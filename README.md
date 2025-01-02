@@ -1,6 +1,6 @@
 <div align="center">
 
-![header](https://capsule-render.vercel.app/api?type=transparent&color=39FF14&height=150&section=header&text=KGA%20Team%20Project&fontSize=70&animation=fadeIn&fontColor=39FF14&desc=Pre-Contract%20Development%20Repository&descSize=25&descAlignY=75)
+![header](https://capsule-render.vercel.app/api?type=transparent&color=39FF14&height=150&section=header&text=Project_Salon&fontSize=50&animation=fadeIn&fontColor=39FF14&desc=KGA%20Team%20Pre-Contract%20Project%20Repository&descSize=25&descAlignY=75)
 
 # 경일게임아카데미 사전협약 프로젝트
 
