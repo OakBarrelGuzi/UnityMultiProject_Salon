@@ -123,21 +123,21 @@
 ━━━━━━━━━━━━━━━━━━━━━━
 
 #### • 기본 구조
-**[Type]** <span style="color: #007FFF">
-feat</span>
+**[Type]**
+feat
 
-**[Subject]** <span style="color: #00CC66">
-실시간 채팅 시스템 구현</span>
+**[Subject]**
+실시간 채팅 시스템 구현
 
-**[Body]** <span style="color: #FFA500">
+**[Body]**
 • 1:1 채팅방 생성 및 관리 기능
 • 이모티콘 시스템 통합
 • 채팅 히스토리 저장 구현
-• 실시간 메시지 알림 기능 추가</span>
+• 실시간 메시지 알림 기능 추가
 
-**[Footer]** <span style="color: #FF6B6B">
+**[Footer]**
 Closes #128
-Related to #125, #126</span>
+Related to #125, #126
 
 ━━━━━━━━━━━━━━━━━━━━━━
 
