@@ -13,7 +13,7 @@ public abstract class DataManager : MonoBehaviour
     protected Dictionary<string, List<string[]>> csvDataSets = new Dictionary<string, List<string[]>>();
 
     public abstract void LoadData();
-    protected abstract string ProcessPath(string fullPath);
+    public abstract string ProcessPath(string fullPath);
 
     public List<string[]> GetDataSet(string path)
     {

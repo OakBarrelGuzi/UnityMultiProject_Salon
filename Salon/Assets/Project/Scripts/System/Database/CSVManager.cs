@@ -42,7 +42,7 @@ public class CSVManager : DataManager
             LoadCSVFromResources(file.path);
     }
 
-    protected override string ProcessPath(string fullPath)
+    public override string ProcessPath(string fullPath)
     {
         string resourcePath = fullPath;
         int resourcesIndex = fullPath.IndexOf("Resources/");
