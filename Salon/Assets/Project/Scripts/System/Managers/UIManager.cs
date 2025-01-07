@@ -1,12 +1,11 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Linq;
 
 public class UIManager : MonoBehaviour
 {
     private static UIManager instance;
     [SerializeField] private DataManager.DataFile[] LanguageFile;
-    private Dictionary<string, List<string>> processedData = new Dictionary<string, List<string>>();
+    private Dictionary<string, string> processedData = new Dictionary<string, string>();
 
     public static UIManager Instance
     {
@@ -47,47 +46,35 @@ public class UIManager : MonoBehaviour
     private void LoadLanguageData(string path)
     {
         List<string[]> csvData = CSVManager.Instance.GetDataSet(path);
-        if (csvData == null)
+        if (csvData == null || csvData.Count < 3)
         {
             Debug.LogError($"언어 데이터를 불러오는데 실패했습니다: {path}");
             return;
         }
 
-        List<string> langData = new List<string>();
-        foreach (string[] row in csvData)
-            langData.Add(row.Length >= 3 ? row[2] : "");
-
-        processedData[path] = langData;
+        for (int i = 2; i < csvData.Count; i++)
+        {
+            string[] row = csvData[i];
+            if (row.Length >= 3 && !string.IsNullOrEmpty(row[0]))
+            {
+                processedData[row[0]] = row[2];
+            }
+        }
     }
 
-    public string GetText(string fileName, int lineNumber)
+    public string GetText(string key)
     {
-        var langFile = LanguageFile.FirstOrDefault(file => file.path.Contains(fileName));
-        if (langFile.path == null)
+        if (processedData.TryGetValue(key, out string value))
         {
-            Debug.LogError($"언어 파일을 찾을 수 없습니다: {fileName}");
-            return "Missing Text";
+            return value;
         }
-
-        int index = lineNumber - 1;
-        if (processedData.ContainsKey(langFile.path) &&
-            index >= 0 &&
-            index < processedData[langFile.path].Count)
-        {
-            return processedData[langFile.path][index];
-        }
+        Debug.LogWarning($"키를 찾을 수 없습니다: {key}");
         return "Missing Text";
     }
 
-    public string GetText(int lineNumber)
+    public string GetText(string fileName, string key)
     {
-        if (LanguageFile == null || LanguageFile.Length == 0)
-        {
-            Debug.LogError("설정된 언어 파일이 없습니다.");
-            return "Missing Text";
-        }
-
-        return GetText(LanguageFile[0].path, lineNumber);
+        return GetText(key);
     }
 
     public void UpdateAllLocalizedTexts()
