@@ -34,25 +34,43 @@ namespace Salon.Firebase
         }
 
         public bool IsInitialized { get; private set; }
+        private TaskCompletionSource<bool> initializationComplete;
 
         public async void Initialize()
         {
             try
             {
+                initializationComplete = new TaskCompletionSource<bool>();
                 var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync();
                 if (dependencyStatus == DependencyStatus.Available)
                 {
-                    Debug.Log("[Firebase] 초기화 성공");
                     InitializeFirebase();
+                    IsInitialized = true;
+                    initializationComplete.SetResult(true);
+                    Debug.Log("[Firebase] 초기화 성공");
                 }
                 else
                 {
                     Debug.LogError($"[Firebase] 초기화 실패: {dependencyStatus}");
+                    initializationComplete.SetResult(false);
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[Firebase] 초기화 실패: {ex.Message}");
+                initializationComplete.SetResult(false);
+            }
+        }
+
+        private async Task EnsureInitialized()
+        {
+            if (!IsInitialized)
+            {
+                if (initializationComplete == null)
+                {
+                    Initialize();
+                }
+                await initializationComplete.Task;
             }
         }
 
@@ -87,19 +105,16 @@ namespace Salon.Firebase
             }
         }
 
-        // 고유한 태� 번호 생성
         private async Task<string> GenerateUniqueTagAsync(string baseName)
         {
             try
             {
-                // DisplayName으로 정렬된 사용자 목록 가져오기
                 var snapshot = await dbReference.Child("Users")
                     .OrderByChild("DisplayName")
                     .StartAt($"{baseName}#")
                     .EndAt($"{baseName}#\uf8ff")
                     .GetValueAsync();
 
-                // 현재 사용 중인 태그 번호들 수집
                 HashSet<int> usedTags = new HashSet<int>();
                 foreach (var child in snapshot.Children)
                 {
@@ -114,7 +129,6 @@ namespace Salon.Firebase
                     }
                 }
 
-                // 사용되지 않은 가장 작은 번호 찾기
                 int newTag = 1;
                 while (usedTags.Contains(newTag))
                 {
@@ -130,41 +144,61 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task<bool> RegisterWithEmailAsync(string email, string password, string displayName)
+        public async Task<bool> RegisterWithEmailAsync(string email, string password)
         {
             try
             {
+                await EnsureInitialized();
+                if (!IsInitialized)
+                {
+                    Debug.LogError("[Firebase] Firebase가 초기화되지 않았습니다.");
+                    return false;
+                }
+
+                Debug.Log($"[Firebase] 회원가입 시도: {email}");
+
+                if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+                {
+                    Debug.LogError("[Firebase] 이메일 또는 비밀번호가 비어있습니다.");
+                    return false;
+                }
+
+                if (password.Length < 6)
+                {
+                    Debug.LogError("[Firebase] 비밀번호는 최소 6자 이상이어야 합니다.");
+                    return false;
+                }
+
                 var result = await auth.CreateUserWithEmailAndPasswordAsync(email, password);
 
-                string uniqueDisplayName = await GenerateUniqueTagAsync(displayName);
+                if (result == null || result.User == null)
+                {
+                    Debug.LogError("[Firebase] 사용자 생성 결과가 null입니다.");
+                    return false;
+                }
+
+                string uniqueDisplayName = await GenerateUniqueTagAsync("user");
                 var profile = new UserProfile { DisplayName = uniqueDisplayName };
                 await result.User.UpdateUserProfileAsync(profile);
 
-                var userData = new Database.UserData(uniqueDisplayName, email);
+                var userData = new Database.UserData(result.User.UserId, uniqueDisplayName, email);
                 string json = JsonConvert.SerializeObject(userData);
+
                 await dbReference.Child("Users").Child(result.User.UserId).SetRawJsonValueAsync(json);
+
+                await dbReference.Child("DisplayNames").Child(uniqueDisplayName).SetValueAsync(result.User.UserId);
 
                 Debug.Log($"[Firebase] 회원가입 성공: {result.User.Email} ({uniqueDisplayName})");
                 return true;
             }
-            catch (FirebaseException ex) when (ex.Message.Contains("EMAIL_EXISTS"))
+            catch (FirebaseException ex)
             {
-                Debug.LogError("[Firebase] 이미 등록된 이메일입니다.");
-                return false;
-            }
-            catch (FirebaseException ex) when (ex.Message.Contains("INVALID_EMAIL"))
-            {
-                Debug.LogError("[Firebase] 유효하지 않은 이메일 형식입니다.");
-                return false;
-            }
-            catch (FirebaseException ex) when (ex.Message.Contains("WEAK_PASSWORD"))
-            {
-                Debug.LogError("[Firebase] 비밀번호가 너무 약합니다.");
+                Debug.LogError($"[Firebase] Firebase 예외: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 회원가입 실패: {ex.Message}");
+                Debug.LogError($"[Firebase] 일반 예외: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
                 return false;
             }
         }
@@ -379,7 +413,7 @@ namespace Salon.Firebase
                 };
                 await dbReference.Child("Users").Child(currentUser.UserId).UpdateChildrenAsync(updates);
 
-                Debug.Log($"[Firebase] 디스플레이 네임 변경 성공: {uniqueDisplayName}");
+                Debug.Log($"[Firebase] 디디스플레이 네임 변경 성공: {uniqueDisplayName}");
                 return true;
             }
             catch (Exception ex)

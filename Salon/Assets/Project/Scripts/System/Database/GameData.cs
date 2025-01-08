@@ -41,14 +41,16 @@ namespace Salon.Firebase.Database
     [System.Serializable]
     public class UserData
     {
+        public string UserId { get; set; }
         public string DisplayName { get; set; }
         public string Email { get; set; }
         public long LastOnline { get; set; }
         public Dictionary<string, bool> Friends { get; set; }
         public Dictionary<GameType, UserStats> GameStats { get; set; }
 
-        public UserData(string displayName, string email)
+        public UserData(string userId, string displayName, string email)
         {
+            UserId = userId;
             DisplayName = displayName;
             Email = email;
             LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
