@@ -4,93 +4,176 @@ using Firebase.Database;
 using Firebase.Auth;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
-using System.Collections;
-using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Firebase.Extensions;
 
-public class FirebaseManager : MonoBehaviour
+namespace Salon.Firebase
 {
-    private DatabaseReference dbReference;
-    void Start()
+    public class FirebaseManager : MonoBehaviour
     {
-        FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
+        private DatabaseReference dbReference;
+        private FirebaseAuth auth;
+        private FirebaseUser currentUser;
+
+        public static FirebaseManager Instance { get; private set; }
+
+        private void Awake()
         {
-            var dependencyStatus = task.Result;
-            if (dependencyStatus == DependencyStatus.Available)
+            if (Instance == null)
             {
-                Debug.Log($"Firebase ÃÊ±âÈ­ ¼º°ø");
-                InitializeFirebase();
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
             }
             else
-                Debug.LogError($"Firebase ÃÊ±âÈ­ ½ÇÆĞ: {dependencyStatus}");
-        });
-    }
-
-    private void InitializeFirebase()
-    {
-        dbReference = FirebaseDatabase.DefaultInstance.RootReference;
-        ExistRooms();
-    }
-
-    private void ExistRooms()
-    {
-        Debug.Log("Firebase ¹æ »ı¼º ½ÃÀÛ");
-
-        // Firebase¿¡¼­ ÇöÀç Á¸ÀçÇÏ´Â ¹æ ¸ñ·Ï È®ÀÎ
-        dbReference.Child("Rooms").GetValueAsync().ContinueWith(task =>
-        {
-            if (task.IsCompleted)
             {
-                DataSnapshot snapshot = task.Result;
+                Destroy(gameObject);
+            }
+        }
 
-                // ÀÌ¹Ì Á¸ÀçÇÏ´Â ¹æ ÀÌ¸§ ÀúÀå
+        void Start()
+        {
+            // Firebase SDK ì´ˆê¸°í™”
+            FirebaseApp.CheckAndFixDependenciesAsync().ContinueWith(task =>
+            {
+                var dependencyStatus = task.Result;
+                if (dependencyStatus == DependencyStatus.Available)
+                {
+                    Debug.Log("[Firebase] ì´ˆê¸°í™” ì„±ê³µ");
+                    InitializeFirebase();
+                }
+                else
+                {
+                    Debug.LogError($"[Firebase] ì´ˆê¸°í™” ì‹¤íŒ¨: {dependencyStatus}");
+                }
+            });
+        }
+
+        private void InitializeFirebase()
+        {
+            // Firebase ì¸ì¦ ë° ë°ì´í„°ë² ì´ìŠ¤ ì´ˆê¸°í™”
+            auth = FirebaseAuth.DefaultInstance;
+            dbReference = FirebaseDatabase.DefaultInstance.RootReference;
+
+            // ì¸ì¦ ìƒíƒœ ë³€ê²½ ì´ë²¤íŠ¸ êµ¬ë…
+            auth.StateChanged += AuthStateChanged;
+        }
+
+        private void AuthStateChanged(object sender, EventArgs e)
+        {
+            if (auth.CurrentUser != currentUser)
+            {
+                bool signedIn = (auth.CurrentUser != null);
+                if (signedIn)
+                {
+                    Debug.Log($"[Firebase] ì‚¬ìš©ì ë¡œê·¸ì¸: {auth.CurrentUser.Email}");
+                    currentUser = auth.CurrentUser;
+                }
+                else
+                {
+                    Debug.Log("[Firebase] ì‚¬ìš©ì ë¡œê·¸ì•„ì›ƒ");
+                    currentUser = null;
+                }
+            }
+        }
+
+        // ì´ë©”ì¼/ë¹„ë°€ë²ˆí˜¸ë¡œ íšŒì›ê°€ì…
+        public async Task<bool> RegisterWithEmailAsync(string email, string password)
+        {
+            try
+            {
+                var result = await auth.CreateUserWithEmailAndPasswordAsync(email, password);
+                Debug.Log($"[Firebase] íšŒì›ê°€ì… ì„±ê³µ: {result.User.Email}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Firebase] íšŒì›ê°€ì… ì‹¤íŒ¨: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ì´ë©”ì¼/ë¹„ë°€ë²ˆí˜¸ë¡œ ë¡œê·¸ì¸
+        public async Task<bool> SignInWithEmailAsync(string email, string password)
+        {
+            try
+            {
+                var result = await auth.SignInWithEmailAndPasswordAsync(email, password);
+                Debug.Log($"[Firebase] ë¡œê·¸ì¸ ì„±ê³µ: {result.User.Email}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Firebase] ë¡œê·¸ì¸ ì‹¤íŒ¨: {ex.Message}");
+                return false;
+            }
+        }
+
+        // ë¡œê·¸ì•„ì›ƒ
+        public void SignOut()
+        {
+            auth.SignOut();
+            Debug.Log("[Firebase] ë¡œê·¸ì•„ì›ƒ ì™„ë£Œ");
+        }
+
+        // ë°© ì¡´ì¬ ì—¬ë¶€ í™•ì¸ ë° ìƒì„±
+        public async void InitializeRooms()
+        {
+            try
+            {
+                Debug.Log("[Firebase] ë°© ì´ˆê¸°í™” ì‹œì‘");
+                var snapshot = await dbReference.Child("Rooms").GetValueAsync();
+
                 HashSet<string> existingRooms = new HashSet<string>();
-                foreach (DataSnapshot room in snapshot.Children)
+                foreach (var room in snapshot.Children)
                 {
                     existingRooms.Add(room.Key);
                 }
 
-                CreateMissingRooms(existingRooms);
+                await CreateMissingRoomsAsync(existingRooms);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Firebase] ë°© ì´ˆê¸°í™” ì‹¤íŒ¨: {ex.Message}");
+            }
+        }
+
+        private async Task CreateMissingRoomsAsync(HashSet<string> existingRooms)
+        {
+            Dictionary<string, Database.RoomData> rooms = new Dictionary<string, Database.RoomData>();
+
+            for (int i = 1; i <= 10; i++)
+            {
+                string roomName = $"Room{i}";
+                if (!existingRooms.Contains(roomName))
+                {
+                    rooms[roomName] = new Database.RoomData();
+                }
+            }
+
+            if (rooms.Count > 0)
+            {
+                try
+                {
+                    var updates = new Dictionary<string, object>();
+                    foreach (var room in rooms)
+                    {
+                        updates[room.Key] = JsonConvert.SerializeObject(room.Value);
+                    }
+
+                    await dbReference.Child("Rooms").UpdateChildrenAsync(updates);
+                    Debug.Log($"[Firebase] {rooms.Count}ê°œì˜ ë°© ìƒì„± ì™„ë£Œ");
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[Firebase] ë°© ìƒì„± ì‹¤íŒ¨: {ex.Message}");
+                }
             }
             else
-                Debug.LogError("¹æ µ¥ÀÌÅÍ È®ÀÎ ½ÇÆĞ: " + task.Exception);
-        });
-    }
-
-    private void CreateMissingRooms(HashSet<string> existingRooms)
-    {
-        Debug.Log("Firebase ³ª¸ÓÁö ¹æ »ı¼º ½ÃÀÛ");
-        Dictionary<string, RoomData> rooms = new Dictionary<string, RoomData>();
-
-        for (int i = 1; i <= 10; i++)
-        {
-            string roomName = $"Room{i}";
-
-            if (!existingRooms.Contains(roomName))
             {
-                RoomData roomData = new RoomData();
-                rooms[roomName] = roomData;
+                Debug.Log("[Firebase] ëª¨ë“  ë°©ì´ ì´ë¯¸ ì¡´ì¬í•¨");
             }
-        }
-
-        if (rooms.Count > 0)
-        {
-            string jsonData = JsonConvert.SerializeObject(rooms, Formatting.Indented);
-            Debug.Log($"Á÷·ÄÈ­µÈ JSON µ¥ÀÌÅÍ: {jsonData}");
-            Debug.Log($"JSON µ¥ÀÌÅÍ Å©±â: {jsonData.Length} bytes");
-
-            dbReference.Child("Rooms").SetRawJsonValueAsync(jsonData).ContinueWith(task =>
-            {
-                if (task.IsFaulted)
-                    Debug.LogError("¹æ »ı¼º ½ÇÆĞ: " + task.Exception);
-                else if (task.IsCompleted)
-                    Debug.Log("´©¶ôµÈ ¹æ »ı¼º ¿Ï·á!");
-            });
-        }
-        else
-        {
-            Debug.Log("¸ğµç ¹æÀÌ ÀÌ¹Ì Á¸ÀçÇÕ´Ï´Ù. Ãß°¡ ÀÛ¾÷ÀÌ ÇÊ¿äÇÏÁö ¾Ê½À´Ï´Ù.");
         }
     }
 }
