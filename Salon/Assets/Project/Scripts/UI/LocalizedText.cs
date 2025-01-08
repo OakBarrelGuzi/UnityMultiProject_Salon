@@ -3,7 +3,6 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
-[AddComponentMenu("UI/Localized Text")]
 public class LocalizedText : MonoBehaviour
 {
     private TMP_FontAsset defaultTMPFont;
