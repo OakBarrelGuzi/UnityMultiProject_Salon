@@ -1,10 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
-[AddComponentMenu("UI/Localized Text")]
 public class LocalizedText : MonoBehaviour
 {
+    private TMP_FontAsset defaultTMPFont;
+    private Font defaultLegacyFont;
+
     [Tooltip("텍스트 데이터 설정\n- TextObject: 텍스트를 표시할 UI 오브젝트\n- textKey: CSV 파일의 Idx 열에 있는 키 값")]
     public LocalizedTextData[] data;
 
@@ -15,6 +18,16 @@ public class LocalizedText : MonoBehaviour
 
     public void UpdateText()
     {
+        if (defaultTMPFont == null)
+        {
+            defaultTMPFont = ResourceManager.Instance.LoadResource<TMP_FontAsset>("Assets/Resources/Fonts/MainFontTmp.asset");
+        }
+
+        if (defaultLegacyFont == null)
+        {
+            defaultLegacyFont = ResourceManager.Instance.LoadResource<Font>("Assets/Resources/Fonts/MainFontLegacy.ttf");
+        }
+
         foreach (LocalizedTextData textData in data)
         {
             string localizedText = UIManager.Instance.GetText(textData.textKey);
@@ -23,9 +36,17 @@ public class LocalizedText : MonoBehaviour
             var tmpText = textData.TextObject.GetComponent<TextMeshProUGUI>();
 
             if (uiText != null)
+            {
                 uiText.text = localizedText;
+                if (defaultLegacyFont != null)
+                    uiText.font = defaultLegacyFont;
+            }
             if (tmpText != null)
+            {
                 tmpText.text = localizedText;
+                if (defaultTMPFont != null)
+                    tmpText.font = defaultTMPFont;
+            }
         }
     }
 }
