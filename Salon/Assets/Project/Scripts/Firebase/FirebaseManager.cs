@@ -9,7 +9,7 @@ using System.Collections;
 using System.Runtime.InteropServices;
 using Firebase.Extensions;
 
-public class FirebaseInit : MonoBehaviour
+public class FirebaseManager : MonoBehaviour
 {
     private DatabaseReference dbReference;
     void Start()
@@ -19,11 +19,11 @@ public class FirebaseInit : MonoBehaviour
             var dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
             {
-                Debug.Log($"Firebase ì´ˆê¸°í™” ì„±ê³µ");
+                Debug.Log($"Firebase ÃÊ±âÈ­ ¼º°ø");
                 InitializeFirebase();
             }
             else
-                Debug.LogError($"Firebase ì´ˆê¸°í™” ì‹¤íŒ¨: {dependencyStatus}");
+                Debug.LogError($"Firebase ÃÊ±âÈ­ ½ÇÆĞ: {dependencyStatus}");
         });
     }
 
@@ -35,16 +35,16 @@ public class FirebaseInit : MonoBehaviour
 
     private void ExistRooms()
     {
-        Debug.Log("Firebase ë°© ìƒì„± ì‹œì‘");
+        Debug.Log("Firebase ¹æ »ı¼º ½ÃÀÛ");
 
-        // Firebaseì—ì„œ í˜„ì¬ ì¡´ì¬í•˜ëŠ” ë°© ëª©ë¡ í™•ì¸
+        // Firebase¿¡¼­ ÇöÀç Á¸ÀçÇÏ´Â ¹æ ¸ñ·Ï È®ÀÎ
         dbReference.Child("Rooms").GetValueAsync().ContinueWith(task =>
         {
             if (task.IsCompleted)
             {
                 DataSnapshot snapshot = task.Result;
 
-                // ì´ë¯¸ ì¡´ì¬í•˜ëŠ” ë°© ì´ë¦„ ì €ì¥
+                // ÀÌ¹Ì Á¸ÀçÇÏ´Â ¹æ ÀÌ¸§ ÀúÀå
                 HashSet<string> existingRooms = new HashSet<string>();
                 foreach (DataSnapshot room in snapshot.Children)
                 {
@@ -54,13 +54,13 @@ public class FirebaseInit : MonoBehaviour
                 CreateMissingRooms(existingRooms);
             }
             else
-                Debug.LogError("ë°© ë°ì´í„° í™•ì¸ ì‹¤íŒ¨: " + task.Exception);
+                Debug.LogError("¹æ µ¥ÀÌÅÍ È®ÀÎ ½ÇÆĞ: " + task.Exception);
         });
     }
 
     private void CreateMissingRooms(HashSet<string> existingRooms)
     {
-        Debug.Log("Firebase ë‚˜ë¨¸ì§€ ë°© ìƒì„± ì‹œì‘");
+        Debug.Log("Firebase ³ª¸ÓÁö ¹æ »ı¼º ½ÃÀÛ");
         Dictionary<string, RoomData> rooms = new Dictionary<string, RoomData>();
 
         for (int i = 1; i <= 10; i++)
@@ -77,20 +77,20 @@ public class FirebaseInit : MonoBehaviour
         if (rooms.Count > 0)
         {
             string jsonData = JsonConvert.SerializeObject(rooms, Formatting.Indented);
-            Debug.Log($"ì§ë ¬í™”ëœ JSON ë°ì´í„°: {jsonData}");
-            Debug.Log($"JSON ë°ì´í„° í¬ê¸°: {jsonData.Length} bytes");
+            Debug.Log($"Á÷·ÄÈ­µÈ JSON µ¥ÀÌÅÍ: {jsonData}");
+            Debug.Log($"JSON µ¥ÀÌÅÍ Å©±â: {jsonData.Length} bytes");
 
             dbReference.Child("Rooms").SetRawJsonValueAsync(jsonData).ContinueWith(task =>
             {
                 if (task.IsFaulted)
-                    Debug.LogError("ë°© ìƒì„± ì‹¤íŒ¨: " + task.Exception);
+                    Debug.LogError("¹æ »ı¼º ½ÇÆĞ: " + task.Exception);
                 else if (task.IsCompleted)
-                    Debug.Log("ëˆ„ë½ëœ ë°© ìƒì„± ì™„ë£Œ!");
+                    Debug.Log("´©¶ôµÈ ¹æ »ı¼º ¿Ï·á!");
             });
         }
         else
         {
-            Debug.Log("ëª¨ë“  ë°©ì´ ì´ë¯¸ ì¡´ì¬í•©ë‹ˆë‹¤. ì¶”ê°€ ì‘ì—…ì´ í•„ìš”í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
+            Debug.Log("¸ğµç ¹æÀÌ ÀÌ¹Ì Á¸ÀçÇÕ´Ï´Ù. Ãß°¡ ÀÛ¾÷ÀÌ ÇÊ¿äÇÏÁö ¾Ê½À´Ï´Ù.");
         }
     }
 }
