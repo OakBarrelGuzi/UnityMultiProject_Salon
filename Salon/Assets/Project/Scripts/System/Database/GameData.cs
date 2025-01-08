@@ -7,7 +7,7 @@ namespace Salon.Firebase.Database
     public class RoomData
     {
         public Dictionary<string, MessageData> Messages { get; set; }
-        public Dictionary<string, PlayerData> Players { get; set; }
+        public Dictionary<string, GamePlayerData> Players { get; set; }
         public int UserCount;
         public bool isFull;
 
@@ -17,7 +17,9 @@ namespace Salon.Firebase.Database
             {
                 { "welcome", new MessageData("system", "Welcome to the room!", DateTimeOffset.UtcNow.ToUnixTimeSeconds()) }
             };
-            Players = null;
+            Players = new Dictionary<string, GamePlayerData>();
+            UserCount = 0;
+            isFull = false;
         }
     }
 
@@ -37,17 +39,60 @@ namespace Salon.Firebase.Database
     }
 
     [System.Serializable]
-    public class PlayerData
+    public class UserData
     {
-        public string PlayerId { get; set; }
-        public string PlayerName { get; set; }
-        public bool IsOnline { get; set; }
+        public string DisplayName { get; set; }
+        public string Email { get; set; }
+        public long LastOnline { get; set; }
+        public Dictionary<string, bool> Friends { get; set; }
+        public Dictionary<GameType, UserStats> GameStats { get; set; }
 
-        public PlayerData(string playerId, string playerName, bool isOnline)
+        public UserData(string displayName, string email)
         {
-            PlayerId = playerId;
-            PlayerName = playerName;
-            IsOnline = isOnline;
+            DisplayName = displayName;
+            Email = email;
+            LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            Friends = new Dictionary<string, bool>();
+            GameStats = new Dictionary<GameType, UserStats>();
+        }
+    }
+
+    [System.Serializable]
+    public class UserStats
+    {
+        public int TotalGames { get; set; }
+        public int TopScore { get; set; }
+        public int Wins { get; set; }
+        public int Losses { get; set; }
+        public float Rank { get; set; }
+
+        public UserStats()
+        {
+            TotalGames = 0;
+            Wins = 0;
+            Losses = 0;
+            Rank = 0;
+        }
+    }
+
+    [System.Serializable]
+    public class GamePlayerData
+    {
+        public string UserId { get; set; }
+        public string DisplayName { get; set; }
+        public bool IsReady { get; set; }
+        public bool IsHost { get; set; }
+        public GamePlayerState State { get; set; }
+        public Dictionary<string, object> GameSpecificData { get; set; }
+
+        public GamePlayerData(string userId, string displayName, bool isHost = false)
+        {
+            UserId = userId;
+            DisplayName = displayName;
+            IsReady = false;
+            IsHost = isHost;
+            State = GamePlayerState.Waiting;
+            GameSpecificData = new Dictionary<string, object>();
         }
     }
 }

@@ -9,6 +9,25 @@ public class MainDisplayPanel : Panel
 
     public override void Initialize()
     {
+        this.panelType = PanelType.MainDisplay;
+
+        if (startButton == null || optionButton == null || customizeButton == null)
+        {
+            GetReferences();
+        }
+        else
+        {
+            if (startButton != null)
+                startButton.onClick.AddListener(OnStartButtonClick);
+            if (optionButton != null)
+                optionButton.onClick.AddListener(OnOptionButtonClick);
+            if (customizeButton != null)
+                customizeButton.onClick.AddListener(OnCustomizeButtonClick);
+        }
+    }
+
+    private void GetReferences()
+    {
         Button[] buttons = GetComponentsInChildren<Button>();
         foreach (Button button in buttons)
         {
@@ -25,7 +44,7 @@ public class MainDisplayPanel : Panel
     {
         if (startButton == null)
         {
-            LogManager.Instance.ShowError("StartButton 이 할당되지 않았습니다.");
+            LogManager.Instance.ShowLog("StartButton 이 할당되지 않았습니다.");
             return;
         }
         UIManager.Instance.OpenPanel(PanelType.Lobby);
@@ -35,7 +54,7 @@ public class MainDisplayPanel : Panel
     {
         if (optionButton == null)
         {
-            LogManager.Instance.ShowError("OptionButton 이 할당되지 않았습니다.");
+            LogManager.Instance.ShowLog("OptionButton 이 할당되지 않았습니다.");
             return;
         }
         UIManager.Instance.OpenPanel(PanelType.Option);
@@ -44,7 +63,7 @@ public class MainDisplayPanel : Panel
     {
         if (customizeButton == null)
         {
-            LogManager.Instance.ShowError("CustomizeButton 이 할당되지 않았습니다.");
+            LogManager.Instance.ShowLog("CustomizeButton 이 할당되지 않았습니다.");
             return;
         }
         UIManager.Instance.OpenPanel(PanelType.Customize);

@@ -1,8 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Salon.Interfaces;
 
-public class UIManager : MonoBehaviour
+public class UIManager : MonoBehaviour, IInitializable
 {
     private static UIManager instance;
     private DataManager.DataFile[] LanguageFile;
@@ -10,6 +11,7 @@ public class UIManager : MonoBehaviour
     private string DefaultLangFile = "Assets/Resources/Langtable/LangTable.CSV";
     private List<Panel> panels = new List<Panel>();
     [SerializeField] private List<Panel> panelsPrefabs = new List<Panel>();
+    public bool IsInitialized { get; private set; }
     public static UIManager Instance
     {
         get
@@ -34,11 +36,22 @@ public class UIManager : MonoBehaviour
             return;
         }
 
+    }
+
+    private void Start()
+    {
+        Initialize();
+        OpenPanel(PanelType.SignIn);
+    }
+
+    public void Initialize()
+    {
         if (LanguageFile == null)
             LanguageFile = new DataManager.DataFile[0];
 
         LoadDefaultLanguageSystem();
         InitializeLanguageSystem();
+        IsInitialized = true;
     }
 
     private void LoadDefaultLanguageSystem()
@@ -176,7 +189,7 @@ public class UIManager : MonoBehaviour
     {
         if (panels.FirstOrDefault(p => p.panelType == panelType) == null)
         {
-            LogManager.Instance.ShowError($"패널 {panelType}이 존재하지 않습니다.");
+            LogManager.Instance.ShowLog($"패널 {panelType}이 존재하지 않습니다.");
             return;
         }
         if (panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
@@ -191,10 +204,7 @@ public class UIManager : MonoBehaviour
         }
         else
         {
-            Panel panel = Instantiate(panelsPrefabs.FirstOrDefault(p => p.panelType == panelType));
-            panel.transform.SetParent(transform);
-            panel.transform.localScale = Vector3.one;
-            panel.transform.localPosition = Vector3.zero;
+            Panel panel = Instantiate(panelsPrefabs.FirstOrDefault(p => p.panelType == panelType), transform);
             panel.isOpen = false;
             return panel;
         }
