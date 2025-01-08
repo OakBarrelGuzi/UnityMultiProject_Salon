@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class UIManager : MonoBehaviour
 {
@@ -7,7 +8,7 @@ public class UIManager : MonoBehaviour
     [SerializeField] private DataManager.DataFile[] LanguageFile;
     private Dictionary<string, string> processedData = new Dictionary<string, string>();
     private string DefaultLangFile = "Assets/Resources/Langtable/LangTable.CSV";
-
+    private List<Panel> panels = new List<Panel>();
     public static UIManager Instance
     {
         get
@@ -154,5 +155,31 @@ public class UIManager : MonoBehaviour
         }
 
         UpdateAllLocalizedTexts();
+    }
+
+    public void OpenPanel(PanelType panelType)
+    {
+        if (panels.FirstOrDefault(p => p.panelType == panelType) == null)
+        {
+            panels.Add(GetPanel(panelType));
+        }
+        if (!panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
+        {
+            panels.FirstOrDefault(p => p.panelType == panelType).Open();
+        }
+    }
+
+    public void ClosePanel(PanelType panelType)
+    {
+        foreach (Panel panel in panels)
+        {
+            if (panel.panelType == panelType && panel.isOpen)
+                panel.Close();
+        }
+    }
+
+    private Panel GetPanel(PanelType panelType)
+    {
+        return ResourceManager.Instance.LoadResource<Panel>($"Assets/Resources/UI/Panels/{panelType}.prefab");
     }
 }

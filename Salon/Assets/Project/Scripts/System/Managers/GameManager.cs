@@ -33,11 +33,10 @@ public class GameManager : MonoBehaviour
 
     private void InitializeManagers()
     {
-        // 매니저들 초기화
-        LogManager.Instance.gameObject.transform.SetParent(transform);
-        UIManager.Instance.gameObject.transform.SetParent(transform);
-        ResourceManager.Instance.gameObject.transform.SetParent(transform);
-        CSVManager.Instance.gameObject.transform.SetParent(transform);
+        _ = LogManager.Instance;
+        _ = UIManager.Instance;
+        _ = ResourceManager.Instance;
+        _ = CSVManager.Instance;
     }
 
 #if UNITY_EDITOR
@@ -46,9 +45,9 @@ public class GameManager : MonoBehaviour
     {
         GameObject go = new GameObject("GameManager");
         go.AddComponent<GameManager>();
-        
+
         UnityEditor.GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
-        
+
         UnityEditor.Undo.RegisterCreatedObjectUndo(go, "Create Game Manager");
         UnityEditor.Selection.activeObject = go;
     }
