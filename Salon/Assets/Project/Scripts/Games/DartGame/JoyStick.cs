@@ -58,7 +58,7 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
     //드래그중 메세지 함수
     public void OnDrag(PointerEventData eventData)
     {
-        Vector2 touchPos = ((eventData.position - (Vector2)transform.position) * speed) / widthHalf;
+        Vector2 touchPos = ((Vector2)transform.position - eventData.position) * speed / widthHalf;
 
         if (touchPos.magnitude > length)
         {
@@ -66,7 +66,7 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
         }
 
         touch = touchPos / speed;
-        handle.anchoredPosition = touchPos * widthHalf;
+        handle.anchoredPosition = -touchPos * widthHalf;
         FocusSetActive();
     }
 
@@ -76,10 +76,10 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
 
         Dictionary<(float value, float threshold), FOCUSTYPE> directionMap = new Dictionary<(float value, float threshold), FOCUSTYPE>
     {
-        { (touch.x, joyStickSensitive), FOCUSTYPE.LEFT },
-        { (-touch.x, joyStickSensitive), FOCUSTYPE.RIGHT },
-        { (touch.y, joyStickSensitive), FOCUSTYPE.BOTTOM },
-        { (-touch.y, joyStickSensitive), FOCUSTYPE.TOP }
+        { (touch.x, joyStickSensitive), FOCUSTYPE.RIGHT },
+        { (-touch.x, joyStickSensitive), FOCUSTYPE.LEFT },
+        { (touch.y, joyStickSensitive), FOCUSTYPE.TOP },
+        { (-touch.y, joyStickSensitive), FOCUSTYPE.BOTTOM }
     };
 
 
