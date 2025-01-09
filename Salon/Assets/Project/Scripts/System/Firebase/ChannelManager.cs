@@ -12,6 +12,7 @@ using Salon.Firebase.Database;
 using System.Threading.Tasks;
 using Salon.Interfaces;
 using Salon.Firebase;
+using UnityEngine.UIElements;
 
 public class ChannelManager : MonoBehaviour
 {
@@ -184,4 +185,38 @@ public class ChannelManager : MonoBehaviour
             Debug.LogError($"플레이어 제거 중 오류 발생: {ex.Message}");
         }
     }
+
+    private async Task WaitForChannelData()
+    {
+        try
+        {
+            DataSnapshot snapshot = await dbReference.Child("Rooms").GetValueAsync();
+
+            if (!snapshot.Exists) return;
+
+            Dictionary<string, RoomData> loadRoomData = new Dictionary<string, RoomData>();
+            foreach (DataSnapshot roomSnapshot in snapshot.Children)
+            {
+                string roomName = roomSnapshot.Key;
+                string roomJson = roomSnapshot.GetRawJsonValue();
+
+                RoomData roomData = JsonConvert.DeserializeObject<RoomData>(roomJson);
+                loadRoomData[roomName] = roomData;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"채널 데이터를 로드하는 도중 오류가 발생함{ex.Message}");
+        }
+    }
+
+    //UI띄울때 이런식으로 하시면 될거 같습니다.
+    //private async void OnEnable()
+    //{
+    //    dbReference = await GetDbReference();
+
+    //    await WaitForAllChannelData();
+
+    //    ShowChannelUI();
+    //}
 }
