@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class ShellManager : MonoBehaviour
+public class ShellShuffle : MonoBehaviour
 
 { public GameObject cupPrefabs;
 
@@ -13,7 +13,7 @@ public class ShellManager : MonoBehaviour
 
     }
 
-    // Update is called once per frame
+ 
     void Update()
     {
 
