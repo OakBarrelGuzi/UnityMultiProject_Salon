@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class JoyStickFocus : MonoBehaviour
 {
-    public FocusType focusType;
+    public FOCUSTYPE focusType;
 }
 
-public enum FocusType
+public enum FOCUSTYPE
 {
     TOP,
     BOTTOM,
