@@ -24,8 +24,8 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
     [SerializeField, Header("핸들 이동방향 포커스 오브젝트")]
     private JoyStickFocus[] handleFocus;
 
-    private Dictionary<FocusType,JoyStickFocus> handleFocusDict =
-        new Dictionary<FocusType,JoyStickFocus>();
+    private Dictionary<FOCUSTYPE,JoyStickFocus> handleFocusDict =
+        new Dictionary<FOCUSTYPE,JoyStickFocus>();
 
     [SerializeField, Header("핸들 최대 이동거리")]
     private float length = 0.8f;
@@ -46,16 +46,15 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
             handleFocusDict.Add(joyStickFocus.focusType,joyStickFocus);
             joyStickFocus.gameObject.SetActive(false);
         }
-
-
     }
 
+    //터치하는 순간 메세지 함수
     public void OnPointerClick(PointerEventData eventData)
     {
         print("클릭함");
     }
 
-
+    //드래그중 메세지 함수
     public void OnDrag(PointerEventData eventData)
     {
         Vector2 touchPos = ((eventData.position - (Vector2)transform.position) * speed) / widthHalf;
@@ -70,66 +69,68 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
         FocusSetActive();
     }
 
+    //방향에따른 포커스 꺼짐켜짐
     private void FocusSetActive()
     {
         if (touch.x > joyStickSensitive)
         {
-            if (handleFocusDict.TryGetValue(FocusType.RIGHT,out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.RIGHT,out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(true);
             } 
         }
         else
         {
-            if (handleFocusDict.TryGetValue(FocusType.RIGHT, out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.RIGHT, out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(false);
             }
         }
         if (touch.x < -joyStickSensitive)
         {
-            if (handleFocusDict.TryGetValue(FocusType.LEFT, out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.LEFT, out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(true);
             }
         }
         else
         {
-            if (handleFocusDict.TryGetValue(FocusType.LEFT, out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.LEFT, out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(false);
             }
         }
         if (touch.y > joyStickSensitive)
         {
-            if (handleFocusDict.TryGetValue(FocusType.TOP, out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.TOP, out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(true);
             }
         }
         else
         {
-            if (handleFocusDict.TryGetValue(FocusType.TOP, out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.TOP, out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(false);
             }
         }
         if (touch.y < -joyStickSensitive)
         {
-            if (handleFocusDict.TryGetValue(FocusType.BOTTOM, out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.BOTTOM, out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(true);
             }
         }
         else
         {
-            if (handleFocusDict.TryGetValue(FocusType.BOTTOM, out JoyStickFocus joyStickFocus))
+            if (handleFocusDict.TryGetValue(FOCUSTYPE.BOTTOM, out JoyStickFocus joyStickFocus))
             {
                 joyStickFocus.gameObject.SetActive(false);
             }
         }
     }
 
+    //드래그끝 메세지 함수
     public void OnEndDrag(PointerEventData eventData)
     {
         handle.anchoredPosition = startHandlePoint;
@@ -140,11 +141,13 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
         }
     }
 
+    //조이스틱이 향하고있는 방향
     public Vector2 GetDirection()
     {
         return touch.normalized;
     }
 
+    //조이스틱의 강도
     public float GetMagnitude()
     {
         return touch.magnitude / length;
