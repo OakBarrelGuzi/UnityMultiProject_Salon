@@ -15,9 +15,10 @@ namespace Salon.Firebase
     public class FirebaseManager : MonoBehaviour, IInitializable
     {
         private DatabaseReference dbReference;
+        public DatabaseReference DbReference { get => dbReference; }
         private FirebaseAuth auth;
         private FirebaseUser currentUser;
-
+        public ChannelManager channelManager;
         public static FirebaseManager Instance { get; private set; }
 
         private void Awake()
@@ -26,6 +27,8 @@ namespace Salon.Firebase
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+                GameObject FBM = new GameObject("FirebaseManager");
+                FBM.AddComponent<FirebaseManager>();
             }
             else
             {
@@ -60,6 +63,8 @@ namespace Salon.Firebase
                 Debug.LogError($"[Firebase] 초기화 실패: {ex.Message}");
                 initializationComplete.SetResult(false);
             }
+            GameObject CM = new GameObject("ChannelManager");
+            CM.AddComponent<ChannelManager>();
         }
 
         private async Task EnsureInitialized()
@@ -109,22 +114,45 @@ namespace Salon.Firebase
         {
             try
             {
+                await EnsureInitialized();
+                if (!IsInitialized)
+                {
+                    throw new InvalidOperationException("Firebase가 초기화되지 않았습니다.");
+                }
+
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    throw new ArgumentException("기본 이름이 비어있습니다.");
+                }
+
                 var snapshot = await dbReference.Child("Users")
                     .OrderByChild("DisplayName")
                     .StartAt($"{baseName}#")
                     .EndAt($"{baseName}#\uf8ff")
-                    .GetValueAsync();
+                    .GetValueAsync()
+                    .ContinueWith(task =>
+                    {
+                        if (task.IsFaulted)
+                        {
+                            throw new Exception($"Firebase 쿼리 실패: {task.Exception?.InnerException?.Message}");
+                        }
+                        return task.Result;
+                    });
 
                 HashSet<int> usedTags = new HashSet<int>();
-                foreach (var child in snapshot.Children)
+
+                if (snapshot != null && snapshot.Exists)
                 {
-                    var userData = JsonConvert.DeserializeObject<Database.UserData>(child.GetRawJsonValue());
-                    if (userData.DisplayName.StartsWith($"{baseName}#"))
+                    foreach (var child in snapshot.Children)
                     {
-                        string tagStr = userData.DisplayName.Split('#')[1];
-                        if (int.TryParse(tagStr, out int tagNum))
+                        var userData = JsonConvert.DeserializeObject<Database.UserData>(child.GetRawJsonValue());
+                        if (userData?.DisplayName != null && userData.DisplayName.StartsWith($"{baseName}#"))
                         {
-                            usedTags.Add(tagNum);
+                            string tagStr = userData.DisplayName.Split('#')[1];
+                            if (int.TryParse(tagStr, out int tagNum))
+                            {
+                                usedTags.Add(tagNum);
+                            }
                         }
                     }
                 }
@@ -139,7 +167,7 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 태그 생성 실패: {ex.Message}");
+                Debug.LogError($"[Firebase] 태그 생성 실패: {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }
@@ -169,6 +197,7 @@ namespace Salon.Firebase
                     return false;
                 }
 
+                Debug.Log("[Firebase] 사용자 생성 시도...");
                 var result = await auth.CreateUserWithEmailAndPasswordAsync(email, password);
 
                 if (result == null || result.User == null)
@@ -177,19 +206,51 @@ namespace Salon.Firebase
                     return false;
                 }
 
+                Debug.Log("[Firebase] 고유 태그 생성 시도...");
                 string uniqueDisplayName = await GenerateUniqueTagAsync("user");
+                Debug.Log($"[Firebase] 생성된 태그: {uniqueDisplayName}");
+
+                Debug.Log("[Firebase] 프로필 업데이트 시도...");
                 var profile = new UserProfile { DisplayName = uniqueDisplayName };
                 await result.User.UpdateUserProfileAsync(profile);
+                Debug.Log("[Firebase] 프로필 업데이트 완료");
 
-                var userData = new Database.UserData(result.User.UserId, uniqueDisplayName, email);
-                string json = JsonConvert.SerializeObject(userData);
+                try
+                {
+                    Debug.Log("[Firebase] 사용자 데이터 생성 시도...");
+                    var userData = new Database.UserData(result.User.UserId, uniqueDisplayName, email);
 
-                await dbReference.Child("Users").Child(result.User.UserId).SetRawJsonValueAsync(json);
+                    // JsonSerializerSettings를 사용하여 null 값 처리
+                    var serializerSettings = new JsonSerializerSettings
+                    {
+                        NullValueHandling = NullValueHandling.Ignore,
+                        Formatting = Formatting.Indented
+                    };
 
-                await dbReference.Child("DisplayNames").Child(uniqueDisplayName).SetValueAsync(result.User.UserId);
+                    string json = JsonConvert.SerializeObject(userData, serializerSettings);
+                    Debug.Log($"[Firebase] 저장할 데이터: {json}");
 
-                Debug.Log($"[Firebase] 회원가입 성공: {result.User.Email} ({uniqueDisplayName})");
-                return true;
+                    // 데이터베이스에 저장
+                    Debug.Log("[Firebase] 데이터베이스에 사용자 데이터 저장 시도...");
+                    await dbReference.Child("Users").Child(result.User.UserId).SetRawJsonValueAsync(json);
+                    Debug.Log("[Firebase] 사용자 데이터 저장 완료");
+
+                    Debug.Log("[Firebase] 모든 데이터베이스 작업 완료");
+                    Debug.Log($"[Firebase] 회원가입 성공: {result.User.Email} ({uniqueDisplayName})");
+                    return true;
+                }
+                catch (Exception dbEx)
+                {
+                    Debug.LogError($"[Firebase] 데이터베이스 작업 실패 상세: {dbEx.GetType().Name} - {dbEx.Message}");
+                    if (dbEx.InnerException != null)
+                    {
+                        Debug.LogError($"[Firebase] 내부 예외: {dbEx.InnerException.Message}");
+                        Debug.LogError($"[Firebase] 내부 예외 스택 트레이스: {dbEx.InnerException.StackTrace}");
+                    }
+                    Debug.LogError($"[Firebase] 스택 트레이스: {dbEx.StackTrace}");
+                    // 데이터가 저장되었으므로 실패로 처리하지 않음
+                    return true;
+                }
             }
             catch (FirebaseException ex)
             {
