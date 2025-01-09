@@ -27,8 +27,8 @@ namespace Salon.Firebase
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
-                GameObject FBM = new GameObject("FirebaseManager");
-                FBM.AddComponent<FirebaseManager>();
+                GameObject go = new GameObject("FirebaseManager");
+                go.AddComponent<FirebaseManager>();
             }
             else
             {
@@ -64,7 +64,7 @@ namespace Salon.Firebase
                 initializationComplete.SetResult(false);
             }
             GameObject CM = new GameObject("ChannelManager");
-            CM.AddComponent<ChannelManager>();
+            channelManager = CM.AddComponent<ChannelManager>();
         }
 
         private async Task EnsureInitialized()
@@ -271,6 +271,7 @@ namespace Salon.Firebase
                 var result = await auth.SignInWithEmailAndPasswordAsync(email, password);
                 await UpdateUserLastOnline(result.User.UserId);
                 Debug.Log($"[Firebase] 로그인 성공: {result.User.Email}");
+                await channelManager.ExistRooms();
                 return true;
             }
             catch (Exception ex)
