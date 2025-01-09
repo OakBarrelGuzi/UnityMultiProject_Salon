@@ -15,9 +15,10 @@ namespace Salon.Firebase
     public class FirebaseManager : MonoBehaviour, IInitializable
     {
         private DatabaseReference dbReference;
+        public DatabaseReference DbReference { get => dbReference; }
         private FirebaseAuth auth;
         private FirebaseUser currentUser;
-
+        public ChannelManager channelManager;
         public static FirebaseManager Instance { get; private set; }
 
         private void Awake()
@@ -26,6 +27,8 @@ namespace Salon.Firebase
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
+                GameObject FBM = new GameObject("FirebaseManager");
+                FBM.AddComponent<FirebaseManager>();
             }
             else
             {
@@ -60,6 +63,8 @@ namespace Salon.Firebase
                 Debug.LogError($"[Firebase] 초기화 실패: {ex.Message}");
                 initializationComplete.SetResult(false);
             }
+            GameObject CM = new GameObject("ChannelManager");
+            CM.AddComponent<ChannelManager>();
         }
 
         private async Task EnsureInitialized()

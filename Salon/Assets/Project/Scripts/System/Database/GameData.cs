@@ -92,16 +92,14 @@ namespace Salon.Firebase.Database
     [System.Serializable]
     public class GamePlayerData
     {
-        public string UserId { get; set; }
         public string DisplayName { get; set; }
         public bool IsReady { get; set; }
         public bool IsHost { get; set; }
         public GamePlayerState State { get; set; }
         public Dictionary<string, object> GameSpecificData { get; set; }
 
-        public GamePlayerData(string userId, string displayName, bool isHost = false)
+        public GamePlayerData(string displayName, bool isHost = false)
         {
-            UserId = userId;
             DisplayName = displayName;
             IsReady = false;
             IsHost = isHost;
