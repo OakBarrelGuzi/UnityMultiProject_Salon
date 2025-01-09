@@ -27,8 +27,8 @@ namespace Salon.Firebase
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
-                GameObject FBM = new GameObject("FirebaseManager");
-                FBM.AddComponent<FirebaseManager>();
+                GameObject go = new GameObject("FirebaseManager");
+                go.AddComponent<FirebaseManager>();
             }
             else
             {
