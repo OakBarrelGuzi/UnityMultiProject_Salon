@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using System.Collections;
 using System.Runtime.InteropServices;
 using Firebase.Extensions;
+using Salon.Firebase.Database;
 
 public class FirebaseInit : MonoBehaviour
 {

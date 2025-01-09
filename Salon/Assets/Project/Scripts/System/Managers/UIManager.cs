@@ -1,14 +1,17 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using Salon.Interfaces;
 
-public class UIManager : MonoBehaviour
+public class UIManager : MonoBehaviour, IInitializable
 {
     private static UIManager instance;
-    [SerializeField] private DataManager.DataFile[] LanguageFile;
+    private DataManager.DataFile[] LanguageFile;
     private Dictionary<string, string> processedData = new Dictionary<string, string>();
     private string DefaultLangFile = "Assets/Resources/Langtable/LangTable.CSV";
     private List<Panel> panels = new List<Panel>();
+    [SerializeField] private List<Panel> panelsPrefabs = new List<Panel>();
+    public bool IsInitialized { get; private set; }
     public static UIManager Instance
     {
         get
@@ -33,11 +36,22 @@ public class UIManager : MonoBehaviour
             return;
         }
 
+    }
+
+    private void Start()
+    {
+        Initialize();
+        OpenPanel(PanelType.SignIn);
+    }
+
+    public void Initialize()
+    {
         if (LanguageFile == null)
             LanguageFile = new DataManager.DataFile[0];
 
         LoadDefaultLanguageSystem();
         InitializeLanguageSystem();
+        IsInitialized = true;
     }
 
     private void LoadDefaultLanguageSystem()
@@ -162,24 +176,38 @@ public class UIManager : MonoBehaviour
         if (panels.FirstOrDefault(p => p.panelType == panelType) == null)
         {
             panels.Add(GetPanel(panelType));
-        }
-        if (!panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
-        {
             panels.FirstOrDefault(p => p.panelType == panelType).Open();
+        }
+        else
+        {
+            if (!panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
+                panels.FirstOrDefault(p => p.panelType == panelType).Open();
         }
     }
 
     public void ClosePanel(PanelType panelType)
     {
-        foreach (Panel panel in panels)
+        if (panels.FirstOrDefault(p => p.panelType == panelType) == null)
         {
-            if (panel.panelType == panelType && panel.isOpen)
-                panel.Close();
+            LogManager.Instance.ShowLog($"패널 {panelType}이 존재하지 않습니다.");
+            return;
         }
+        if (panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
+            panels.FirstOrDefault(p => p.panelType == panelType).Close();
     }
 
     private Panel GetPanel(PanelType panelType)
     {
-        return ResourceManager.Instance.LoadResource<Panel>($"Assets/Resources/UI/Panels/{panelType}.prefab");
+        if (panelsPrefabs.FirstOrDefault(p => p.panelType == panelType) == null)
+        {
+            return ResourceManager.Instance.LoadResource<Panel>($"Assets/Resources/UI/Panels/{panelType}.prefab");
+        }
+        else
+        {
+            Panel panel = Instantiate(panelsPrefabs.FirstOrDefault(p => p.panelType == panelType), transform);
+            panel.isOpen = false;
+            return panel;
+        }
+
     }
 }

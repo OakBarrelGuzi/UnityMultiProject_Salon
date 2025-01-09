@@ -1,6 +1,8 @@
 using UnityEngine;
+using Salon.Interfaces;
+using Salon.Firebase;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IInitializable
 {
     private static GameManager instance;
     public static GameManager Instance
@@ -16,6 +18,13 @@ public class GameManager : MonoBehaviour
             return instance;
         }
     }
+    public bool IsInitialized { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoInitialize()
+    {
+        _ = Instance;
+    }
 
     void Awake()
     {
@@ -23,7 +32,6 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
-            InitializeManagers();
         }
         else if (instance != this)
         {
@@ -31,9 +39,15 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void Initialize()
+    {
+        InitializeManagers();
+        IsInitialized = true;
+    }
+
     private void InitializeManagers()
     {
-        _ = LogManager.Instance;
+        _ = FirebaseManager.Instance;
         _ = UIManager.Instance;
         _ = ResourceManager.Instance;
         _ = CSVManager.Instance;
