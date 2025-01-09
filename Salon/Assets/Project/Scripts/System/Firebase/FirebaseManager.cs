@@ -109,22 +109,45 @@ namespace Salon.Firebase
         {
             try
             {
+                await EnsureInitialized();
+                if (!IsInitialized)
+                {
+                    throw new InvalidOperationException("Firebase가 초기화되지 않았습니다.");
+                }
+
+                if (string.IsNullOrEmpty(baseName))
+                {
+                    throw new ArgumentException("기본 이름이 비어있습니다.");
+                }
+
                 var snapshot = await dbReference.Child("Users")
                     .OrderByChild("DisplayName")
                     .StartAt($"{baseName}#")
                     .EndAt($"{baseName}#\uf8ff")
-                    .GetValueAsync();
+                    .GetValueAsync()
+                    .ContinueWith(task =>
+                    {
+                        if (task.IsFaulted)
+                        {
+                            throw new Exception($"Firebase 쿼리 실패: {task.Exception?.InnerException?.Message}");
+                        }
+                        return task.Result;
+                    });
 
                 HashSet<int> usedTags = new HashSet<int>();
-                foreach (var child in snapshot.Children)
+
+                if (snapshot != null && snapshot.Exists)
                 {
-                    var userData = JsonConvert.DeserializeObject<Database.UserData>(child.GetRawJsonValue());
-                    if (userData.DisplayName.StartsWith($"{baseName}#"))
+                    foreach (var child in snapshot.Children)
                     {
-                        string tagStr = userData.DisplayName.Split('#')[1];
-                        if (int.TryParse(tagStr, out int tagNum))
+                        var userData = JsonConvert.DeserializeObject<Database.UserData>(child.GetRawJsonValue());
+                        if (userData?.DisplayName != null && userData.DisplayName.StartsWith($"{baseName}#"))
                         {
-                            usedTags.Add(tagNum);
+                            string tagStr = userData.DisplayName.Split('#')[1];
+                            if (int.TryParse(tagStr, out int tagNum))
+                            {
+                                usedTags.Add(tagNum);
+                            }
                         }
                     }
                 }
@@ -139,7 +162,7 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 태그 생성 실패: {ex.Message}");
+                Debug.LogError($"[Firebase] 태그 생성 실패: {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }
