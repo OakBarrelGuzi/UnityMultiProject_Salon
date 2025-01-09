@@ -1,9 +1,10 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
+using Random = UnityEngine.Random;
+
 
 public class Dart : MonoBehaviour
 {
@@ -16,7 +17,35 @@ public class Dart : MonoBehaviour
     [SerializeField,Header("점수 배율계산 위치")]
     private ScroeSetPoint scroeMultiplyPoint = new ScroeSetPoint();
 
-    private Transform[] transforms;
+    [SerializeField,Header("조준원 프리펩")]
+    private AimingRing aimingRing;
+
+    private AimingRing targetAiming;
+
+    [SerializeField,Header("오브젝트 아웃라인")]
+    private Transform outerLine;
+   
+    private void Start()
+    {
+        SpawnAimingRing();
+    }
+
+    private void Update()
+    {
+        AimingMove();
+    }
+
+    public void AimingMove()
+    {
+        if (targetAiming == null)
+        {
+            SpawnAimingRing();
+        }
+        float x = joyStick.GetDirection().x;
+        float y = joyStick.GetDirection().y;
+
+        targetAiming.transform.Translate(new Vector3(x, y, 0) * Time.deltaTime * 2f);
+    }
 
     //중앙에서 부터 충돌위치 각도 힘 계산함수
     public void SetShootPoint(Vector3 Point)
@@ -34,6 +63,31 @@ public class Dart : MonoBehaviour
         scores = GetScoreMultiplier(arrowDistance,scores);
 
         print(scores);
+    }
+
+
+    public void SpawnAimingRing()
+    {
+        AimingRing aiming = Instantiate(aimingRing);
+
+        float dartDistance = Vector3.Magnitude(center.position - outerLine.position);
+        float aminingDistance = Vector3.Magnitude(aiming.transform.position - aiming.outerLine.position);
+
+        print(dartDistance);
+        print(aminingDistance);
+
+        float maxSpawnDistance = dartDistance - aminingDistance;
+            
+        print(maxSpawnDistance);
+        Vector2 ranPos = Random.insideUnitCircle;
+
+        ranPos = ranPos * maxSpawnDistance;
+
+        Vector3 spawnPosition = center.position + new Vector3(ranPos.x, ranPos.y, -0.01f);
+
+        aiming.transform.position = spawnPosition;
+
+        targetAiming = aiming;
     }
 
     //각도 기준으로 점수계산
@@ -85,7 +139,7 @@ public class Dart : MonoBehaviour
         return scores;
     }
 
-    //
+    
     public float GetScoreDistance(Transform Point)
     {
         float Distance = Vector3.Magnitude(center.position - Point.position);

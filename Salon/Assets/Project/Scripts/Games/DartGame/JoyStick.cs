@@ -18,8 +18,11 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
     [SerializeField, Header("핸들 움직임 속도")]
     private float speed = 0.35f;
 
-    //핸들 포커스 민감도
-    private float joyStickSensitive = 0.3f;
+    [SerializeField, Header("핸들 최대 이동거리")]
+    private float length = 50f;
+    
+    [SerializeField,Header("핸들 포커스 민감도")]
+    private float joyStickSensitive = 10f;
 
     [SerializeField, Header("핸들 이동방향 포커스 오브젝트")]
     private JoyStickFocus[] handleFocus;
@@ -27,8 +30,6 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
     private Dictionary<FOCUSTYPE,JoyStickFocus> handleFocusDict =
         new Dictionary<FOCUSTYPE,JoyStickFocus>();
 
-    [SerializeField, Header("핸들 최대 이동거리")]
-    private float length = 0.8f;
 
     private void Start()
     {
@@ -72,60 +73,30 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
     //방향에따른 포커스 꺼짐켜짐
     private void FocusSetActive()
     {
-        if (touch.x > joyStickSensitive)
+
+        Dictionary<(float value, float threshold), FOCUSTYPE> directionMap = new Dictionary<(float value, float threshold), FOCUSTYPE>
+    {
+        { (touch.x, joyStickSensitive), FOCUSTYPE.LEFT },
+        { (-touch.x, joyStickSensitive), FOCUSTYPE.RIGHT },
+        { (touch.y, joyStickSensitive), FOCUSTYPE.BOTTOM },
+        { (-touch.y, joyStickSensitive), FOCUSTYPE.TOP }
+    };
+
+
+        foreach (var focus in handleFocusDict.Values)
         {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.RIGHT,out JoyStickFocus joyStickFocus))
-            {
-                joyStickFocus.gameObject.SetActive(true);
-            } 
+            focus.gameObject.SetActive(false);
         }
-        else
+
+
+        foreach (var direction in directionMap)
         {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.RIGHT, out JoyStickFocus joyStickFocus))
+            if (direction.Key.value > direction.Key.threshold)
             {
-                joyStickFocus.gameObject.SetActive(false);
-            }
-        }
-        if (touch.x < -joyStickSensitive)
-        {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.LEFT, out JoyStickFocus joyStickFocus))
-            {
-                joyStickFocus.gameObject.SetActive(true);
-            }
-        }
-        else
-        {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.LEFT, out JoyStickFocus joyStickFocus))
-            {
-                joyStickFocus.gameObject.SetActive(false);
-            }
-        }
-        if (touch.y > joyStickSensitive)
-        {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.TOP, out JoyStickFocus joyStickFocus))
-            {
-                joyStickFocus.gameObject.SetActive(true);
-            }
-        }
-        else
-        {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.TOP, out JoyStickFocus joyStickFocus))
-            {
-                joyStickFocus.gameObject.SetActive(false);
-            }
-        }
-        if (touch.y < -joyStickSensitive)
-        {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.BOTTOM, out JoyStickFocus joyStickFocus))
-            {
-                joyStickFocus.gameObject.SetActive(true);
-            }
-        }
-        else
-        {
-            if (handleFocusDict.TryGetValue(FOCUSTYPE.BOTTOM, out JoyStickFocus joyStickFocus))
-            {
-                joyStickFocus.gameObject.SetActive(false);
+                if (handleFocusDict.TryGetValue(direction.Value, out JoyStickFocus focus))
+                {
+                    focus.gameObject.SetActive(true);
+                }
             }
         }
     }
