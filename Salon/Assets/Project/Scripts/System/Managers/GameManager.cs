@@ -1,6 +1,8 @@
 using UnityEngine;
+using Salon.Interfaces;
+using Salon.Firebase;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviour, IInitializable
 {
     private static GameManager instance;
     public static GameManager Instance
@@ -16,6 +18,13 @@ public class GameManager : MonoBehaviour
             return instance;
         }
     }
+    public bool IsInitialized { get; private set; }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoInitialize()
+    {
+        _ = Instance;
+    }
 
     void Awake()
     {
@@ -23,7 +32,6 @@ public class GameManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
-            InitializeManagers();
         }
         else if (instance != this)
         {
@@ -31,13 +39,18 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public void Initialize()
+    {
+        InitializeManagers();
+        IsInitialized = true;
+    }
+
     private void InitializeManagers()
     {
-        // 매니저들 초기화
-        LogManager.Instance.gameObject.transform.SetParent(transform);
-        UIManager.Instance.gameObject.transform.SetParent(transform);
-        ResourceManager.Instance.gameObject.transform.SetParent(transform);
-        CSVManager.Instance.gameObject.transform.SetParent(transform);
+        _ = FirebaseManager.Instance;
+        _ = UIManager.Instance;
+        _ = ResourceManager.Instance;
+        _ = CSVManager.Instance;
     }
 
 #if UNITY_EDITOR
@@ -46,9 +59,9 @@ public class GameManager : MonoBehaviour
     {
         GameObject go = new GameObject("GameManager");
         go.AddComponent<GameManager>();
-        
+
         UnityEditor.GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
-        
+
         UnityEditor.Undo.RegisterCreatedObjectUndo(go, "Create Game Manager");
         UnityEditor.Selection.activeObject = go;
     }
