@@ -8,54 +8,7 @@ using Newtonsoft.Json;
 using System.Collections;
 using System.Runtime.InteropServices;
 using Firebase.Extensions;
-
-[System.Serializable]
-public class RoomData
-{
-    public Dictionary<string, MessageData> Messages { get; set; }
-    public Dictionary<string, PlayerData> Players { get; set; }
-    public int UserCount;
-    public bool isFull;
-
-    public RoomData()
-    {
-        Messages = new Dictionary<string, MessageData>
-        {
-            { "welcome", new MessageData("system", "Welcome to the room!", DateTimeOffset.UtcNow.ToUnixTimeSeconds()) }
-        };
-        Players = null;
-    }
-}
-
-[System.Serializable]
-public class MessageData
-{
-    public string SenderId { get; set; }
-    public string Content { get; set; }
-    public long Timestamp { get; set; }
-
-    public MessageData(string senderId, string content, long timestamp)
-    {
-        SenderId = senderId;
-        Content = content;
-        Timestamp = timestamp;
-    }
-}
-
-[System.Serializable]
-public class PlayerData
-{
-    public string PlayerId { get; set; }
-    public string PlayerName { get; set; }
-    public bool IsOnline { get; set; }
-
-    public PlayerData(string playerId, string playerName, bool isOnline)
-    {
-        PlayerId = playerId;
-        PlayerName = playerName;
-        IsOnline = isOnline;
-    }
-}
+using Salon.Firebase.Database;
 
 public class FirebaseInit : MonoBehaviour
 {
@@ -67,11 +20,11 @@ public class FirebaseInit : MonoBehaviour
             var dependencyStatus = task.Result;
             if (dependencyStatus == DependencyStatus.Available)
             {
-                Debug.Log($"Firebase ÃÊ±âÈ­ ¼º°ø");
+                Debug.Log($"Firebase ì´ˆê¸°í™” ì„±ê³µ");
                 InitializeFirebase();
             }
             else
-                Debug.LogError($"Firebase ÃÊ±âÈ­ ½ÇÆĞ: {dependencyStatus}");
+                Debug.LogError($"Firebase ì´ˆê¸°í™” ì‹¤íŒ¨: {dependencyStatus}");
         });
     }
 
@@ -83,16 +36,16 @@ public class FirebaseInit : MonoBehaviour
 
     private void ExistRooms()
     {
-        Debug.Log("Firebase ¹æ »ı¼º ½ÃÀÛ");
+        Debug.Log("Firebase ë°© ìƒì„± ì‹œì‘");
 
-        // Firebase¿¡¼­ ÇöÀç Á¸ÀçÇÏ´Â ¹æ ¸ñ·Ï È®ÀÎ
+        // Firebaseì—ì„œ í˜„ì¬ ì¡´ì¬í•˜ëŠ” ë°© ëª©ë¡ í™•ì¸
         dbReference.Child("Rooms").GetValueAsync().ContinueWith(task =>
         {
             if (task.IsCompleted)
             {
                 DataSnapshot snapshot = task.Result;
 
-                // ÀÌ¹Ì Á¸ÀçÇÏ´Â ¹æ ÀÌ¸§ ÀúÀå
+                // ì´ë¯¸ ì¡´ì¬í•˜ëŠ” ë°© ì´ë¦„ ì €ì¥
                 HashSet<string> existingRooms = new HashSet<string>();
                 foreach (DataSnapshot room in snapshot.Children)
                 {
@@ -102,13 +55,13 @@ public class FirebaseInit : MonoBehaviour
                 CreateMissingRooms(existingRooms);
             }
             else
-                Debug.LogError("¹æ µ¥ÀÌÅÍ È®ÀÎ ½ÇÆĞ: " + task.Exception);
+                Debug.LogError("ë°© ë°ì´í„° í™•ì¸ ì‹¤íŒ¨: " + task.Exception);
         });
     }
 
     private void CreateMissingRooms(HashSet<string> existingRooms)
     {
-        Debug.Log("Firebase ³ª¸ÓÁö ¹æ »ı¼º ½ÃÀÛ");
+        Debug.Log("Firebase ë‚˜ë¨¸ì§€ ë°© ìƒì„± ì‹œì‘");
         Dictionary<string, RoomData> rooms = new Dictionary<string, RoomData>();
 
         for (int i = 1; i <= 10; i++)
@@ -125,20 +78,20 @@ public class FirebaseInit : MonoBehaviour
         if (rooms.Count > 0)
         {
             string jsonData = JsonConvert.SerializeObject(rooms, Formatting.Indented);
-            Debug.Log($"Á÷·ÄÈ­µÈ JSON µ¥ÀÌÅÍ: {jsonData}");
-            Debug.Log($"JSON µ¥ÀÌÅÍ Å©±â: {jsonData.Length} bytes");
+            Debug.Log($"ì§ë ¬í™”ëœ JSON ë°ì´í„°: {jsonData}");
+            Debug.Log($"JSON ë°ì´í„° í¬ê¸°: {jsonData.Length} bytes");
 
             dbReference.Child("Rooms").SetRawJsonValueAsync(jsonData).ContinueWith(task =>
             {
                 if (task.IsFaulted)
-                    Debug.LogError("¹æ »ı¼º ½ÇÆĞ: " + task.Exception);
+                    Debug.LogError("ë°© ìƒì„± ì‹¤íŒ¨: " + task.Exception);
                 else if (task.IsCompleted)
-                    Debug.Log("´©¶ôµÈ ¹æ »ı¼º ¿Ï·á!");
+                    Debug.Log("ëˆ„ë½ëœ ë°© ìƒì„± ì™„ë£Œ!");
             });
         }
         else
         {
-            Debug.Log("¸ğµç ¹æÀÌ ÀÌ¹Ì Á¸ÀçÇÕ´Ï´Ù. Ãß°¡ ÀÛ¾÷ÀÌ ÇÊ¿äÇÏÁö ¾Ê½À´Ï´Ù.");
+            Debug.Log("ëª¨ë“  ë°©ì´ ì´ë¯¸ ì¡´ì¬í•©ë‹ˆë‹¤. ì¶”ê°€ ì‘ì—…ì´ í•„ìš”í•˜ì§€ ì•ŠìŠµë‹ˆë‹¤.");
         }
     }
 }
