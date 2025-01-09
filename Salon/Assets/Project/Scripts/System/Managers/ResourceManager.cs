@@ -31,18 +31,9 @@ public class ResourceManager : DataManager
             Destroy(gameObject);
     }
 
-    public override void LoadData()
-    {
-
-    }
-
     public override string ProcessPath(string fullPath)
     {
-        string resourcePath = fullPath;
-        int resourcesIndex = fullPath.IndexOf("Resources/");
-
-        if (resourcesIndex != -1)
-            resourcePath = fullPath.Substring(resourcesIndex + 10);
+        string resourcePath = base.ProcessPath(fullPath);
 
         int extensionIndex = resourcePath.LastIndexOf('.');
         if (extensionIndex != -1)

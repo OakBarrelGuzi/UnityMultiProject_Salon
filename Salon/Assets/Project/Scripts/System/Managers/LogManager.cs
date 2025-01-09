@@ -65,11 +65,11 @@ public class LogManager : MonoBehaviour
     {
         if (type == LogType.Error || type == LogType.Exception)
         {
-            ShowError(logString, stackTrace);
+            ShowLog(logString, stackTrace);
         }
     }
 
-    public void ShowError(string errorMessage, string stackTrace = "")
+    public void ShowLog(string errorMessage, string stackTrace = "")
     {
         errorQueue.Enqueue((errorMessage, stackTrace));
         if (!isShowingError)

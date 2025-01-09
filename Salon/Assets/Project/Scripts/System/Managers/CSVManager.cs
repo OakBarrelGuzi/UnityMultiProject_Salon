@@ -1,6 +1,6 @@
-using UnityEngine;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class CSVManager : DataManager
 {
@@ -44,12 +44,7 @@ public class CSVManager : DataManager
 
     public override string ProcessPath(string fullPath)
     {
-        string resourcePath = fullPath;
-        int resourcesIndex = fullPath.IndexOf("Resources/");
-
-        if (resourcesIndex != -1)
-            resourcePath = fullPath.Substring(resourcesIndex + 10);
-
+        string resourcePath = base.ProcessPath(fullPath);
         if (resourcePath.EndsWith(".csv", System.StringComparison.OrdinalIgnoreCase))
             resourcePath = resourcePath.Substring(0, resourcePath.Length - 4);
 

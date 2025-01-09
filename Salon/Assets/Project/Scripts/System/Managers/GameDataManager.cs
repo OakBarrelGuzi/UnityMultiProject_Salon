@@ -1,12 +1,15 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Salon.Interfaces;
 
-public class GameDataManager : MonoBehaviour
+public class GameDataManager : MonoBehaviour, IInitializable
 {
     private static GameDataManager instance;
     [SerializeField] private DataManager.DataFile[] GameDataFiles;
 
     private Dictionary<string, float> gameValues = new Dictionary<string, float>();
+
+    public bool IsInitialized { get; private set; }
 
     public static GameDataManager Instance
     {
@@ -31,7 +34,10 @@ public class GameDataManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+    }
 
+    public void Initialize()
+    {
         InitializeGameData();
     }
 
