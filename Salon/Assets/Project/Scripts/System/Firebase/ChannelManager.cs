@@ -25,7 +25,7 @@ namespace Salon.Firebase
             return FirebaseManager.Instance.DbReference;
         }
 
-        private async Task ExistRooms()
+        public async Task ExistRooms()
         {
             Debug.Log("Firebase 방 생성 시작");
 
