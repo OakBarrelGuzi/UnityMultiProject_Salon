@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Salon.Firebase.Database;
 using System.Threading.Tasks;
 
+
 namespace Salon.Firebase
 {
     public class ChannelManager : MonoBehaviour
@@ -180,4 +181,38 @@ namespace Salon.Firebase
             }
         }
     }
+
+    private async Task WaitForChannelData()
+    {
+        try
+        {
+            DataSnapshot snapshot = await dbReference.Child("Rooms").GetValueAsync();
+
+            if (!snapshot.Exists) return;
+
+            Dictionary<string, RoomData> loadRoomData = new Dictionary<string, RoomData>();
+            foreach (DataSnapshot roomSnapshot in snapshot.Children)
+            {
+                string roomName = roomSnapshot.Key;
+                string roomJson = roomSnapshot.GetRawJsonValue();
+
+                RoomData roomData = JsonConvert.DeserializeObject<RoomData>(roomJson);
+                loadRoomData[roomName] = roomData;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"채널 데이터를 로드하는 도중 오류가 발생함{ex.Message}");
+        }
+    }
+
+    //UI띄울때 이런식으로 하시면 될거 같습니다.
+    //private async void OnEnable()
+    //{
+    //    dbReference = await GetDbReference();
+
+    //    await WaitForAllChannelData();
+
+    //    ShowChannelUI();
+    //}
 }
