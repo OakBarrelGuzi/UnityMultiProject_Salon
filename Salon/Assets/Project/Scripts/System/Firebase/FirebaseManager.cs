@@ -419,14 +419,14 @@ namespace Salon.Firebase
 
         private async Task CreateMissingRoomsAsync(HashSet<string> existingRooms)
         {
-            Dictionary<string, Database.RoomData> rooms = new Dictionary<string, Database.RoomData>();
+            Dictionary<string, Database.ChannelData> rooms = new Dictionary<string, Database.ChannelData>();
 
             for (int i = 1; i <= 10; i++)
             {
                 string roomName = $"Room{i}";
                 if (!existingRooms.Contains(roomName))
                 {
-                    rooms[roomName] = new Database.RoomData();
+                    rooms[roomName] = new Database.ChannelData();
                 }
             }
 

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Salon.Firebase.Database;
 using System.Threading.Tasks;
-
+using UnityEngine.SceneManagement;
 namespace Salon.Firebase
 {
     public class ChannelManager : MonoBehaviour
@@ -61,7 +61,7 @@ namespace Salon.Firebase
 
                 if (false == existingRooms.Contains(roomName)) // 기존에 없는 방만 추가
                 {
-                    RoomData roomData = new RoomData();
+                    ChannelData roomData = new ChannelData();
                     string roomJson = JsonConvert.SerializeObject(roomData, Formatting.Indented);
 
                     try
@@ -88,12 +88,12 @@ namespace Salon.Firebase
                 // Firebase에서 현재 방 데이터 가져오기
                 DataSnapshot snapshot = await dbReference.Child("Rooms").Child(roomName).GetValueAsync();
 
-                RoomData roomData;
+                ChannelData roomData;
 
                 if (snapshot.Exists)
                 {
                     string json = snapshot.GetRawJsonValue();
-                    roomData = JsonConvert.DeserializeObject<RoomData>(json);
+                    roomData = JsonConvert.DeserializeObject<ChannelData>(json);
                 }
                 else
                 {
@@ -156,7 +156,7 @@ namespace Salon.Firebase
                 }
 
                 string json = snapshot.GetRawJsonValue();
-                RoomData roomData = JsonConvert.DeserializeObject<RoomData>(json);
+                ChannelData roomData = JsonConvert.DeserializeObject<ChannelData>(json);
 
                 if (roomData.Players.ContainsKey(displayName))
                 {
@@ -180,28 +180,36 @@ namespace Salon.Firebase
             }
         }
 
-        private async Task WaitForChannelData()
+        public async Task<Dictionary<string, ChannelData>> WaitForChannelData()
         {
             try
             {
                 DataSnapshot snapshot = await dbReference.Child("Rooms").GetValueAsync();
 
-                if (!snapshot.Exists) return;
+                if (!snapshot.Exists) return null;
 
-                Dictionary<string, RoomData> loadRoomData = new Dictionary<string, RoomData>();
+                Dictionary<string, ChannelData> loadRoomData = new Dictionary<string, ChannelData>();
                 foreach (DataSnapshot roomSnapshot in snapshot.Children)
                 {
                     string roomName = roomSnapshot.Key;
                     string roomJson = roomSnapshot.GetRawJsonValue();
 
-                    RoomData roomData = JsonConvert.DeserializeObject<RoomData>(roomJson);
+                    ChannelData roomData = JsonConvert.DeserializeObject<ChannelData>(roomJson);
                     loadRoomData[roomName] = roomData;
                 }
+                return loadRoomData;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"채널 데이터를 로드하는 도중 오류가 발생함{ex.Message}");
             }
+            return null;
+        }
+
+        public async Task EnterChannel(string channelName)
+        {
+            await AddPlayerToRoom(channelName, FirebaseManager.Instance.GetCurrentDisplayName());
+            SceneManager.LoadSceneAsync("LobbyScene");
         }
 
         //UI띄울때 이런식으로 하시면 될거 같습니다.
