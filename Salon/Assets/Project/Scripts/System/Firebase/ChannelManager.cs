@@ -5,39 +5,46 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Salon.Firebase.Database;
 using System.Threading.Tasks;
-using UnityEngine.SceneManagement;
+
 namespace Salon.Firebase
 {
     public class ChannelManager : MonoBehaviour
     {
         private DatabaseReference dbReference;
+        private string currentChannel;
 
         private async void OnEnable()
         {
-            dbReference = await GetDbReference();
+            try
+            {
+                if (dbReference == null)
+                {
+                    dbReference = await GetDbReference();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Firebase 초기화 실패: {ex.Message}");
+            }
         }
 
         private async Task<DatabaseReference> GetDbReference()
         {
             while (FirebaseManager.Instance.DbReference == null)
                 await Task.Delay(100);
-
             return FirebaseManager.Instance.DbReference;
         }
 
         public async Task ExistRooms()
         {
-            Debug.Log("Firebase 방 생성 시작");
-
             try
             {
-                DataSnapshot snapshot = await dbReference.Child("Rooms").GetValueAsync();
+                var snapshot = await dbReference.Child("Rooms").GetValueAsync();
+                var existingRooms = new HashSet<string>();
 
-                // 이미 존재하는 방 이름 저장
-                HashSet<string> existingRooms = new HashSet<string>();
                 if (snapshot.Exists)
                 {
-                    foreach (DataSnapshot room in snapshot.Children)
+                    foreach (var room in snapshot.Children)
                     {
                         existingRooms.Add(room.Key);
                     }
@@ -53,93 +60,55 @@ namespace Salon.Firebase
 
         private async Task CreateMissingRooms(HashSet<string> existingRooms)
         {
-            Debug.Log("Firebase 누락된 방 생성 시작");
-
             for (int i = 1; i <= 10; i++)
             {
                 string roomName = $"Room{i}";
-
-                if (false == existingRooms.Contains(roomName)) // 기존에 없는 방만 추가
+                if (!existingRooms.Contains(roomName))
                 {
-                    ChannelData roomData = new ChannelData();
-                    string roomJson = JsonConvert.SerializeObject(roomData, Formatting.Indented);
-
                     try
                     {
+                        var roomData = new ChannelData();
+                        string roomJson = JsonConvert.SerializeObject(roomData, Formatting.Indented);
                         await dbReference.Child("Rooms").Child(roomName).SetRawJsonValueAsync(roomJson);
-                        Debug.Log($"방 {roomName} 생성 완료!");
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError($"방 {roomName} 생성 중 오류 발생: {ex.Message}");
+                        Debug.LogError($"방 {roomName} 생성 중 오류: {ex.Message}");
                     }
                 }
-                else
-                {
-                    Debug.Log($"방 {roomName}은 이미 존재합니다. 생성하지 않습니다.");
-                }
             }
-            Debug.Log("Firebase 방 생성 완료");
         }
+
         public async Task AddPlayerToRoom(string roomName, string displayName)
         {
             try
             {
-                // Firebase에서 현재 방 데이터 가져오기
-                DataSnapshot snapshot = await dbReference.Child("Rooms").Child(roomName).GetValueAsync();
+                var snapshot = await dbReference.Child("Rooms").Child(roomName).GetValueAsync();
+                if (!snapshot.Exists) throw new Exception($"방 {roomName}이 존재하지 않습니다.");
 
-                ChannelData roomData;
+                var roomData = JsonConvert.DeserializeObject<ChannelData>(snapshot.GetRawJsonValue());
+                roomData.Players ??= new Dictionary<string, GamePlayerData>();
 
-                if (snapshot.Exists)
-                {
-                    string json = snapshot.GetRawJsonValue();
-                    roomData = JsonConvert.DeserializeObject<ChannelData>(json);
-                }
-                else
-                {
-                    Debug.LogError($"방 {roomName}이 존재하지 않습니다. 새로 생성해야 합니다.");
-                    return;
-                }
-
-                // Players가 null인 경우 초기화
-                if (roomData.Players == null)
-                    roomData.Players = new Dictionary<string, GamePlayerData>();
-
-                // 방이 가득 찼는지 확인
-                if (roomData.isFull)
-                {
-                    Debug.Log($"방 {roomName}은 이미 가득 찼습니다. 플레이어 추가 불가.");
-                    return;
-                }
-
-                // 플레이어 추가
-                if (!roomData.Players.ContainsKey(displayName))
-                {
-                    GamePlayerData newPlayer = new GamePlayerData(displayName);
-                    roomData.Players[displayName] = newPlayer;
-                    roomData.UserCount++;
-
-                    // 방이 가득 찼는지 확인
-                    if (roomData.UserCount >= 10)
-                        roomData.isFull = true;
-
-                    Debug.Log($"플레이어 {displayName}가 방 {roomName}에 추가되었습니다.");
-                }
-                else
+                if (roomData.Players.ContainsKey(displayName))
                 {
                     Debug.Log($"플레이어 {displayName}는 이미 방 {roomName}에 존재합니다.");
                     return;
                 }
 
-                // Firebase에 수정된 데이터 저장
+                if (roomData.isFull)
+                    throw new Exception("방이 가득 찼습니다.");
+
+                roomData.Players[displayName] = new GamePlayerData(displayName);
+                roomData.UserCount++;
+                roomData.isFull = roomData.UserCount >= 10;
+
                 string updatedJson = JsonConvert.SerializeObject(roomData, Formatting.Indented);
                 await dbReference.Child("Rooms").Child(roomName).SetRawJsonValueAsync(updatedJson);
-
-                Debug.Log($"방 {roomName} 업데이트 완료. 현재 유저 수: {roomData.UserCount}");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"플레이어 추가 중 오류 발생: {ex.Message}");
+                Debug.LogError($"플레이어 추가 중 오류: {ex.Message}");
+                throw;
             }
         }
 
@@ -147,36 +116,22 @@ namespace Salon.Firebase
         {
             try
             {
-                DataSnapshot snapshot = await dbReference.Child("Rooms").Child(roomName).GetValueAsync();
+                var snapshot = await dbReference.Child("Rooms").Child(roomName).GetValueAsync();
+                if (!snapshot.Exists) return;
 
-                if (!snapshot.Exists)
+                var roomData = JsonConvert.DeserializeObject<ChannelData>(snapshot.GetRawJsonValue());
+                if (roomData.Players?.Remove(displayName) ?? false)
                 {
-                    Debug.LogError($"방 {roomName}이 존재하지 않습니다.");
-                    return;
-                }
-
-                string json = snapshot.GetRawJsonValue();
-                ChannelData roomData = JsonConvert.DeserializeObject<ChannelData>(json);
-
-                if (roomData.Players.ContainsKey(displayName))
-                {
-                    roomData.Players.Remove(displayName);
                     roomData.UserCount--;
-
-                    if (roomData.isFull && roomData.UserCount < 10)
-                        roomData.isFull = false;
+                    roomData.isFull = roomData.UserCount >= 10;
 
                     string updatedJson = JsonConvert.SerializeObject(roomData, Formatting.Indented);
                     await dbReference.Child("Rooms").Child(roomName).SetRawJsonValueAsync(updatedJson);
-
-                    Debug.Log($"플레이어 {displayName}가 방 {roomName}에서 제거되었습니다.");
                 }
-                else
-                    Debug.Log($"플레이어 {displayName}는 방 {roomName}에 존재하지 않습니다.");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"플레이어 제거 중 오류 발생: {ex.Message}");
+                Debug.LogError($"플레이어 제거 중 오류: {ex.Message}");
             }
         }
 
@@ -184,42 +139,61 @@ namespace Salon.Firebase
         {
             try
             {
-                DataSnapshot snapshot = await dbReference.Child("Rooms").GetValueAsync();
-
+                var snapshot = await dbReference.Child("Rooms").GetValueAsync();
                 if (!snapshot.Exists) return null;
 
-                Dictionary<string, ChannelData> loadRoomData = new Dictionary<string, ChannelData>();
-                foreach (DataSnapshot roomSnapshot in snapshot.Children)
+                var loadRoomData = new Dictionary<string, ChannelData>();
+                foreach (var roomSnapshot in snapshot.Children)
                 {
-                    string roomName = roomSnapshot.Key;
-                    string roomJson = roomSnapshot.GetRawJsonValue();
-
-                    ChannelData roomData = JsonConvert.DeserializeObject<ChannelData>(roomJson);
-                    loadRoomData[roomName] = roomData;
+                    loadRoomData[roomSnapshot.Key] = JsonConvert.DeserializeObject<ChannelData>(roomSnapshot.GetRawJsonValue());
                 }
                 return loadRoomData;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"채널 데이터를 로드하는 도중 오류가 발생함{ex.Message}");
+                Debug.LogError($"채널 데이터 로드 실패: {ex.Message}");
+                return null;
             }
-            return null;
         }
 
-        public async Task EnterChannel(string channelName)
+        public async Task<bool> EnterChannel(string channelName)
         {
-            await AddPlayerToRoom(channelName, FirebaseManager.Instance.GetCurrentDisplayName());
-            SceneManager.LoadSceneAsync("LobbyScene");
+            try
+            {
+                // 1. 데이터베이스 참조 확인 및 대기
+                if (FirebaseManager.Instance.DbReference == null)
+                {
+                    await Task.Delay(1000);
+                    dbReference = await GetDbReference();
+                }
+
+                // 2. 플레이어 추가 완료까지 대기
+                await AddPlayerToRoom(channelName, FirebaseManager.Instance.GetCurrentDisplayName());
+                currentChannel = channelName;
+
+                // 3. 성공 여부 반환
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"채널 입장 실패: {ex.Message}");
+                return false;
+            }
         }
 
-        //UI띄울때 이런식으로 하시면 될거 같습니다.
-        //private async void OnEnable()
-        //{
-        //    dbReference = await GetDbReference();
-
-        //    await WaitForAllChannelData();
-
-        //    ShowChannelUI();
-        //}
+        private async void OnApplicationQuit()
+        {
+            if (!string.IsNullOrEmpty(currentChannel))
+            {
+                try
+                {
+                    await RemovePlayerFromRoom(currentChannel, FirebaseManager.Instance.GetCurrentDisplayName());
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"플레이어 제거 실패: {ex.Message}");
+                }
+            }
+        }
     }
 }

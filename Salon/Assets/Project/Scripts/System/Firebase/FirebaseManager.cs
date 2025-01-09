@@ -9,7 +9,9 @@ using Newtonsoft.Json;
 using System.Threading.Tasks;
 using Firebase.Extensions;
 using Salon.Interfaces;
+using UnityEngine.SceneManagement;
 
+//Todo : OnDisconnected 처리
 namespace Salon.Firebase
 {
     public class FirebaseManager : MonoBehaviour, IInitializable
@@ -21,18 +23,20 @@ namespace Salon.Firebase
         public ChannelManager channelManager;
         public static FirebaseManager Instance { get; private set; }
 
+        private bool isConnected = false;
+        private DatabaseReference connectionRef;
+
         private void Awake()
         {
             if (Instance == null)
             {
                 Instance = this;
                 DontDestroyOnLoad(gameObject);
-                GameObject go = new GameObject("FirebaseManager");
-                go.AddComponent<FirebaseManager>();
             }
             else
             {
                 Destroy(gameObject);
+                return;
             }
         }
 
@@ -48,6 +52,14 @@ namespace Salon.Firebase
                 if (dependencyStatus == DependencyStatus.Available)
                 {
                     InitializeFirebase();
+
+                    if (channelManager == null)
+                    {
+                        GameObject CM = new GameObject("ChannelManager");
+                        channelManager = CM.AddComponent<ChannelManager>();
+                        CM.transform.SetParent(transform);
+                    }
+
                     IsInitialized = true;
                     initializationComplete.SetResult(true);
                     Debug.Log("[Firebase] 초기화 성공");
@@ -63,8 +75,6 @@ namespace Salon.Firebase
                 Debug.LogError($"[Firebase] 초기화 실패: {ex.Message}");
                 initializationComplete.SetResult(false);
             }
-            GameObject CM = new GameObject("ChannelManager");
-            channelManager = CM.AddComponent<ChannelManager>();
         }
 
         private async Task EnsureInitialized()
@@ -89,6 +99,10 @@ namespace Salon.Firebase
             auth = FirebaseAuth.DefaultInstance;
             dbReference = FirebaseDatabase.DefaultInstance.RootReference;
 
+            // 연결 상태 모니터링 설정
+            connectionRef = FirebaseDatabase.DefaultInstance.GetReference(".info/connected");
+            connectionRef.ValueChanged += HandleConnectionChanged;
+
             auth.StateChanged += AuthStateChanged;
         }
 
@@ -107,6 +121,71 @@ namespace Salon.Firebase
                     Debug.Log("[Firebase] 사용자 로그아웃");
                     currentUser = null;
                 }
+            }
+        }
+
+        private void HandleConnectionChanged(object sender, ValueChangedEventArgs args)
+        {
+            if (args.DatabaseError != null)
+            {
+                Debug.LogError($"[Firebase] 연결 상태 확인 오류: {args.DatabaseError.Message}");
+                return;
+            }
+
+            isConnected = (bool)args.Snapshot.Value;
+            if (isConnected)
+            {
+                Debug.Log("[Firebase] 연결됨");
+            }
+            else
+            {
+                Debug.LogWarning("[Firebase] 연결 끊김, 재연결 시도...");
+                ReconnectFirebase();
+            }
+        }
+
+        private async void ReconnectFirebase()
+        {
+            try
+            {
+                FirebaseDatabase.DefaultInstance.GoOnline();
+                await Task.Delay(1000); // 재연결 대기
+
+                if (!isConnected)
+                {
+                    Debug.Log("[Firebase] 재초기화 시도");
+                    Initialize();
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Firebase] 재연결 실패: {ex.Message}");
+            }
+        }
+
+        private void OnApplicationPause(bool pause)
+        {
+            if (pause)
+            {
+                Debug.Log("[Firebase] 앱 일시정지, 연결 해제");
+                FirebaseDatabase.DefaultInstance.GoOffline();
+            }
+            else
+            {
+                Debug.Log("[Firebase] 앱 재개, 연결 복구");
+                FirebaseDatabase.DefaultInstance.GoOnline();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (connectionRef != null)
+            {
+                connectionRef.ValueChanged -= HandleConnectionChanged;
+            }
+            if (auth != null)
+            {
+                auth.StateChanged -= AuthStateChanged;
             }
         }
 
@@ -489,6 +568,27 @@ namespace Salon.Firebase
         public string GetCurrentDisplayName()
         {
             return currentUser?.DisplayName ?? "Unknown";
+        }
+
+        private void OnEnable()
+        {
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void OnDisable()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Debug.Log($"[Firebase] 씬 로드됨: {scene.name}");
+
+            if (!isConnected || !IsInitialized || DbReference == null)
+            {
+                Debug.Log("[Firebase] 재연결 시도");
+                ReconnectFirebase();
+            }
         }
     }
 }
