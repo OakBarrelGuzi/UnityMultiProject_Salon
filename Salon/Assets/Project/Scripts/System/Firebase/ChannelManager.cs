@@ -31,10 +31,8 @@ public class ChannelManager : MonoBehaviour
         return FirebaseManager.Instance.DbReference;
     }
 
-    private async Task ExistRooms()
+    public async Task ExistRooms()
     {
-        Debug.Log("Firebase 방 생성 시작");
-
         try
         {
             DataSnapshot snapshot = await dbReference.Child("Rooms").GetValueAsync();
