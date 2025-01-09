@@ -4,14 +4,14 @@ using System.Collections.Generic;
 namespace Salon.Firebase.Database
 {
     [System.Serializable]
-    public class RoomData
+    public class ChannelData
     {
         public Dictionary<string, MessageData> Messages { get; set; }
         public Dictionary<string, GamePlayerData> Players { get; set; }
         public int UserCount;
         public bool isFull;
 
-        public RoomData()
+        public ChannelData()
         {
             Messages = new Dictionary<string, MessageData>
             {
