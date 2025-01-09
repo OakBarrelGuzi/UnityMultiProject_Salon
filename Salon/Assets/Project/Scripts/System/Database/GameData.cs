@@ -58,6 +58,18 @@ namespace Salon.Firebase.Database
             GameStats = new Dictionary<GameType, UserStats>();
         }
     }
+    [System.Serializable]
+    public class UserMapping
+    {
+        public string userId { get; set; }
+        public string userName { get; set; }
+
+        public UserMapping(string userId, string userName)
+        {
+            this.userId = userId;
+            this.userName = userName;
+        }
+    }
 
     [System.Serializable]
     public class UserStats
