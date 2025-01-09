@@ -51,6 +51,7 @@ public class UIManager : MonoBehaviour, IInitializable
 
         LoadDefaultLanguageSystem();
         InitializeLanguageSystem();
+
         IsInitialized = true;
     }
 
