@@ -4,22 +4,33 @@ using System.Collections.Generic;
 namespace Salon.Firebase.Database
 {
     [System.Serializable]
-    public class ChannelData
+    public class CommonChannelData
     {
         public Dictionary<string, MessageData> Messages { get; set; }
-        public Dictionary<string, GamePlayerData> Players { get; set; }
         public int UserCount;
         public bool isFull;
 
-        public ChannelData()
+        public CommonChannelData()
         {
             Messages = new Dictionary<string, MessageData>
             {
                 { "welcome", new MessageData("system", "Welcome to the room!", DateTimeOffset.UtcNow.ToUnixTimeSeconds()) }
             };
-            Players = new Dictionary<string, GamePlayerData>();
             UserCount = 0;
             isFull = false;
+        }
+    }
+
+    [System.Serializable]
+    public class ChannelData
+    {
+        public CommonChannelData CommonChannelData { get; set; }
+        public Dictionary<string, GamePlayerData> Players { get; set; }
+
+        public ChannelData()
+        {
+            CommonChannelData = new CommonChannelData();
+            Players = new Dictionary<string, GamePlayerData>();
         }
     }
 
@@ -42,17 +53,13 @@ namespace Salon.Firebase.Database
     public class UserData
     {
         public string UserId { get; set; }
-        public string DisplayName { get; set; }
-        public string Email { get; set; }
         public long LastOnline { get; set; }
         public Dictionary<string, bool> Friends { get; set; }
         public Dictionary<GameType, UserStats> GameStats { get; set; }
 
-        public UserData(string userId, string displayName, string email)
+        public UserData(string userId)
         {
             UserId = userId;
-            DisplayName = displayName;
-            Email = email;
             LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             Friends = new Dictionary<string, bool>();
             GameStats = new Dictionary<GameType, UserStats>();
