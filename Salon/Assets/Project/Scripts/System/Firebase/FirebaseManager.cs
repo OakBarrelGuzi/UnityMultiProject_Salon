@@ -533,21 +533,17 @@ namespace Salon.Firebase
             }
         }
 
-        // 디스플레이 네임 변경
         public async Task<bool> UpdateDisplayNameAsync(string newDisplayName)
         {
             if (currentUser == null) return false;
 
             try
             {
-                // 새로운 고유 디스플레이 네임 생성
                 string uniqueDisplayName = await GenerateUniqueTagAsync(newDisplayName);
 
-                // Firebase Auth 프로필 업데이트
                 var profile = new UserProfile { DisplayName = uniqueDisplayName };
                 await currentUser.UpdateUserProfileAsync(profile);
 
-                // 데이터베이스의 사용자 데이터 업데이트
                 var updates = new Dictionary<string, object>
                 {
                     ["DisplayName"] = uniqueDisplayName
@@ -564,7 +560,6 @@ namespace Salon.Firebase
             }
         }
 
-        // 현재 사용자의 디스플레이 네임 가져오기
         public string GetCurrentDisplayName()
         {
             return currentUser?.DisplayName ?? "Unknown";
