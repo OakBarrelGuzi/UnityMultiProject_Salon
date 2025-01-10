@@ -60,7 +60,10 @@ public class SignInPanel : Panel
         {
             bool result = await FirebaseManager.Instance.SignInWithEmailAsync(idInputField.text, passwordInputField.text);
             if (result)
-                UIManager.Instance.OpenPanel(PanelType.Lobby);
+            {
+                Close();
+                UIManager.Instance.OpenPanel(PanelType.Channel);
+            }
             else
                 LogManager.Instance.ShowLog("로그인에 실패했습니다.");
         }

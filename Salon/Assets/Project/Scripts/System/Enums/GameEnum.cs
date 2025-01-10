@@ -2,6 +2,7 @@ public enum PanelType
 {
     MainDisplay,
     Customize,
+    Channel,
     Log,
     Lobby,
     Game,

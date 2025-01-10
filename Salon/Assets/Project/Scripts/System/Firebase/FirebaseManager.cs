@@ -206,8 +206,8 @@ namespace Salon.Firebase
 
                 var snapshot = await dbReference.Child("Users")
                     .OrderByChild("DisplayName")
-                    .StartAt($"{baseName}#")
-                    .EndAt($"{baseName}#\uf8ff")
+                    .StartAt($"{baseName}_")
+                    .EndAt($"{baseName}_\uf8ff")
                     .GetValueAsync()
                     .ContinueWith(task =>
                     {
@@ -225,9 +225,9 @@ namespace Salon.Firebase
                     foreach (var child in snapshot.Children)
                     {
                         var userData = JsonConvert.DeserializeObject<Database.UserData>(child.GetRawJsonValue());
-                        if (userData?.DisplayName != null && userData.DisplayName.StartsWith($"{baseName}#"))
+                        if (userData?.UserId != null && userData.UserId.StartsWith($"{baseName}_"))
                         {
-                            string tagStr = userData.DisplayName.Split('#')[1];
+                            string tagStr = userData.UserId.Split('_')[1];
                             if (int.TryParse(tagStr, out int tagNum))
                             {
                                 usedTags.Add(tagNum);
@@ -242,7 +242,7 @@ namespace Salon.Firebase
                     newTag++;
                 }
 
-                return $"{baseName}#{newTag:D4}";
+                return $"{baseName}_{newTag:D4}";
             }
             catch (Exception ex)
             {
@@ -297,21 +297,19 @@ namespace Salon.Firebase
                 try
                 {
                     Debug.Log("[Firebase] 사용자 데이터 생성 시도...");
-                    var userData = new Database.UserData(result.User.UserId, uniqueDisplayName, email);
 
-                    // JsonSerializerSettings를 사용하여 null 값 처리
-                    var serializerSettings = new JsonSerializerSettings
+                    // 사용자 데이터를 Dictionary로 직접 생성
+                    var userData = new Dictionary<string, object>
                     {
-                        NullValueHandling = NullValueHandling.Ignore,
-                        Formatting = Formatting.Indented
+                        ["UserId"] = result.User.UserId,
+                        ["LastOnline"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                        ["Friends"] = new Dictionary<string, bool>(),
+                        ["GameStats"] = new Dictionary<string, object>()
                     };
-
-                    string json = JsonConvert.SerializeObject(userData, serializerSettings);
-                    Debug.Log($"[Firebase] 저장할 데이터: {json}");
 
                     // 데이터베이스에 저장
                     Debug.Log("[Firebase] 데이터베이스에 사용자 데이터 저장 시도...");
-                    await dbReference.Child("Users").Child(result.User.UserId).SetRawJsonValueAsync(json);
+                    await dbReference.Child("Users").Child(uniqueDisplayName).UpdateChildrenAsync(userData);
                     Debug.Log("[Firebase] 사용자 데이터 저장 완료");
 
                     Debug.Log("[Firebase] 모든 데이터베이스 작업 완료");
