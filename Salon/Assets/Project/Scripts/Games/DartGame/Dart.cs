@@ -8,60 +8,16 @@ using Random = UnityEngine.Random;
 
 public class Dart : MonoBehaviour
 {
-    [SerializeField]
-    private JoyStick joyStick;
+    public int roundscores { get; set; } = 0;
 
-    [SerializeField, Header("다트판 중앙")]
-    private Transform center;
+    [Header("다트판 중앙")]
+    public Transform center;
+
+    [Header("오브젝트 아웃라인")]
+    public Transform outerLine;
 
     [SerializeField,Header("점수 배율계산 위치")]
     private ScroeSetPoint scroeMultiplyPoint = new ScroeSetPoint();
-
-    [SerializeField,Header("조준원 프리펩")]
-    private AimingRing aimingRing;
-
-    private AimingRing targetAiming;
-
-    [SerializeField,Header("오브젝트 아웃라인")]
-    private Transform outerLine;
-   
-    private void Start()
-    {
-        SpawnAimingRing();
-    }
-
-    private void Update()
-    {
-        AimingMove();
-    }
-
-    public void AimingMove()
-    {
-        if (targetAiming == null)
-        {
-            SpawnAimingRing();
-        }
-        Vector2 direction = joyStick.GetDirection();
-        float  magnitude = joyStick.GetMagnitude();
-        //print(magnitude);
-        if (magnitude < 1f) return;
-
-        Vector3 newPosition = targetAiming.transform.position +
-            new Vector3(direction.x, direction.y, 0) * Time.deltaTime * 0.3f;
-
-        float distanceFromCenter = Vector3.Distance(newPosition ,center.position);
-        float maxAllowedDistance = Vector3.Distance(center.position, outerLine.position)
-            - Vector3.Distance(targetAiming.transform.position, targetAiming.outerLine.position);
-
-        if (distanceFromCenter > maxAllowedDistance)
-        {
-            Vector3 directionFromCenter = (newPosition -center.position).normalized;
-
-            newPosition = center.position + directionFromCenter * maxAllowedDistance;
-        }
-
-        targetAiming.transform.position = new Vector3(newPosition.x, newPosition.y, targetAiming.transform.position.z);
-    }
 
     //중앙에서 부터 충돌위치 각도 힘 계산함수
     public void SetShootPoint(Vector3 Point)
@@ -79,31 +35,8 @@ public class Dart : MonoBehaviour
         scores = GetScoreMultiplier(arrowDistance,scores);
 
         print(scores);
-    }
 
-
-    public void SpawnAimingRing()
-    {
-        AimingRing aiming = Instantiate(aimingRing);
-
-        float dartDistance = Vector3.Magnitude(center.position - outerLine.position);
-        float aminingDistance = Vector3.Magnitude(aiming.transform.position - aiming.outerLine.position);
-
-       //print(dartDistance);
-       //print(aminingDistance);
-
-        float maxSpawnDistance = dartDistance - aminingDistance;
-            
-       //print(maxSpawnDistance);
-        Vector2 ranPos = Random.insideUnitCircle;
-
-        ranPos = ranPos * maxSpawnDistance;
-
-        Vector3 spawnPosition = center.position + new Vector3(ranPos.x, ranPos.y, -0.01f);
-
-        aiming.transform.position = spawnPosition;
-
-        targetAiming = aiming;
+        roundscores += scores;
     }
 
     //각도 기준으로 점수계산
