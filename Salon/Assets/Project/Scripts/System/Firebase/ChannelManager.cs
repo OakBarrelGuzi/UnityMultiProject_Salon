@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Salon.Firebase
 {
+    //ToDO : userRef 변수로 관리하자
     public class ChannelManager : MonoBehaviour
     {
         private DatabaseReference dbReference;
