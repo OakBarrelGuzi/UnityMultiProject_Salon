@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Salon.Firebase;
+using Salon.Firebase.Database;
 public class LobbyPanel : Panel
 {
 
@@ -19,15 +20,16 @@ public class LobbyPanel : Panel
         GetChannels();
     }
 
-    private void GetChannels()
+    private async void GetChannels()
     {
-        //foreach (var channel in FirebaseManager.Instance.channelManager.channelData)
-        //{
-        //    ChannelButton button = Instantiate(channelButtonPrefab, channelParent);
-        //    button.Initialize(channel.Key, channel.Value.playerCount);
-        //    button.button.onClick.AddListener(() => enterChannel(channel.Key));
-        //    channelButtons.Add(button);
-        //}
+        Dictionary<string, ChannelData> channelData = await FirebaseManager.Instance.channelManager.WaitForChannelData();
+        foreach (var channel in channelData)
+        {
+            ChannelButton button = Instantiate(channelButtonPrefab, channelParent);
+            button.Initialize(channel.Key, channel.Value.UserCount);
+            button.button.onClick.AddListener(() => EnterChannel(channel.Key));
+            channelButtons.Add(button);
+        }
     }
 
     public void OnRefreshButtonClick()
@@ -35,8 +37,8 @@ public class LobbyPanel : Panel
         Initialize();
     }
 
-    public async void enterChannel(string channelName)
+    public async void EnterChannel(string channelName)
     {
-        //await FirebaseManager.Instance.channelManager.EnterChannel(channelName);
+        await FirebaseManager.Instance.channelManager.EnterChannel(channelName);
     }
 }
