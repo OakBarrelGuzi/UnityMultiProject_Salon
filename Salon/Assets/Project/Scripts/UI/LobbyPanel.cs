@@ -65,7 +65,7 @@ public class LobbyPanel : Panel
         foreach (var channel in channelData)
         {
             var button = Instantiate(channelButtonPrefab, channelParent);
-            button.Initialize(channel.Key, channel.Value.UserCount);
+            button.Initialize(channel.Key, channel.Value.CommonChannelData.UserCount);
             button.button.onClick.AddListener(() => OnChannelButtonClick(channel.Key));
             channelButtons.Add(button);
         }

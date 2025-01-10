@@ -46,7 +46,7 @@ namespace Salon.Firebase
                 Debug.Log($"Firebase 데이터베이스 참조 대기 중... (시도 {currentRetry + 1}/{maxRetries})");
                 await Task.Delay(delayMs);
                 currentRetry++;
-                delayMs *= 2; // 지수 백오프
+                delayMs *= 2;
             }
 
             throw new Exception("Firebase 데이터베이스 참조를 가져올 수 없습니다.");
@@ -56,7 +56,7 @@ namespace Salon.Firebase
         {
             try
             {
-                var snapshot = await dbReference.Child("Rooms").GetValueAsync();
+                var snapshot = await dbReference.Child("Channels").GetValueAsync();
                 var existingRooms = new HashSet<string>();
 
                 if (snapshot.Exists)
@@ -71,7 +71,7 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"방 목록 확인 실패: {ex.Message}");
+                Debug.LogError($"채널 목록 확인 실패: {ex.Message}");
             }
         }
 
@@ -79,14 +79,14 @@ namespace Salon.Firebase
         {
             for (int i = 1; i <= 10; i++)
             {
-                string roomName = $"Room{i}";
+                string roomName = $"Channel{i}";
                 if (!existingRooms.Contains(roomName))
                 {
                     try
                     {
                         var roomData = new ChannelData();
                         string roomJson = JsonConvert.SerializeObject(roomData, Formatting.Indented);
-                        await dbReference.Child("Rooms").Child(roomName).SetRawJsonValueAsync(roomJson);
+                        await dbReference.Child("Channels").Child(roomName).SetRawJsonValueAsync(roomJson);
                     }
                     catch (Exception ex)
                     {
@@ -96,64 +96,41 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task AddPlayerToRoom(string roomName, string displayName)
+        public async Task AddPlayerToChannel(string channelName, string displayName)
         {
             try
             {
-                print("AddPlayerToRoom 돌입");
-                var snapshot = await dbReference.Child("Rooms").Child(roomName).GetValueAsync();
+                Debug.Log("AddPlayerToRoom 돌입");
+                var snapshot = await dbReference.Child("Channels").Child(channelName).GetValueAsync();
 
-                Debug.Log("snapshot 확인");
                 if (!snapshot.Exists)
                 {
-                    Debug.LogError($"방 {roomName}이 존재하지 않습니다.");
-                    throw new Exception($"방 {roomName}이 존재하지 않습니다.");
+                    Debug.LogError($"채널 {channelName}이 존재하지 않습니다.");
+                    throw new Exception($"채널 {channelName}이 존재하지 않습니다.");
                 }
 
-                Debug.Log("rawJson 확인");
-                string rawJson = snapshot.GetRawJsonValue();
-                if (string.IsNullOrEmpty(rawJson))
+                int currentUserCount = snapshot.Child("CommonChannelData").Child("UserCount").Value != null ?
+                    Convert.ToInt32(snapshot.Child("CommonChannelData").Child("UserCount").Value) : 0;
+
+                if (currentUserCount >= 10)
                 {
-                    Debug.LogError("방 데이터가 비어있습니다.");
-                    throw new Exception("방 데이터가 비어있습니다.");
+                    throw new Exception("채널이 가득 찼습니다.");
                 }
 
-                Debug.Log($"방 데이터: {rawJson}");
+                var playerData = new GamePlayerData(displayName);
 
-                var roomData = JsonConvert.DeserializeObject<ChannelData>(rawJson);
-                if (roomData == null)
+                // Players에 플레이어 데이터 추가
+                await dbReference.Child("Channels").Child(channelName).Child("Players")
+                    .Child(displayName).SetRawJsonValueAsync(JsonConvert.SerializeObject(playerData));
+
+                var ChannelUpdateData = new Dictionary<string, object>
                 {
-                    Debug.LogError("방 데이터를 파싱할 수 없습니다.");
-                    throw new Exception("방 데이터를 파싱할 수 없습니다.");
-                }
+                    ["UserCount"] = currentUserCount + 1,
 
-                Debug.Log("roomData 확인");
-                roomData.Players ??= new Dictionary<string, GamePlayerData>();
-
-                if (roomData.Players.ContainsKey(displayName))
-                {
-                    Debug.Log($"플레이어 {displayName}는 이미 방 {roomName}에 존재합니다.");
-                    return;
-                }
-
-                Debug.Log("roomData.isFull 확인");
-                if (roomData.isFull)
-                    throw new Exception("방이 가득 찼습니다.");
-
-                roomData.Players[displayName] = new GamePlayerData(displayName);
-                roomData.UserCount++;
-                roomData.isFull = roomData.UserCount >= 10;
-
-                Debug.Log("플레이어 데이터 추가 시도");
-                var settings = new JsonSerializerSettings
-                {
-                    NullValueHandling = NullValueHandling.Ignore,
-                    Formatting = Formatting.Indented
+                    ["isFull"] = (currentUserCount + 1) >= 10
                 };
-                string updatedJson = JsonConvert.SerializeObject(roomData, settings);
-                Debug.Log("updatedJson 확인");
-                Debug.Log(updatedJson);
-                await dbReference.Child("Rooms").Child(roomName).SetRawJsonValueAsync(updatedJson);
+                // CommonChannelData의 UserCount 업데이트
+                await dbReference.Child("Channels").Child(channelName).Child("CommonChannelData").UpdateChildrenAsync(ChannelUpdateData);
                 Debug.Log("플레이어 데이터 추가 완료");
             }
             catch (Exception ex)
@@ -163,21 +140,32 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task RemovePlayerFromRoom(string roomName, string displayName)
+        public async Task RemovePlayerFromChannel(string channelName, string displayName)
         {
             try
             {
-                var snapshot = await dbReference.Child("Rooms").Child(roomName).GetValueAsync();
-                if (!snapshot.Exists) return;
+                var channelSnapshot = await dbReference.Child("Channels").Child(channelName).GetValueAsync();
+                if (!channelSnapshot.Exists) return;
 
-                var roomData = JsonConvert.DeserializeObject<ChannelData>(snapshot.GetRawJsonValue());
-                if (roomData.Players?.Remove(displayName) ?? false)
+                await dbReference.Child("Channels").Child(channelName).Child("Players")
+                    .Child(displayName).RemoveValueAsync();
+
+                var userCountSnapshot = await dbReference.Child("Channels").Child(channelName)
+                    .Child("CommonChannelData").Child("UserCount").GetValueAsync();
+
+                int currentUserCount = userCountSnapshot.Value != null ?
+                    Convert.ToInt32(userCountSnapshot.Value) : 0;
+
+                if (currentUserCount > 0)
                 {
-                    roomData.UserCount--;
-                    roomData.isFull = roomData.UserCount >= 10;
+                    var updates = new Dictionary<string, object>
+                    {
+                        ["UserCount"] = currentUserCount - 1,
+                        ["isFull"] = (currentUserCount - 1) >= 10
+                    };
 
-                    string updatedJson = JsonConvert.SerializeObject(roomData, Formatting.Indented);
-                    await dbReference.Child("Rooms").Child(roomName).SetRawJsonValueAsync(updatedJson);
+                    await dbReference.Child("Channels").Child(channelName)
+                        .Child("CommonChannelData").UpdateChildrenAsync(updates);
                 }
             }
             catch (Exception ex)
@@ -190,15 +178,15 @@ namespace Salon.Firebase
         {
             try
             {
-                var snapshot = await dbReference.Child("Rooms").GetValueAsync();
+                var snapshot = await dbReference.Child("Channels").GetValueAsync();
                 if (!snapshot.Exists) return null;
 
-                var loadRoomData = new Dictionary<string, ChannelData>();
-                foreach (var roomSnapshot in snapshot.Children)
+                var channelData = new Dictionary<string, ChannelData>();
+                foreach (var channelSnapshot in snapshot.Children)
                 {
-                    loadRoomData[roomSnapshot.Key] = JsonConvert.DeserializeObject<ChannelData>(roomSnapshot.GetRawJsonValue());
+                    channelData[channelSnapshot.Key] = JsonConvert.DeserializeObject<ChannelData>(channelSnapshot.GetRawJsonValue());
                 }
-                return loadRoomData;
+                return channelData;
             }
             catch (Exception ex)
             {
@@ -219,7 +207,7 @@ namespace Salon.Firebase
                     dbReference = await GetDbReference();
                 }
 
-                await AddPlayerToRoom(channelName, FirebaseManager.Instance.GetCurrentDisplayName());
+                await AddPlayerToChannel(channelName, FirebaseManager.Instance.GetCurrentDisplayName());
                 currentChannel = channelName;
 
                 return true;
@@ -237,7 +225,7 @@ namespace Salon.Firebase
             {
                 try
                 {
-                    await RemovePlayerFromRoom(currentChannel, FirebaseManager.Instance.GetCurrentDisplayName());
+                    await RemovePlayerFromChannel(currentChannel, FirebaseManager.Instance.GetCurrentDisplayName());
                 }
                 catch (Exception ex)
                 {
