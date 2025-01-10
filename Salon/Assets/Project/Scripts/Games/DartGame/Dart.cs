@@ -41,10 +41,26 @@ public class Dart : MonoBehaviour
         {
             SpawnAimingRing();
         }
-        float x = joyStick.GetDirection().x;
-        float y = joyStick.GetDirection().y;
+        Vector2 direction = joyStick.GetDirection();
+        float  magnitude = joyStick.GetMagnitude();
+        //print(magnitude);
+        if (magnitude < 1f) return;
 
-        targetAiming.transform.Translate(new Vector3(x, y, 0) * Time.deltaTime * 2f);
+        Vector3 newPosition = targetAiming.transform.position +
+            new Vector3(direction.x, direction.y, 0) * Time.deltaTime * 0.3f;
+
+        float distanceFromCenter = Vector3.Distance(newPosition ,center.position);
+        float maxAllowedDistance = Vector3.Distance(center.position, outerLine.position)
+            - Vector3.Distance(targetAiming.transform.position, targetAiming.outerLine.position);
+
+        if (distanceFromCenter > maxAllowedDistance)
+        {
+            Vector3 directionFromCenter = (newPosition -center.position).normalized;
+
+            newPosition = center.position + directionFromCenter * maxAllowedDistance;
+        }
+
+        targetAiming.transform.position = new Vector3(newPosition.x, newPosition.y, targetAiming.transform.position.z);
     }
 
     //중앙에서 부터 충돌위치 각도 힘 계산함수
@@ -73,12 +89,12 @@ public class Dart : MonoBehaviour
         float dartDistance = Vector3.Magnitude(center.position - outerLine.position);
         float aminingDistance = Vector3.Magnitude(aiming.transform.position - aiming.outerLine.position);
 
-        print(dartDistance);
-        print(aminingDistance);
+       //print(dartDistance);
+       //print(aminingDistance);
 
         float maxSpawnDistance = dartDistance - aminingDistance;
             
-        print(maxSpawnDistance);
+       //print(maxSpawnDistance);
         Vector2 ranPos = Random.insideUnitCircle;
 
         ranPos = ranPos * maxSpawnDistance;
@@ -113,6 +129,7 @@ public class Dart : MonoBehaviour
     //중앙에서 거리기준으로 추가점수 계산
     public int GetScoreMultiplier(float arrowDistance,int scores)
     {
+        print($"다트 : {arrowDistance}");
         if(arrowDistance < GetScoreDistance(scroeMultiplyPoint.FiftyPoint))
         {
             return 50;
@@ -144,6 +161,7 @@ public class Dart : MonoBehaviour
     {
         float Distance = Vector3.Magnitude(center.position - Point.position);
 
+        print(Distance);
         return Distance;
     }
 }
