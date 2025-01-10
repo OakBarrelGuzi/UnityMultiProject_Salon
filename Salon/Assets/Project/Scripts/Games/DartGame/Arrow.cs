@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Arrow : MonoBehaviour
@@ -12,11 +11,11 @@ public class Arrow : MonoBehaviour
 
     private Vector3 heigtPosition;
 
-    [SerializeField,Header("°î¼± Á¤µµ"),Range(0f,1f)]
+    [SerializeField, Header("ï¿½î¼± ï¿½ï¿½ï¿½ï¿½"), Range(0f, 1f)]
     private float height = 0.5f;
 
-    [SerializeField, Header("°¡´Âµ¥ °É¸®´Â ½Ã°£")]
-    private float duration=0.1f;
+    [SerializeField, Header("ï¿½ï¿½ï¿½Âµï¿½ ï¿½É¸ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½")]
+    private float duration = 0.1f;
 
     private bool isStop = false;
 
@@ -68,8 +67,8 @@ public class Arrow : MonoBehaviour
         while (!isStop)
         {
 
-            Vector3 p1 = Vector3.Lerp(startPosition,heigtPosition,time);
-            Vector3 p2 = Vector3.Lerp(heigtPosition,targetPosition.position,time);
+            Vector3 p1 = Vector3.Lerp(startPosition, heigtPosition, time);
+            Vector3 p2 = Vector3.Lerp(heigtPosition, targetPosition.position, time);
 
             Vector3 previousPos = transform.position;
             transform.position = Vector3.Lerp(p1, p2, time);

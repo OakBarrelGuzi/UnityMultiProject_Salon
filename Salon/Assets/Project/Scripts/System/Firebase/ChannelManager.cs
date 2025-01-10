@@ -13,6 +13,7 @@ namespace Salon.Firebase
     public class ChannelManager : MonoBehaviour
     {
         private DatabaseReference dbReference;
+        private DatabaseReference userRef;
         private string currentChannel;
         public Action<string, string, Sprite> OnReceiveChat;
 
