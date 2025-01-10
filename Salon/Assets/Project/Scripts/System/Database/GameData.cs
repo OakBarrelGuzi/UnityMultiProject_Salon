@@ -104,7 +104,7 @@ namespace Salon.Firebase.Database
         public bool IsHost { get; set; }
         public GamePlayerState State { get; set; }
         public Dictionary<string, object> GameSpecificData { get; set; }
-
+        public PositionData Position { get; set; }
         public GamePlayerData(string displayName, bool isHost = false)
         {
             DisplayName = displayName;
@@ -112,6 +112,22 @@ namespace Salon.Firebase.Database
             IsHost = isHost;
             State = GamePlayerState.Waiting;
             GameSpecificData = new Dictionary<string, object>();
+            Position = new PositionData(0f, 0.5f, 0f);
+        }
+    }
+
+    [System.Serializable]
+    public class PositionData
+    {
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+
+        public PositionData(float x, float y, float z)
+        {
+            X = x;
+            Y = y;
+            Z = z;
         }
     }
 }

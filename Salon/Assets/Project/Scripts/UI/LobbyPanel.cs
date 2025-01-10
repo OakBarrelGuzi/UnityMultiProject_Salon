@@ -90,14 +90,14 @@ public class LobbyPanel : Panel
             SetButtonsInteractable(false);
 
             await FirebaseManager.Instance.channelManager.EnterChannel(channelName);
-            SceneManager.LoadScene("LobbyScene");
+            SceneManager.LoadScene("LobbySceneClone");
         }
         catch (Exception ex)
         {
             Debug.LogError($"채널 입장 실패: {ex.Message}");
             if (ex.Message.Contains("이미 방에 존재"))
             {
-                SceneManager.LoadScene("LobbyScene");
+                SceneManager.LoadScene("LobbySceneClone");
             }
         }
         finally
