@@ -297,6 +297,7 @@ namespace Salon.Firebase
             try
             {
                 print("EnterChannel 돌입");
+
                 if (FirebaseManager.Instance.DbReference == null)
                 {
                     print("DbReference 없음");
@@ -304,9 +305,23 @@ namespace Salon.Firebase
                     dbReference = await GetDbReference();
                 }
 
-                await AddPlayerToChannel(channelName, FirebaseManager.Instance.GetCurrentDisplayName());
+                string displayName = FirebaseManager.Instance.GetCurrentDisplayName();
+
+                // 본인 캐릭터 데이터 추가
+                await AddPlayerToChannel(channelName, displayName);
+
+                // 현재 채널 설정
                 currentChannel = channelName;
                 StartListeningToMessages();
+
+                // RoomManager에서 본인 캐릭터 생성 요청
+                RoomManager roomManager = FindObjectOfType<RoomManager>();
+                if (roomManager != null)
+                {
+                    Debug.Log("플레이어 프리팹 생성시작");
+                    var playerData = new GamePlayerData(displayName); // 기본 데이터 생성
+                    roomManager.InstantiatePlayer(displayName, playerData, isLocalPlayer: true);
+                }
 
                 return true;
             }
