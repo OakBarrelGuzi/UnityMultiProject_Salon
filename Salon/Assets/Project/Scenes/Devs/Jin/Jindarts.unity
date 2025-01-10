@@ -578,6 +578,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   joystickMoveSpeed: 0.3
   randomMoveSpeed: 0.15
+  turnWait: 1
   gameUi: {fileID: 1815990655228747360}
   dart: {fileID: 1402785250}
   joyStick: {fileID: 1344355829}
@@ -733,7 +734,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5650360100152320113, guid: a68f273c90993f342ad921a2c11197f2, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 225.25835
+      value: 225.25839
+      objectReference: {fileID: 0}
+    - target: {fileID: 6007903289557450346, guid: a68f273c90993f342ad921a2c11197f2, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 6007903289557450346, guid: a68f273c90993f342ad921a2c11197f2, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6392438460598606278, guid: a68f273c90993f342ad921a2c11197f2, type: 3}
       propertyPath: m_Pivot.x

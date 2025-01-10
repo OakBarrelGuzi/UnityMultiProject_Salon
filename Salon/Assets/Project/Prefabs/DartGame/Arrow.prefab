@@ -27,7 +27,7 @@ Transform:
   m_GameObject: {fileID: 3876515577614317897}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.519}
+  m_LocalPosition: {x: 0, y: 0, z: -0.515}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -93,7 +93,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3593057332149008302}
   - component: {fileID: 306664355961297160}
-  - component: {fileID: 4289711743077067010}
+  - component: {fileID: 4383480426401316176}
   m_Layer: 0
   m_Name: Arrow
   m_TagString: Untagged
@@ -130,9 +130,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   height: 0.1
-  duration: 3
---- !u!135 &4289711743077067010
-SphereCollider:
+  duration: 2
+--- !u!136 &4383480426401316176
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -149,6 +149,8 @@ SphereCollider:
   m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Radius: 0.015
-  m_Center: {x: 0, y: 0, z: 0}
+  serializedVersion: 2
+  m_Radius: 0.001980432
+  m_Height: 0.02291588
+  m_Direction: 2
+  m_Center: {x: 0, y: 0.0025, z: -0.001}

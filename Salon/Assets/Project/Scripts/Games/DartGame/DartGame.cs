@@ -8,10 +8,13 @@ public class DartGame : MonoBehaviour
 {
     private const float TURNTIME = 10f;
     private const float BREATHTIME = 3f;
+    private const int MAXROUND = 5;
+    private const int MAXTURN = 3;
 
-    private int Round = 1;
-    private int Turn = 0;
-    
+    private int round = 1;
+    private int turn = 1;
+    private int totalScore = 0;
+
     private float turnTime = TURNTIME;
     private float breathTime = BREATHTIME;
 
@@ -28,11 +31,14 @@ public class DartGame : MonoBehaviour
 
     private List<TextMeshProUGUI> scoreTextList = new List<TextMeshProUGUI>();
 
+    private List<Arrow> darts = new List<Arrow>();
 
-    [SerializeField,Header("조이스틱 무브 스피드")] 
+    [SerializeField, Header("조이스틱 무브 스피드")]
     private float joystickMoveSpeed = 0.3f;
-    [SerializeField,Header("랜덤 방향 무브 스피드")] 
+    [SerializeField, Header("랜덤 방향 무브 스피드")]
     private float randomMoveSpeed = 0.15f;
+    [SerializeField, Header("턴과 턴사이 딜레이시간")]
+    private float turnWait = 1f;
 
     [SerializeField]
     private DartGameUI gameUi;
@@ -56,9 +62,24 @@ public class DartGame : MonoBehaviour
 
     private void Start()
     {
-        SpawnAimingRing();
         StartCoroutine(GameRoutine());
     }
+
+    public void NextTurnset()
+    {
+        turnTime = TURNTIME;
+        breathTime = BREATHTIME;
+
+        isWaitInput = false;
+        isWaitBreath = false;
+        isWaitShootButton = false;
+
+        isRandomMoving = false;
+
+        isMove = true;
+        isMoving = false;
+    }
+
 
     private void Update()
     {
@@ -67,26 +88,24 @@ public class DartGame : MonoBehaviour
         DartGameTimeDecay();
 
         DartGameUiUpdate();
-
-
     }
     private void DartGameUiUpdate()
     {
         gameUi.turnTimeSlider.value = turnTime / TURNTIME;
         gameUi.turnTimeText.text = $"{(int)turnTime} / {TURNTIME}";
         gameUi.breathTimeSlider.value = breathTime / BREATHTIME;
+
+        gameUi.totalScoreText.text = $"Total Score : {totalScore}";
     }
 
     private void DartGameTimeDecay()
     {
         if (isMoving == false && isWaitBreath == false) turnTime -= Time.deltaTime;
-        else if(isWaitBreath == false) { breathTime -= Time.deltaTime; }
+        else if (isWaitBreath == false) { breathTime -= Time.deltaTime; }
 
         if (breathTime <= 0f && isWaitBreath == false)
         {
-            isWaitBreath = true;
-            isMove = false;
-            isMoving = false;
+            ShootButtonClick();
         }
         if (turnTime <= 0f && isWaitBreath == false)
         {
@@ -97,10 +116,7 @@ public class DartGame : MonoBehaviour
     public void AimingMove()
     {
         if (isMove == false) return;
-        if (targetAiming == null)
-        {
-            SpawnAimingRing();
-        }
+        if (targetAiming == null) return;
 
         Vector3 moveDirection = GetJoystickDirection();
         if (moveDirection != Vector3.zero)
@@ -114,7 +130,7 @@ public class DartGame : MonoBehaviour
         if (!isRandomMoving || targetAiming == null) return;
 
         Vector3 moveDirection = (randomTargetPosition - targetAiming.transform.position).normalized;
-        MoveTarget(moveDirection,randomMoveSpeed);
+        MoveTarget(moveDirection, randomMoveSpeed);
     }
 
     private Vector3 GetJoystickDirection()
@@ -133,7 +149,7 @@ public class DartGame : MonoBehaviour
         return new Vector3(direction.x, direction.y, 0);
     }
 
-    private void MoveTarget(Vector3 direction,float speed)
+    private void MoveTarget(Vector3 direction, float speed)
     {
         Vector3 newPosition = targetAiming.transform.position + direction * Time.deltaTime * speed;
         newPosition = ClampPositionToDartboard(newPosition);
@@ -189,8 +205,8 @@ public class DartGame : MonoBehaviour
 
         arrowPoint.z = dart.transform.position.z;
 
-        Arrow arrow = Instantiate(arrowPrefab,arrowShootPoint);
-
+        Arrow arrow = Instantiate(arrowPrefab, arrowShootPoint);
+        darts.Add(arrow);
         arrow.SetTargetPosition(arrowPoint);
     }
 
@@ -203,7 +219,7 @@ public class DartGame : MonoBehaviour
         Vector2 randomDirection = Random.insideUnitCircle;
         Vector3 randomPosition = dart.center.position +
                                new Vector3(randomDirection.x, randomDirection.y, -0.01f) * maxDistance;
-        
+
         randomPosition.z = targetAiming.transform.position.z;
 
         randomTargetPosition = randomPosition;
@@ -216,6 +232,7 @@ public class DartGame : MonoBehaviour
         isMove = false;
         isWaitInput = true;
         isWaitBreath = true;
+        isMoving = false;
 
         gameUi.shootButton.onClick?.RemoveListener(ShootButtonClick);
         StartCoroutine(reduceAimingRoutine());
@@ -223,27 +240,73 @@ public class DartGame : MonoBehaviour
 
     public void ShootDartArrow()
     {
+        print("ShootDartArrow호출");
         isWaitShootButton = true;
         gameUi.shootButton.onClick?.RemoveListener(ShootDartArrow);
-        SpawnArrow();
+        SpawnArrow();      
+
+        Destroy(targetAiming.gameObject);
+        targetAiming = null;
     }
 
     public void AddScores()
     {
-        if (scoreTextList.Count < Round)
+
+        int dartScore = dart.roundscores;
+        if (scoreTextList.Count < round)
         {
             TextMeshProUGUI scoretext = Instantiate(gameUi.scoreTextPrefab, gameUi.scoreTextField);
             scoreTextList.Add(scoretext);
-            scoreTextList[Round -1].text = dart.roundscores.ToString();
+            scoreTextList[round - 1].text = dartScore.ToString();
         }
         else
         {
-            scoreTextList[Round -1].text = dart.roundscores.ToString();
+            int score = int.Parse(scoreTextList[round - 1].text.ToString());
+            scoreTextList[round - 1].text = (score +dartScore).ToString();
+        }
+        totalScore += dartScore;
+        dart.roundscores = 0;
+
+        RoundManagement();
+        StartCoroutine(Gameing());
+    }
+
+    //턴증가 및 라운드 증가 처리 및 다음 사이클 진행을 위한 초기화 
+    public void RoundManagement()
+    {
+        turn++;
+        if (turn > MAXTURN)
+        {
+            turn = 1;
+            round++;
+            foreach (Arrow dart in darts)
+            {
+                if(dart != null)
+                {
+                    Destroy(dart.gameObject);
+                }            
+            }
+            darts.Clear();
+        }
+        if (round > MAXROUND)
+        {
+            //TODO:다트 게임 종료 처리
+            return;
         }
     }
 
+    private IEnumerator Gameing()
+    {
+        yield return new WaitForSeconds(turnWait);
+        //yield return new WaitUntil()
+        NextTurnset();
+        StartCoroutine(GameRoutine());
+    }
+
+    //TODO: 중간중간 이벤트나 모션들 넣기
     private IEnumerator GameRoutine()
     {
+        SpawnAimingRing();
         StartCoroutine(RingRandomMoveRoutine());
         gameUi.shootButton.onClick.AddListener(ShootButtonClick);
         yield return new WaitUntil(() => isWaitInput == true);
@@ -252,20 +315,30 @@ public class DartGame : MonoBehaviour
         gameUi.shootButton.onClick?.RemoveListener(ShootButtonClick);
         gameUi.shootButton.onClick.AddListener(ShootDartArrow);
 
-        yield return new WaitUntil(()=> isWaitShootButton == true);
+        yield return new WaitUntil(() => isWaitShootButton == true);
         gameUi.shootButton.onClick?.RemoveListener(ShootDartArrow);
 
-        yield return new WaitForSeconds(arrowPrefab.duration + 2f);
+        yield return new WaitForSeconds(arrowPrefab.duration + 0.5f);
         AddScores();
     }
-    
+
     private IEnumerator reduceAimingRoutine()
-    {   
-        //TODO:원 최소 사이즈 제한 (코루틴 탈출)
-        while (!isWaitShootButton)
+    {
+        //최적의 조건 인스펙터로 빼서 이걸 건드리게 할수없다!
+        float time = 0f;
+        float delay = 0.8f;
+        float Routinedelay = 0.01f;
+
+        while (!isWaitShootButton && time <= delay)
         {
-            targetAiming.transform.localScale = targetAiming.transform.localScale * 0.97f;
-            yield return new WaitForSeconds(0.05f);
+            targetAiming.transform.localScale = targetAiming.transform.localScale * 0.98f;
+            yield return new WaitForSeconds(Routinedelay);
+            time += Routinedelay;
+        }
+        if (time >= delay)
+        {
+            targetAiming.transform.localScale = targetAiming.startScale;
+            ShootDartArrow();
         }
     }
 
