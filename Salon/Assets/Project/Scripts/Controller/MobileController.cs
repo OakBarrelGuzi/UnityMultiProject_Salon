@@ -41,7 +41,7 @@ namespace Salon.Controller
 
                 if (debugLog)
                 {
-                    Debug.Log("[MCS] " + "[" + gameObject.name + "] " + "OnPointerDown : " + eventData.pointerId);
+                    Debug.Log("[컨트롤러] " + "[" + gameObject.name + "] " + "OnPointerDown : " + eventData.pointerId);
                 }
 
                 isFingerDown = true;
@@ -107,7 +107,7 @@ namespace Salon.Controller
             this.UpdateDirection();
             if (debugLog)
             {
-                Debug.Log("[MCS] " + "Aim Value : " + direction + " | Magnitude : " + direction.magnitude);
+                Debug.Log("[컨트롤러] " + "방향 : " + direction + " | 크기 : " + direction.magnitude);
             }
 
             if (direction.magnitude > 0f)
@@ -188,7 +188,7 @@ namespace Salon.Controller
             serializedObject.Update();
 
             var script = target as MobileController;
-            EditorGUILayout.TextArea("-----[ Config ]---------------", GUIStyle.none);
+            EditorGUILayout.TextArea("-----[ 설정 ]---------------", GUIStyle.none);
             EditorGUILayout.PropertyField(debugLog);
             EditorGUILayout.PropertyField(scaler);
             EditorGUILayout.PropertyField(isAimable);
@@ -200,7 +200,7 @@ namespace Salon.Controller
             EditorGUILayout.PropertyField(deadzoneCurve);
             EditorGUILayout.PropertyField(resetOutputValueOnRelease);
 
-            EditorGUILayout.TextArea("-----[ Parameters ]---------------", GUIStyle.none);
+            EditorGUILayout.TextArea("-----[ 파라미터 ]---------------", GUIStyle.none);
             EditorGUILayout.PropertyField(isActive);
             EditorGUILayout.PropertyField(isFingerDown);
             EditorGUILayout.PropertyField(fingerId);

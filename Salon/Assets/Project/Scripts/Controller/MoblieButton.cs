@@ -105,7 +105,7 @@ namespace Salon.Controller
             {
                 if (debugLog)
                 {
-                    Debug.Log("[MCS] " + "[" + gameObject.name + "] " + "OnPointerDown - FingerID : " + eventData.pointerId);
+                    Debug.Log("[컨트롤러] " + "[" + gameObject.name + "] " + "OnPointerDown - FingerID : " + eventData.pointerId);
                 }
                 isFingerDown = true;
                 fingerId = eventData.pointerId;
@@ -137,7 +137,7 @@ namespace Salon.Controller
             {
                 if (debugLog)
                 {
-                    Debug.Log("[MCS] " + "[" + gameObject.name + "] " + "OnBeginDrag - FingerID : " + eventData.pointerId);
+                    Debug.Log("[컨트롤러] " + "[" + gameObject.name + "] " + "OnBeginDrag - FingerID : " + eventData.pointerId);
                 }
                 isManualAimOverride = true;
 
@@ -161,7 +161,7 @@ namespace Salon.Controller
 
                 if (debugLog)
                 {
-                    Debug.Log("[MCS] " + "[" + gameObject.name + "] " + "OnDrag - FingerID : " + eventData.pointerId);
+                    Debug.Log("[컨트롤러] " + "[" + gameObject.name + "] " + "OnDrag - FingerID : " + eventData.pointerId);
 
                     if (onDrag != null)
                     {
@@ -178,7 +178,7 @@ namespace Salon.Controller
 
                 if (debugLog)
                 {
-                    Debug.Log("[MCS] " + "[" + gameObject.name + "] " + "OnPointerUp - FingerID : " + eventData.pointerId);
+                    Debug.Log("[컨트롤러] " + "[" + gameObject.name + "] " + "OnPointerUp - FingerID : " + eventData.pointerId);
                 }
 
                 isFingerDown = false;
@@ -189,7 +189,7 @@ namespace Salon.Controller
                     isPointerUpOutOfBound = true;
                     if (debugLog)
                     {
-                        Debug.Log("[MCS] " + "isPointerUpOutOfBound : " + isPointerUpOutOfBound.ToString());
+                        Debug.Log("[컨트롤러] " + "isPointerUpOutOfBound : " + isPointerUpOutOfBound.ToString());
                     }
                 }
 
@@ -222,7 +222,7 @@ namespace Salon.Controller
             {
                 if (debugLog)
                 {
-                    Debug.Log("[MCS] " + "[" + gameObject.name + "] " + "OnEndDrag - FingerID : " + eventData.pointerId);
+                    Debug.Log("[컨트롤러] " + "[" + gameObject.name + "] " + "OnEndDrag - FingerID : " + eventData.pointerId);
                 }
 
                 isManualAimOverride = false;
@@ -245,7 +245,7 @@ namespace Salon.Controller
             this.UpdateDirection();
             if (debugLog)
             {
-                Debug.Log("[MCS] " + "Aim Value : " + direction + " \t\t Magnitude : " + direction.magnitude);
+                Debug.Log("[컨트롤러] " + "Aim Value : " + direction + " \t\t Magnitude : " + direction.magnitude);
             }
         }
 
@@ -314,7 +314,7 @@ namespace Salon.Controller
             btnRadius = btn.rect.width / 2f * scaler.scaleFactor;
             if (debugLog)
             {
-                Debug.Log("[MCS] " + this.gameObject.name + " >> " + btnRadius + " = " + btn.sizeDelta.x / 2f);
+                Debug.Log("[컨트롤러] " + this.gameObject.name + " >> " + btnRadius + " = " + btn.sizeDelta.x / 2f);
             }
             if (isAimable)
             {
@@ -399,7 +399,7 @@ namespace Salon.Controller
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            EditorGUILayout.TextArea("-----[ Config ]---------------", GUIStyle.none);
+            EditorGUILayout.TextArea("-----[ 설정 ]---------------", GUIStyle.none);
             EditorGUILayout.PropertyField(debugLog);
             EditorGUILayout.PropertyField(scaler);
             EditorGUILayout.PropertyField(isAimable);
@@ -412,7 +412,7 @@ namespace Salon.Controller
             }
             EditorGUILayout.PropertyField(text);
             EditorGUILayout.PropertyField(btnIndex);
-            EditorGUILayout.TextArea("-----[ Parameters ]---------------", GUIStyle.none);
+            EditorGUILayout.TextArea("-----[ 파라미터 ]---------------", GUIStyle.none);
             EditorGUILayout.PropertyField(isActive);
             EditorGUILayout.PropertyField(isFingerDown);
             EditorGUILayout.PropertyField(fingerId);
@@ -424,7 +424,7 @@ namespace Salon.Controller
             EditorGUILayout.PropertyField(state);
             EditorGUILayout.PropertyField(colorInactive);
             EditorGUILayout.PropertyField(colorPressed);
-            EditorGUILayout.TextArea("-----[ Events ]---------------", GUIStyle.none);
+            EditorGUILayout.TextArea("-----[ 이벤트 ]---------------", GUIStyle.none);
             showRawButtonEvents = EditorGUILayout.Toggle("showRawButtonEvents", showRawButtonEvents);
             if (showRawButtonEvents)
             {
