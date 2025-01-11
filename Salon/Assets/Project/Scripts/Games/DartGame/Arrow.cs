@@ -4,18 +4,18 @@ using UnityEngine;
 
 public class Arrow : MonoBehaviour
 {
-    
+
     private Vector3 targetPosition;
 
     private Vector3 startPosition;
 
     private Vector3 heigtPosition;
 
-    [SerializeField,Header("� ����"),Range(0f,1f)]
+    [SerializeField, Header("포물선높이"), Range(0f, 1f)]
     private float height = 0.5f;
 
-    [Header("���µ� �ɸ��� �ð�")]
-    public float duration=0.1f;
+    [Header("다트속도")]
+    public float duration = 0.1f;
 
     private bool isStop = false;
 
@@ -76,8 +76,8 @@ public class Arrow : MonoBehaviour
         while (!isStop && time <= 1f)
         {
 
-            Vector3 p1 = Vector3.Lerp(startPosition,heigtPosition,time);
-            Vector3 p2 = Vector3.Lerp(heigtPosition,targetPosition,time);
+            Vector3 p1 = Vector3.Lerp(startPosition, heigtPosition, time);
+            Vector3 p2 = Vector3.Lerp(heigtPosition, targetPosition, time);
 
             Vector3 previousPos = transform.position;
             transform.position = Vector3.Lerp(p1, p2, time);

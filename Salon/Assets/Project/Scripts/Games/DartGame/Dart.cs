@@ -5,26 +5,25 @@ using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
-
 public class Dart : MonoBehaviour
 {
     public int roundscores { get; set; } = 0;
 
-    [Header("´ÙÆ®ÆÇ Áß¾Ó")]
+    [Header("ë‹¤íŠ¸íŒ ì¤‘ì•™")]
     public Transform center;
 
-    [Header("¿ÀºêÁ§Æ® ¾Æ¿ô¶óÀÎ")]
+    [Header("ì˜¤ë¸Œì íŠ¸ ì•„ì›ƒë¼ì¸")]
     public Transform outerLine;
 
-    [SerializeField,Header("Á¡¼ö ¹èÀ²°è»ê À§Ä¡")]
+    [SerializeField, Header("ì ìˆ˜ ë°°ìœ¨ê³„ì‚° ìœ„ì¹˜")]
     private ScroeSetPoint scroeMultiplyPoint = new ScroeSetPoint();
 
-    //Áß¾Ó¿¡¼­ ºÎÅÍ Ãæµ¹À§Ä¡ °¢µµ Èû °è»êÇÔ¼ö
+    //ì¤‘ì•™ì—ì„œ ë¶€í„° ì¶©ëŒìœ„ì¹˜ ê°ë„ í˜ ê³„ì‚°í•¨ìˆ˜
     public void SetShootPoint(Vector3 Point)
     {
         float arrowDistance = Vector3.Magnitude(center.position - Point);
 
-        float arrowAngle= Mathf.Atan2(Point.y - center.position.y, Point.x - center.position.x) * Mathf.Rad2Deg;
+        float arrowAngle = Mathf.Atan2(Point.y - center.position.y, Point.x - center.position.x) * Mathf.Rad2Deg;
 
         //print(Point);
         //print(arrowDistance);
@@ -32,14 +31,14 @@ public class Dart : MonoBehaviour
 
         int scores = GetScoreFromAngle(arrowAngle);
 
-        scores = GetScoreMultiplier(arrowDistance,scores);
+        scores = GetScoreMultiplier(arrowDistance, scores);
 
         print(scores);
 
         roundscores += scores;
     }
 
-    //°¢µµ ±âÁØÀ¸·Î Á¡¼ö°è»ê
+    //ê°ë„ ê¸°ì¤€ìœ¼ë¡œ ì ìˆ˜ê³„ì‚°
     public int GetScoreFromAngle(float arrowAngle)
     {
         int[] scores = new int[]
@@ -59,24 +58,24 @@ public class Dart : MonoBehaviour
         return scores[section];
     }
 
-    //Áß¾Ó¿¡¼­ °Å¸®±âÁØÀ¸·Î Ãß°¡Á¡¼ö °è»ê
-    public int GetScoreMultiplier(float arrowDistance,int scores)
+    //ì¤‘ì•™ì—ì„œ ê±°ë¦¬ê¸°ì¤€ìœ¼ë¡œ ì¶”ê°€ì ìˆ˜ ê³„ì‚°
+    public int GetScoreMultiplier(float arrowDistance, int scores)
     {
-        print($"´ÙÆ® : {arrowDistance}");
-        if(arrowDistance < GetScoreDistance(scroeMultiplyPoint.FiftyPoint))
+        print($"ë‹¤íŠ¸ : {arrowDistance}");
+        if (arrowDistance < GetScoreDistance(scroeMultiplyPoint.FiftyPoint))
         {
             return 50;
         }
-        if(arrowDistance < GetScoreDistance(scroeMultiplyPoint.TwentyfivePoint))
+        if (arrowDistance < GetScoreDistance(scroeMultiplyPoint.TwentyfivePoint))
         {
             return 25;
         }
-        if(arrowDistance > GetScoreDistance(scroeMultiplyPoint.ThreetimesPoint1) 
+        if (arrowDistance > GetScoreDistance(scroeMultiplyPoint.ThreetimesPoint1)
             && arrowDistance < GetScoreDistance(scroeMultiplyPoint.ThreetimesPoint2))
         {
             return scores * 3;
         }
-        if(arrowDistance > GetScoreDistance(scroeMultiplyPoint.TwotimesPoint1)
+        if (arrowDistance > GetScoreDistance(scroeMultiplyPoint.TwotimesPoint1)
             && arrowDistance < GetScoreDistance(scroeMultiplyPoint.TwotimesPoint2))
         {
             return scores * 2;
@@ -85,11 +84,10 @@ public class Dart : MonoBehaviour
         {
             return 0;
         }
-        
+
         return scores;
     }
 
-    
     public float GetScoreDistance(Transform Point)
     {
         float Distance = Vector3.Magnitude(center.position - Point.position);
