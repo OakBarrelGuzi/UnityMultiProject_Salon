@@ -212,6 +212,10 @@ public class UIManager : MonoBehaviour, IInitializable
             panel.isOpen = false;
             return panel;
         }
+    }
 
+    public T GetUI<T>() where T : Component
+    {
+        return gameObject.GetComponentInChildren<T>();
     }
 }

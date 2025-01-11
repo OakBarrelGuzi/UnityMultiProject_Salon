@@ -1,31 +1,29 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
-
-public class Player : MonoBehaviour
+using Salon.Controller;
+namespace Salon.Character
 {
-    public string DisplayName { get; set; }
-    public string UserId { get; set; }
-    public Player(string displayName, string userId)
+    public class Player : MonoBehaviour
     {
-        DisplayName = displayName;
-        UserId = userId;
-    }
-    public void Move(Vector3 position)
-    {
-        transform.position = position;
-    }
+        private string displayName;
+        private bool isLocalPlayer;
+        [SerializeField] private MobileController mobileController;
 
-    public void Rotate(Vector3 rotation)
-    {
-        transform.rotation = Quaternion.Euler(rotation);
-    }
+        public void Initialize(string displayName, bool isLocalPlayer)
+        {
+            this.displayName = displayName;
+            this.isLocalPlayer = isLocalPlayer;
 
-    public void MoveTo()
-    {
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-        Vector3 direction = new Vector3(horizontal, 0, vertical);
-        Move(direction);
-        Rotate(direction);
-    }
+            if (isLocalPlayer)
+            {
+                //Todo : UIManager 통해서 inputController 할당 받기
+            }
+        }
 
+        public void UpdatePosition(Vector3 newPosition)
+        {
+            transform.position = newPosition;
+        }
+    }
 }
