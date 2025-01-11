@@ -2,13 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Salon.Controller;
+using UnityEngine.AI;
 namespace Salon.Character
 {
     public class Player : MonoBehaviour
     {
         private string displayName;
         private bool isLocalPlayer;
-        [SerializeField] private MobileController mobileController;
+        private NavMeshAgent agent;
 
         public void Initialize(string displayName, bool isLocalPlayer)
         {
@@ -23,7 +24,7 @@ namespace Salon.Character
 
         public void UpdatePosition(Vector3 newPosition)
         {
-            transform.position = newPosition;
+            agent.SetDestination(newPosition);
         }
     }
 }
