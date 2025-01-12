@@ -21,7 +21,7 @@ public class ChatPopUp : MonoBehaviour
     public async void SendChat(string message)
     {
         if (string.IsNullOrEmpty(message)) return;
-        await FirebaseManager.Instance.channelManager.SendChat(message);
+        await FirebaseManager.Instance.ChannelManager.SendChat(message);
         messageInputField.text = "";
     }
 

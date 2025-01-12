@@ -8,6 +8,7 @@ namespace Salon.Character
         private Vector3 networkPosition;
         private Vector3 networkDirection;
         private const float MOVE_SPEED = 20f;
+        private Animator animator;
 
         [SerializeField]
         private float interpolationSpeed = 10f;
@@ -15,6 +16,7 @@ namespace Salon.Character
         public override void Initialize(string displayName)
         {
             base.Initialize(displayName);
+            animator = GetComponent<Animator>();
             networkPosition = transform.position;
             networkDirection = Vector3.zero;
         }
@@ -23,6 +25,7 @@ namespace Salon.Character
         {
             Vector3 predictedPosition = networkPosition + (networkDirection * MOVE_SPEED * Time.deltaTime);
             transform.position = Vector3.Lerp(transform.position, predictedPosition, Time.deltaTime * interpolationSpeed);
+            animator.SetFloat("MoveSpeed", networkDirection.magnitude);
         }
 
         public void GetNetworkPosition(NetworkPositionData posData)

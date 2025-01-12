@@ -18,8 +18,9 @@ namespace Salon.Firebase
         public DatabaseReference DbReference { get => dbReference; }
         private FirebaseAuth auth;
         private FirebaseUser currentUser;
-        public ChannelManager channelManager { get; private set; }
-        public RoomManager roomManager { get; private set; }
+        public ChannelManager ChannelManager { get; private set; }
+        public RoomManager RoomManager { get; private set; }
+        public ChatManager ChatManager { get; private set; }
 
         private bool isConnected = false;
         private DatabaseReference connectionRef;
@@ -46,16 +47,18 @@ namespace Salon.Firebase
                 {
                     InitializeFirebase();
 
-                    if (channelManager == null)
+                    if (ChannelManager == null)
                     {
                         GameObject CM = new GameObject("ChannelManager");
-                        channelManager = CM.AddComponent<ChannelManager>();
+                        ChannelManager = CM.AddComponent<ChannelManager>();
                         CM.transform.SetParent(transform);
+                        ChannelManager.Initialize();
                     }
-                    if (roomManager == null)
+                    if (RoomManager == null)
                     {
                         GameObject RM = new GameObject("RoomManager");
-                        roomManager = RM.AddComponent<RoomManager>();
+                        RoomManager = RM.AddComponent<RoomManager>();
+                        RoomManager.Initialize();
                         RM.transform.SetParent(transform);
                     }
 
@@ -98,7 +101,6 @@ namespace Salon.Firebase
             auth = FirebaseAuth.DefaultInstance;
             dbReference = FirebaseDatabase.DefaultInstance.RootReference;
 
-            // 연결 상태 모니터링 설정
             connectionRef = FirebaseDatabase.DefaultInstance.GetReference(".info/connected");
             connectionRef.ValueChanged += HandleConnectionChanged;
 
@@ -114,11 +116,14 @@ namespace Salon.Firebase
                 {
                     Debug.Log($"[Firebase] 사용자 로그인: {auth.CurrentUser.Email}");
                     currentUser = auth.CurrentUser;
+                    currentUserName = currentUser.DisplayName;
+                    Debug.Log($"[Firebase] 현재 사용자 이름: {currentUserName}");
                 }
                 else
                 {
                     Debug.Log("[Firebase] 사용자 로그아웃");
                     currentUser = null;
+                    currentUserName = null;
                 }
             }
         }
@@ -346,8 +351,9 @@ namespace Salon.Firebase
             {
                 var result = await auth.SignInWithEmailAndPasswordAsync(email, password);
                 await UpdateUserLastOnline(result.User.UserId);
-                Debug.Log($"[Firebase] 로그인 성공: {result.User.Email}");
-                await channelManager.ExistRooms();
+                currentUserName = result.User.DisplayName;
+                Debug.Log($"[Firebase] 로그인 성공: {result.User.Email} (DisplayName: {currentUserName})");
+                await ChannelManager.ExistRooms();
                 return true;
             }
             catch (Exception ex)

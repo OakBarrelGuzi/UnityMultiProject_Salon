@@ -1,5 +1,6 @@
 using UnityEngine;
 using Salon.Firebase;
+using Salon.Controller;
 
 public class LobbyPanel : Panel
 {
@@ -13,18 +14,12 @@ public class LobbyPanel : Panel
     public override void Initialize()
     {
         chatPopUp.Initialize();
-        if (FindObjectOfType<ChannelManager>() != null)
-        {
-            FindObjectOfType<ChannelManager>().OnReceiveChat += HandleChat;
-        }
+        FirebaseManager.Instance.ChannelManager.OnReceiveChat += HandleChat;
     }
 
     public override void Close()
     {
-        if (FindObjectOfType<ChannelManager>() != null)
-        {
-            FindObjectOfType<ChannelManager>().OnReceiveChat -= HandleChat;
-        }
+        FirebaseManager.Instance.ChannelManager.OnReceiveChat -= HandleChat;
         chatPopUp.ClearChat();
         base.Close();
     }

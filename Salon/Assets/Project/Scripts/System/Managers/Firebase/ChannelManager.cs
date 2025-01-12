@@ -6,39 +6,53 @@ using System.Linq;
 using Newtonsoft.Json;
 using Salon.Firebase.Database;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace Salon.Firebase
 {
-    //ToDo : userRef 변수로 관리하자
     public class ChannelManager : MonoBehaviour
     {
         private DatabaseReference dbReference;
         private DatabaseReference userRef;
-        private string currentChannel;
+        public string CurrentChannel { get; private set; }
+        private ChatManager chatManager;
         public Action<string, string, Sprite> OnReceiveChat;
-        private const float DISCONNECT_TIMEOUT = 5f; // 5초 동안 응답 없으면 연결 해제로 간주
+        private const float DISCONNECT_TIMEOUT = 5f;
+        private DatabaseReference connectedRef;
+        private EventHandler<ValueChangedEventArgs> disconnectHandler;
+        private bool isQuitting = false;
 
-        public void ReceiveChat(string sender, string message)
-        {
-            OnReceiveChat?.Invoke(sender, message, null);
-        }
-
-        private async void OnEnable()
+        public async void Initialize()
         {
             try
             {
-                Debug.Log("ChannelManager OnEnable 시작");
+                Debug.Log("[ChannelManager] Initialize 시작");
                 if (dbReference == null)
                 {
                     dbReference = await GetDbReference();
-                    Debug.Log("Firebase 데이터베이스 참조 설정 완료");
+                    Debug.Log("[ChannelManager] 데이터베이스 참조 설정 완료");
                     SetupDisconnectHandlers();
+                }
+
+                if (chatManager == null)
+                {
+                    GameObject chatObj = new GameObject("ChatManager");
+                    chatManager = chatObj.AddComponent<ChatManager>();
+                    chatObj.transform.SetParent(transform);
+                    chatManager.Initialize(dbReference);
+                    chatManager.OnReceiveChat += (sender, message, sprite) => OnReceiveChat?.Invoke(sender, message, sprite);
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Firebase 초기화 실패: {ex.Message}");
+                Debug.LogError($"[ChannelManager] 초기화 실패: {ex.Message}");
             }
+        }
+
+        public async Task SendChat(string message)
+        {
+            if (string.IsNullOrEmpty(CurrentChannel)) return;
+            await chatManager.SendChat(message, CurrentChannel, FirebaseManager.Instance.GetCurrentDisplayName());
         }
 
         private async Task<DatabaseReference> GetDbReference()
@@ -54,13 +68,67 @@ namespace Salon.Firebase
                     return FirebaseManager.Instance.DbReference;
                 }
 
-                Debug.Log($"Firebase 데이터베이스 참조 대기 중... (시도 {currentRetry + 1}/{maxRetries})");
+                Debug.Log($"[ChannelManager] Firebase 데이터베이스 참조 대기 중... (시도 {currentRetry + 1}/{maxRetries})");
                 await Task.Delay(delayMs);
                 currentRetry++;
                 delayMs *= 2;
             }
 
-            throw new Exception("Firebase 데이터베이스 참조를 가져올 수 없습니다.");
+            throw new Exception("[ChannelManager] Firebase 데이터베이스 참조를 가져올 수 없습니다.");
+        }
+
+        private void SetupDisconnectHandlers()
+        {
+            // 기존 핸들러 제거
+            if (connectedRef != null && disconnectHandler != null)
+            {
+                connectedRef.ValueChanged -= disconnectHandler;
+            }
+
+            // 새로운 핸들러 설정
+            connectedRef = FirebaseDatabase.DefaultInstance.GetReference(".info/connected");
+            disconnectHandler = async (sender, args) =>
+            {
+                try
+                {
+                    if (args.Snapshot.Value == null) return;
+                    bool isConnected = (bool)args.Snapshot.Value;
+
+                    if (!isConnected && !string.IsNullOrEmpty(CurrentChannel) &&
+                        FirebaseManager.Instance.CurrentUserName != null)
+                    {
+                        Debug.Log("[ChannelManager] 연결 끊김 감지, 정리 작업 시작");
+                        // 플레이어 데이터 삭제
+                        var playerRef = dbReference.Child("Channels").Child(CurrentChannel)
+                            .Child("Players").Child(FirebaseManager.Instance.CurrentUserName);
+                        await playerRef.RemoveValueAsync();
+
+                        // UserCount 감소
+                        var userCountRef = dbReference.Child("Channels").Child(CurrentChannel)
+                            .Child("CommonChannelData").Child("UserCount");
+
+                        var currentCount = await userCountRef.GetValueAsync();
+                        int count = currentCount.Value != null ? Convert.ToInt32(currentCount.Value) : 0;
+                        var newCount = Math.Max(0, count - 1);
+
+                        var updates = new Dictionary<string, object>
+                        {
+                            ["UserCount"] = newCount,
+                            ["isFull"] = newCount >= 10
+                        };
+
+                        await userCountRef.Parent.UpdateChildrenAsync(updates);
+                        Debug.Log("[ChannelManager] 연결 끊김 정리 작업 완료");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[ChannelManager] 연결 상태 처리 중 오류 발생: {ex.Message}");
+                }
+            };
+
+            connectedRef.ValueChanged += disconnectHandler;
+            Debug.Log("[ChannelManager] 연결 해제 핸들러 설정 완료");
         }
 
         public async Task ExistRooms()
@@ -82,7 +150,7 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"채널 목록 확인 실패: {ex.Message}");
+                Debug.LogError($"[ChannelManager] 채널 목록 확인 실패: {ex.Message}");
             }
         }
 
@@ -101,87 +169,218 @@ namespace Salon.Firebase
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError($"방 {roomName} 생성 중 오류: {ex.Message}");
+                        Debug.LogError($"[ChannelManager] 방 {roomName} 생성 중 오류: {ex.Message}");
                     }
                 }
             }
         }
 
-        public async Task AddPlayerToChannel(string channelName, string displayName)
+        public async Task JoinChannel(string channelName)
         {
             try
             {
-                Debug.Log("AddPlayerToRoom 돌입");
-                var snapshot = await dbReference.Child("Channels").Child(channelName).GetValueAsync();
+                Debug.Log($"[ChannelManager] {channelName} 채널 입장 시도 시작");
 
-                if (!snapshot.Exists)
+                // 채널 존재 여부 확인
+                Debug.Log($"[ChannelManager] 채널 {channelName} 존재 여부 확인 중...");
+                var channelSnapshot = await dbReference.Child("Channels").Child(channelName).GetValueAsync();
+                if (!channelSnapshot.Exists)
                 {
-                    Debug.LogError($"채널 {channelName}이 존재하지 않습니다.");
+                    Debug.LogError($"[ChannelManager] 채널 {channelName}이 존재하지 않음");
                     throw new Exception($"채널 {channelName}이 존재하지 않습니다.");
                 }
+                Debug.Log($"[ChannelManager] 채널 {channelName} 존재 확인됨");
+                if (CurrentChannel != null)
+                {
+                    // 현재 채널에서 나가기
+                    Debug.Log("[ChannelManager] 현재 채널에서 나가기 시도...");
+                    await LeaveChannel(true);
+                    Debug.Log("[ChannelManager] 현재 채널에서 나가기 완료");
+                }
 
-                int currentUserCount = snapshot.Child("CommonChannelData").Child("UserCount").Value != null ?
-                    Convert.ToInt32(snapshot.Child("CommonChannelData").Child("UserCount").Value) : 0;
+                // UserCount 확인
+                Debug.Log($"[ChannelManager] {channelName} 채널의 유저 수 확인 중...");
+                var userCountSnapshot = await dbReference.Child("Channels").Child(channelName)
+                    .Child("CommonChannelData").Child("UserCount").GetValueAsync();
+                int currentUserCount = userCountSnapshot.Value != null ?
+                    Convert.ToInt32(userCountSnapshot.Value) : 0;
+                Debug.Log($"[ChannelManager] 현재 유저 수: {currentUserCount}");
 
                 if (currentUserCount >= 10)
                 {
+                    Debug.LogError("[ChannelManager] 채널이 가득 참");
                     throw new Exception("채널이 가득 찼습니다.");
                 }
 
-                var playerData = new GamePlayerData(displayName);
+                CurrentChannel = channelName;
+                Debug.Log($"[ChannelManager] CurrentChannel을 {channelName}으로 설정");
 
-                // Players에 플레이어 데이터 추가
-                await dbReference.Child("Channels").Child(channelName).Child("Players")
-                    .Child(displayName).SetRawJsonValueAsync(JsonConvert.SerializeObject(playerData));
-
-                var ChannelUpdateData = new Dictionary<string, object>
+                // CurrentUserName 체크
+                string currentUserName = FirebaseManager.Instance.CurrentUserName;
+                Debug.Log($"[ChannelManager] CurrentUserName: {currentUserName}");
+                if (string.IsNullOrEmpty(currentUserName))
                 {
-                    ["UserCount"] = currentUserCount + 1,
+                    throw new Exception("[ChannelManager] 현재 사용자 이름이 설정되지 않았습니다.");
+                }
 
-                    ["isFull"] = (currentUserCount + 1) >= 10
-                };
-                // CommonChannelData의 UserCount 업데이트
-                await dbReference.Child("Channels").Child(channelName).Child("CommonChannelData").UpdateChildrenAsync(ChannelUpdateData);
-                Debug.Log("플레이어 데이터 추가 완료");
+                var playerRef = dbReference.Child("Channels").Child(channelName)
+                    .Child("Players").Child(currentUserName);
+
+                // 새로운 플레이어 데이터 생성
+                Debug.Log("[ChannelManager] 플레이어 데이터 생성 중...");
+                var playerData = new GamePlayerData(currentUserName);
+                string playerJson = JsonConvert.SerializeObject(playerData);
+                Debug.Log($"[ChannelManager] 생성된 플레이어 데이터: {playerJson}");
+                await playerRef.SetRawJsonValueAsync(playerJson);
+                Debug.Log("[ChannelManager] 플레이어 데이터 저장 완료");
+
+                // UserCount 증가
+                Debug.Log("[ChannelManager] UserCount 업데이트 중...");
+                await dbReference.Child("Channels").Child(channelName)
+                    .Child("CommonChannelData").UpdateChildrenAsync(new Dictionary<string, object>
+                    {
+                        ["UserCount"] = currentUserCount + 1,
+                        ["isFull"] = (currentUserCount + 1) >= 10
+                    });
+                Debug.Log($"[ChannelManager] UserCount 업데이트 완료: {currentUserCount + 1}");
+
+                // 연결 해제 핸들러 설정
+                Debug.Log("[ChannelManager] 연결 해제 핸들러 설정 중...");
+                SetupDisconnectHandlers();
+                Debug.Log("[ChannelManager] 연결 해제 핸들러 설정 완료");
+
+                // 채팅 구독 시작
+                Debug.Log("[ChannelManager] 채팅 구독 시작...");
+                chatManager.StartListeningToMessages(channelName);
+                Debug.Log("[ChannelManager] 채팅 구독 완료");
+
+                // 플레이어 프리팹 생성
+                RoomManager roomManager = FirebaseManager.Instance.RoomManager;
+                if (roomManager != null)
+                {
+                    Debug.Log("[ChannelManager] 플레이어 프리팹 생성 시작");
+                    var newPlayerData = new GamePlayerData(FirebaseManager.Instance.CurrentUserName);
+                    roomManager.InstantiatePlayer(FirebaseManager.Instance.CurrentUserName, newPlayerData, isLocalPlayer: true);
+                    Debug.Log("[ChannelManager] 플레이어 프리팹 생성 완료");
+
+                    // 플레이어 변경사항 구독 시작
+                    Debug.Log("[ChannelManager] 플레이어 변경사항 구독 시작...");
+                    await roomManager.SubscribeToPlayerChanges(channelName);
+                    Debug.Log("[ChannelManager] 플레이어 변경사항 구독 완료");
+                }
+
+                Debug.Log($"[ChannelManager] {channelName} 채널 입장 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"플레이어 추가 중 오류: {ex.Message}");
+                Debug.LogError($"[ChannelManager] 채널 입장 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 throw;
             }
         }
 
-        public async Task RemovePlayerFromChannel(string channelName, string displayName)
+        public async Task LeaveChannel(bool isNormalDisconnect = true)
         {
+            if (string.IsNullOrEmpty(CurrentChannel)) return;
+
             try
             {
-                var channelSnapshot = await dbReference.Child("Channels").Child(channelName).GetValueAsync();
-                if (!channelSnapshot.Exists) return;
+                Debug.Log($"[ChannelManager] 채널 {CurrentChannel}에서 나가기 시작");
 
-                await dbReference.Child("Channels").Child(channelName).Child("Players")
-                    .Child(displayName).RemoveValueAsync();
-
-                var userCountSnapshot = await dbReference.Child("Channels").Child(channelName)
-                    .Child("CommonChannelData").Child("UserCount").GetValueAsync();
-
-                int currentUserCount = userCountSnapshot.Value != null ?
-                    Convert.ToInt32(userCountSnapshot.Value) : 0;
-
-                if (currentUserCount > 0)
+                // 1. 채팅 구독 중단
+                if (chatManager != null)
                 {
+                    Debug.Log("[ChannelManager] 채팅 구독 중단");
+                    chatManager.StopListeningToMessages();
+                }
+
+                // 2. RoomManager 정리 (이벤트 구독 해제 및 플레이어 오브젝트 제거)
+                RoomManager roomManager = FirebaseManager.Instance.RoomManager;
+                if (roomManager != null)
+                {
+                    Debug.Log("[ChannelManager] RoomManager 정리 시작");
+                    roomManager.UnsubscribeFromChannel();
+                    roomManager.DestroyAllPlayers();
+                    Debug.Log("[ChannelManager] RoomManager 정리 완료");
+                }
+
+                // 3. Firebase 데이터 정리 (정상 종료시에만)
+                if (isNormalDisconnect)
+                {
+                    Debug.Log("[ChannelManager] Firebase 데이터 정리 시작");
+                    var playerRef = dbReference.Child("Channels").Child(CurrentChannel)
+                        .Child("Players").Child(FirebaseManager.Instance.CurrentUserName);
+                    await playerRef.RemoveValueAsync();
+
+                    // UserCount 감소
+                    var userCountRef = dbReference.Child("Channels").Child(CurrentChannel)
+                        .Child("CommonChannelData").Child("UserCount");
+
+                    var currentCount = await userCountRef.GetValueAsync();
+                    int count = currentCount.Value != null ? Convert.ToInt32(currentCount.Value) : 0;
+                    var newCount = Math.Max(0, count - 1);
+
                     var updates = new Dictionary<string, object>
                     {
-                        ["UserCount"] = currentUserCount - 1,
-                        ["isFull"] = (currentUserCount - 1) >= 10
+                        ["UserCount"] = newCount,
+                        ["isFull"] = newCount >= 10
                     };
-
-                    await dbReference.Child("Channels").Child(channelName)
-                        .Child("CommonChannelData").UpdateChildrenAsync(updates);
+                    await userCountRef.Parent.UpdateChildrenAsync(updates);
+                    Debug.Log("[ChannelManager] Firebase 데이터 정리 완료");
                 }
+
+                CurrentChannel = null;
+                Debug.Log("[ChannelManager] 채널 나가기 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"플레이어 제거 중 오류: {ex.Message}");
+                Debug.LogError($"[ChannelManager] 채널 나가기 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
+            }
+        }
+
+        private bool hasCalledLeaveChannel = false;
+
+        private async void OnDisable()
+        {
+            if (isQuitting || hasCalledLeaveChannel) return;
+            isQuitting = true;
+            hasCalledLeaveChannel = true;
+            try
+            {
+                await LeaveChannel(true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ChannelManager] OnDisable에서 LeaveChannel 실패: {ex.Message}");
+            }
+        }
+
+        private async void OnDestroy()
+        {
+            if (isQuitting || hasCalledLeaveChannel) return;
+            isQuitting = true;
+            hasCalledLeaveChannel = true;
+            try
+            {
+                await LeaveChannel(true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ChannelManager] OnDestroy에서 LeaveChannel 실패: {ex.Message}");
+            }
+        }
+
+        private async void OnApplicationQuit()
+        {
+            if (isQuitting || hasCalledLeaveChannel) return;
+            isQuitting = true;
+            hasCalledLeaveChannel = true;
+            try
+            {
+                await LeaveChannel(true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ChannelManager] OnApplicationQuit에서 LeaveChannel 실패: {ex.Message}");
             }
         }
 
@@ -201,295 +400,8 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"채널 데이터 로드 실패: {ex.Message}");
+                Debug.LogError($"[ChannelManager] 채널 데이터 로드 실패: {ex.Message}");
                 return null;
-            }
-        }
-
-        public async Task SendChat(string message)
-        {
-            if (string.IsNullOrEmpty(currentChannel)) return;
-
-            try
-            {
-                string senderId = FirebaseManager.Instance.GetCurrentDisplayName();
-                var messageData = new MessageData(
-                    senderId,
-                    message,
-                    DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                );
-
-                string messageKey = dbReference.Child("Channels").Child(currentChannel)
-                    .Child("CommonChannelData").Child("Messages").Push().Key;
-
-                await dbReference.Child("Channels").Child(currentChannel)
-                    .Child("CommonChannelData").Child("Messages")
-                    .Child(messageKey).SetRawJsonValueAsync(JsonConvert.SerializeObject(messageData));
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"메시지 전송 실패: {ex.Message}");
-            }
-        }
-
-        private async void StartListeningToMessages()
-        {
-            if (string.IsNullOrEmpty(currentChannel)) return;
-
-            Debug.Log($"채널 {currentChannel}의 메시지 구독 시작");
-
-            long lastTimestamp = 0;
-            // 기존 메시지들을 시간순으로 가져오기
-            try
-            {
-                var snapshot = await dbReference.Child("Channels").Child(currentChannel)
-                    .Child("CommonChannelData").Child("Messages")
-                    .OrderByChild("Timestamp")
-                    .GetValueAsync();
-
-                if (snapshot.Exists)
-                {
-                    foreach (var messageSnapshot in snapshot.Children)
-                    {
-                        var messageData = JsonConvert.DeserializeObject<MessageData>(messageSnapshot.GetRawJsonValue());
-                        OnReceiveChat?.Invoke(messageData.SenderId, messageData.Content, null);
-                        lastTimestamp = messageData.Timestamp;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"기존 메시지 로드 실패: {ex.Message}");
-            }
-
-            // 마지막 타임스탬프 이후의 새로운 메시지만 구독
-            dbReference.Child("Channels").Child(currentChannel)
-                .Child("CommonChannelData").Child("Messages")
-                .OrderByChild("Timestamp")
-                .StartAt(lastTimestamp + 1)
-                .ChildAdded += HandleMessageReceived;
-        }
-
-        private void StopListeningToMessages()
-        {
-            if (string.IsNullOrEmpty(currentChannel)) return;
-
-            dbReference.Child("Channels").Child(currentChannel)
-                .Child("CommonChannelData").Child("Messages")
-                .ChildAdded -= HandleMessageReceived;
-        }
-
-        private void HandleMessageReceived(object sender, ChildChangedEventArgs args)
-        {
-            if (!args.Snapshot.Exists) return;
-
-            try
-            {
-                var messageData = JsonConvert.DeserializeObject<MessageData>(args.Snapshot.GetRawJsonValue());
-                Debug.Log($"새 메시지 수신: Sender={messageData.SenderId}, Content={messageData.Content}");
-                OnReceiveChat?.Invoke(messageData.SenderId, messageData.Content, null);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"메시지 처리 중 오류 발생: {ex.Message}");
-            }
-        }
-
-        public async Task<bool> EnterChannel(string channelName)
-        {
-            try
-            {
-                print("EnterChannel 돌입");
-
-                if (FirebaseManager.Instance.DbReference == null)
-                {
-                    print("DbReference 없음");
-                    await Task.Delay(1000);
-                    dbReference = await GetDbReference();
-                }
-
-                string displayName = FirebaseManager.Instance.GetCurrentDisplayName();
-
-                await AddPlayerToChannel(channelName, displayName);
-
-                currentChannel = channelName;
-                StartListeningToMessages();
-
-                RoomManager roomManager = FirebaseManager.Instance.roomManager;
-                if (roomManager != null)
-                {
-                    Debug.Log("플레이어 프리팹 생성시작");
-                    var playerData = new GamePlayerData(displayName);
-                    roomManager.InstantiatePlayer(displayName, playerData, isLocalPlayer: true);
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"채널 입장 실패: {ex.Message}");
-                return false;
-            }
-        }
-
-        private async void OnDisable()
-        {
-            await LeaveCurrentChannel();
-        }
-
-        private async void OnDestroy()
-        {
-            await LeaveCurrentChannel();
-        }
-
-        private async void OnApplicationQuit()
-        {
-            await LeaveCurrentChannel();
-        }
-
-        private async Task LeaveCurrentChannel()
-        {
-            if (string.IsNullOrEmpty(currentChannel)) return;
-
-            try
-            {
-                StopListeningToMessages();
-
-                var userCountSnapshot = await dbReference.Child("Channels").Child(currentChannel)
-                    .Child("CommonChannelData").Child("UserCount").GetValueAsync();
-
-                int currentUserCount = userCountSnapshot.Value != null ?
-                    Convert.ToInt32(userCountSnapshot.Value) : 0;
-
-                if (currentUserCount > 0)
-                {
-                    var updates = new Dictionary<string, object>
-                    {
-                        ["UserCount"] = currentUserCount - 1,
-                        ["isFull"] = false
-                    };
-
-                    await dbReference.Child("Channels").Child(currentChannel)
-                        .Child("CommonChannelData").UpdateChildrenAsync(updates);
-                }
-
-                await RemovePlayerFromChannel(currentChannel, FirebaseManager.Instance.GetCurrentDisplayName());
-                currentChannel = null;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"채널 퇴장 실패: {ex.Message}");
-                try
-                {
-                    await dbReference.Child("Channels").Child(currentChannel)
-                        .Child("CommonChannelData").Child("UserCount")
-                        .RunTransaction(mutableData =>
-                        {
-                            int count = mutableData.Value != null ? Convert.ToInt32(mutableData.Value) : 0;
-                            mutableData.Value = Math.Max(0, count - 1);
-                            return TransactionResult.Success(mutableData);
-                        });
-                }
-                catch (Exception innerEx)
-                {
-                    Debug.LogError($"UserCount 업데이트 실패: {innerEx.Message}");
-                }
-            }
-        }
-
-        private void SetupDisconnectHandlers()
-        {
-            // 연결이 끊어질 때 자동으로 cleanup하는 핸들러 설정
-            var connectedRef = FirebaseDatabase.DefaultInstance.GetReference(".info/connected");
-            connectedRef.ValueChanged += async (sender, args) =>
-            {
-                if (args.Snapshot.Value == null || !(bool)args.Snapshot.Value) return;
-
-                if (!string.IsNullOrEmpty(currentChannel) && FirebaseManager.Instance.CurrentUserName != null)
-                {
-                    var playerRef = dbReference.Child("Channels").Child(currentChannel)
-                        .Child("Players").Child(FirebaseManager.Instance.CurrentUserName);
-
-                    // 연결이 끊어질 때 자동으로 데이터 삭제
-                    await playerRef.SetValueAsync(null, true);  // true는 onDisconnect를 의미
-
-                    // UserCount 감소
-                    var userCountRef = dbReference.Child("Channels").Child(currentChannel)
-                        .Child("CommonChannelData").Child("UserCount");
-
-                    var currentCount = await userCountRef.GetValueAsync();
-                    int count = currentCount.Value != null ? Convert.ToInt32(currentCount.Value) : 0;
-                    await userCountRef.SetValueAsync(Math.Max(0, count - 1), true);
-                }
-            };
-        }
-
-        public async Task LeaveChannel(bool isNormalDisconnect = true)
-        {
-            if (string.IsNullOrEmpty(currentChannel)) return;
-
-            try
-            {
-                var playerRef = dbReference.Child("Channels").Child(currentChannel)
-                    .Child("Players").Child(FirebaseManager.Instance.CurrentUserName);
-
-                // 정상 종료시에는 즉시 데이터 삭제
-                if (isNormalDisconnect)
-                {
-                    await playerRef.RemoveValueAsync();
-
-                    // UserCount 감소
-                    var userCountRef = dbReference.Child("Channels").Child(currentChannel)
-                        .Child("CommonChannelData").Child("UserCount");
-
-                    var currentCount = await userCountRef.GetValueAsync();
-                    int count = currentCount.Value != null ? Convert.ToInt32(currentCount.Value) : 0;
-                    await userCountRef.SetValueAsync(Math.Max(0, count - 1));
-
-                    // OnDisconnect 핸들러 취소
-                    await playerRef.SetValueAsync(null, false);  // false는 onDisconnect 취소
-                }
-
-                currentChannel = null;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"채널 나가기 실패: {ex.Message}");
-            }
-        }
-
-        public async Task JoinChannel(string channelName)
-        {
-            try
-            {
-                // 이전 채널에서 나가기
-                await LeaveChannel(true);
-
-                currentChannel = channelName;
-                var playerRef = dbReference.Child("Channels").Child(channelName)
-                    .Child("Players").Child(FirebaseManager.Instance.CurrentUserName);
-
-                // 새로운 플레이어 데이터 생성
-                var playerData = new GamePlayerData(FirebaseManager.Instance.CurrentUserName);
-                await playerRef.SetRawJsonValueAsync(JsonConvert.SerializeObject(playerData));
-
-                // UserCount 증가
-                var userCountRef = dbReference.Child("Channels").Child(channelName)
-                    .Child("CommonChannelData").Child("UserCount");
-                await userCountRef.RunTransaction(mutableData =>
-                {
-                    int count = mutableData.Value != null ? Convert.ToInt32(mutableData.Value) : 0;
-                    mutableData.Value = count + 1;
-                    return TransactionResult.Success(mutableData);
-                });
-
-                // 연결 해제 핸들러 설정
-                SetupDisconnectHandlers();
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"채널 입장 실패: {ex.Message}");
-                throw;
             }
         }
     }

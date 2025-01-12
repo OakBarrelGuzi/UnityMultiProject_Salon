@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
 namespace Salon.Controller
@@ -17,6 +18,7 @@ namespace Salon.Controller
         protected override void Awake()
         {
             isAimable = true;
+            this.scaler = UIManager.Instance.GetComponent<CanvasScaler>();
             base.Awake();
             innerRadius = dpadInner.rect.width / 2f * scaler.scaleFactor;
             pointerRadius = pointer.rect.width / 2f * scaler.scaleFactor;
