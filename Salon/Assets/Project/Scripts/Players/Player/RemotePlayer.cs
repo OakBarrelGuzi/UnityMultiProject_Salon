@@ -23,9 +23,12 @@ namespace Salon.Character
 
         private void Update()
         {
-            Vector3 predictedPosition = networkPosition + (networkDirection * MOVE_SPEED * Time.deltaTime);
-            transform.position = Vector3.Lerp(transform.position, predictedPosition, Time.deltaTime * interpolationSpeed);
-            animator.SetFloat("MoveSpeed", networkDirection.magnitude);
+            if (!isTesting)
+            {
+                Vector3 predictedPosition = networkPosition + (networkDirection * MOVE_SPEED * Time.deltaTime);
+                transform.position = Vector3.Lerp(transform.position, predictedPosition, Time.deltaTime * interpolationSpeed);
+                animator.SetFloat("MoveSpeed", networkDirection.magnitude);
+            }
         }
 
         public void GetNetworkPosition(NetworkPositionData posData)

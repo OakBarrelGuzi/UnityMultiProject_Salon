@@ -13,7 +13,10 @@ namespace Salon.System
                 {
                     GameObject go = new GameObject(typeof(T).Name);
                     instance = go.AddComponent<T>();
-                    DontDestroyOnLoad(go);
+                    if (Application.isPlaying)
+                    {
+                        DontDestroyOnLoad(go);
+                    }
                 }
                 return instance;
             }
@@ -24,7 +27,10 @@ namespace Salon.System
             if (instance == null)
             {
                 instance = this as T;
-                DontDestroyOnLoad(gameObject);
+                if (Application.isPlaying)
+                {
+                    DontDestroyOnLoad(gameObject);
+                }
             }
             else if (instance != this)
             {

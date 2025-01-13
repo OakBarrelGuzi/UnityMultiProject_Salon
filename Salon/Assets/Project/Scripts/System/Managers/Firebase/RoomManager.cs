@@ -159,7 +159,7 @@ namespace Salon.Firebase
                     var positionRef = e.Snapshot.Reference.Child("Position");
                     positionRef.ValueChanged -= OnPositionChanged;
 
-                    Destroy(instantiatedPlayers[displayName]);
+                    DestroyImmediate(instantiatedPlayers[displayName]);
                     instantiatedPlayers.Remove(displayName);
                 }
             }

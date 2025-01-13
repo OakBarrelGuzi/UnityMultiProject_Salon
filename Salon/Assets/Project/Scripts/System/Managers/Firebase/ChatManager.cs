@@ -13,6 +13,8 @@ namespace Salon.Firebase
         private string currentChannel;
         public Action<string, string, Sprite> OnReceiveChat;
 
+
+
         public void Initialize(DatabaseReference dbReference)
         {
             this.dbReference = dbReference;

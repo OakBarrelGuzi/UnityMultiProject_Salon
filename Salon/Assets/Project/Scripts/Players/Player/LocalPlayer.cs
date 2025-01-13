@@ -30,9 +30,12 @@ namespace Salon.Character
 
         private void Update()
         {
-            if (Time.time - lastPositionUpdateTime >= positionUpdateInterval)
+            if (!isTesting)
             {
-                UpdateAndSendPosition();
+                if (Time.time - lastPositionUpdateTime >= positionUpdateInterval)
+                {
+                    UpdateAndSendPosition();
+                }
             }
         }
 

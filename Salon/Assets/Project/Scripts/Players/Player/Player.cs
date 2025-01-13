@@ -6,6 +6,9 @@ namespace Salon.Character
     {
         protected string displayName;
 
+        [SerializeField]
+        protected bool isTesting = false;
+
         public virtual void Initialize(string displayName)
         {
             this.displayName = displayName;
