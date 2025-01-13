@@ -3,37 +3,37 @@ using Salon.Firebase.Database;
 
 namespace Salon.Character
 {
+    //ToDo : 회전에 약간 보간 추가
     public class RemotePlayer : Player
     {
         private Vector3 targetPosition;
         private Vector3 targetDirection;
         private Vector3 currentVelocity;
-        private Vector3 currentAngularVelocity;
+        private Vector3 previousPosition;
 
         [SerializeField] private float positionSmoothTime = 0.15f;
-        [SerializeField] private float rotationSmoothTime = 0.1f;
         [SerializeField] private float maxSpeed = 20f;
+        [SerializeField] private float movementThreshold = 0.01f;
 
         private Animator animator;
         private bool isMoving;
-        private float currentMoveSpeed;
-        private float moveSpeedVelocity;
 
         public override void Initialize(string displayName)
         {
             base.Initialize(displayName);
             animator = GetComponent<Animator>();
             targetPosition = transform.position;
+            previousPosition = transform.position;
             targetDirection = transform.forward;
             currentVelocity = Vector3.zero;
-            currentAngularVelocity = Vector3.zero;
         }
 
         private void Update()
         {
             if (isTesting) return;
 
-            // 위치 보간
+            previousPosition = transform.position;
+
             transform.position = Vector3.SmoothDamp(
                 transform.position,
                 targetPosition,
@@ -41,27 +41,16 @@ namespace Salon.Character
                 positionSmoothTime,
                 maxSpeed);
 
-            // 방향 보간
-            if (targetDirection != Vector3.zero)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    targetRotation,
-                    Time.deltaTime * 360f * rotationSmoothTime);
-            }
+            isMoving = Vector3.Distance(transform.position, previousPosition) > movementThreshold;
 
-            // 애니메이션 업데이트
-            float targetSpeed = isMoving ? 1f : 0f;
-            currentMoveSpeed = Mathf.SmoothDamp(
-                currentMoveSpeed,
-                targetSpeed,
-                ref moveSpeedVelocity,
-                0.1f);
+            if (targetDirection.magnitude > 0.01f)
+            {
+                transform.forward = targetDirection;
+            }
 
             if (animator != null)
             {
-                animator.SetFloat("MoveSpeed", currentMoveSpeed);
+                animator.SetFloat("MoveSpeed", isMoving ? 1f : 0f);
             }
         }
 
@@ -73,12 +62,15 @@ namespace Salon.Character
             if (position.HasValue)
             {
                 targetPosition = position.Value;
-                isMoving = posData.IsPositionUpdate;
             }
 
-            targetDirection = posData.GetDirection();
+            Vector3 newDirection = posData.GetDirection();
+            if (newDirection.magnitude > 0.01f)
+            {
+                targetDirection = newDirection;
+            }
 
-            Debug.Log($"[RemotePlayer] {displayName} 위치 업데이트 - Pos: {targetPosition}, Dir: {targetDirection}, Moving: {isMoving}");
+            Debug.Log($"[RemotePlayer] {displayName} 업데이트 - Pos: {targetPosition}, Dir: {targetDirection}, Moving: {isMoving}");
         }
     }
 }

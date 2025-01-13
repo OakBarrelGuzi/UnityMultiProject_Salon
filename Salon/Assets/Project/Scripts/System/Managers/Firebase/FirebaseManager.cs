@@ -46,7 +46,7 @@ namespace Salon.Firebase
             }
         }
         public ChannelManager ChannelManager { get; private set; }
-        public ChatManager ChatManager { get; private set; }
+        public ChatManager ChatManager { get; set; }
 
         private bool isConnected = false;
         private DatabaseReference connectionRef;
@@ -60,11 +60,11 @@ namespace Salon.Firebase
             // 추가적인 초기화 로직
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void AutoInitialize()
-        {
-            _ = Instance;
-        }
+        // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        // private static void AutoInitialize()
+        // {
+        //     _ = Instance;
+        // }
 
         public bool IsInitialized { get; private set; }
         private TaskCompletionSource<bool> initializationComplete;

@@ -12,11 +12,16 @@ namespace Salon.Firebase
     public class RoomManager : MonoBehaviour
     {
         private DatabaseReference dbReference;
+        private DatabaseReference channelsRef;
+        private DatabaseReference currentChannelRef;
+        private DatabaseReference currentChannelPlayersRef;
+        private Query currentPlayersQuery;
         private Dictionary<string, GameObject> instantiatedPlayers = new Dictionary<string, GameObject>();
+        private Dictionary<string, Query> playerPositionQueries = new Dictionary<string, Query>();
         public LocalPlayer localPlayerPrefab;
         public RemotePlayer remotePlayerPrefab;
         public Transform spawnParent;
-        private string CurrentChannel;
+        private string currentChannel;
 
         public void Initialize()
         {
@@ -27,6 +32,7 @@ namespace Salon.Firebase
                 {
                     Debug.Log("[RoomManager] 데이터베이스 참조 설정 시작");
                     dbReference = FirebaseManager.Instance.DbReference;
+                    channelsRef = dbReference.Child("Channels");
                     Debug.Log("[RoomManager] 데이터베이스 참조 설정 완료");
                 }
                 Debug.Log("[RoomManager] 플레이어 프리팹 로드 시작");
@@ -40,22 +46,42 @@ namespace Salon.Firebase
             }
         }
 
+        private void UpdateChannelReferences(string channelName)
+        {
+            if (string.IsNullOrEmpty(channelName)) return;
+
+            currentChannelRef = channelsRef.Child(channelName);
+            currentChannelPlayersRef = currentChannelRef.Child("Players");
+            currentChannel = channelName;
+            Debug.Log($"[RoomManager] 채널 레퍼런스 업데이트 완료: {channelName}");
+        }
+
+        private void ClearChannelReferences()
+        {
+            currentChannelRef = null;
+            currentChannelPlayersRef = null;
+            currentPlayersQuery = null;
+            currentChannel = null;
+            Debug.Log("[RoomManager] 채널 레퍼런스 초기화 완료");
+        }
+
         public void UnsubscribeFromChannel()
         {
-            if (dbReference != null && !string.IsNullOrEmpty(CurrentChannel))
+            if (currentPlayersQuery != null)
             {
-                Debug.Log($"[RoomManager] {CurrentChannel} 채널의 이벤트 구독 해제 시작");
-                var playersReference = dbReference.Child("Channels").Child(CurrentChannel).Child("Players");
-                playersReference.ChildAdded -= OnPlayerAdded;
-                playersReference.ChildRemoved -= OnPlayerRemoved;
-
-                foreach (var player in instantiatedPlayers)
-                {
-                    var positionRef = playersReference.Child(player.Key).Child("Position");
-                    positionRef.ValueChanged -= OnPositionChanged;
-                }
-                Debug.Log("[RoomManager] 이벤트 구독 해제 완료");
+                currentPlayersQuery.ChildAdded -= OnPlayerAdded;
+                currentPlayersQuery.ChildRemoved -= OnPlayerRemoved;
+                currentPlayersQuery = null;
             }
+
+            foreach (var query in playerPositionQueries.Values)
+            {
+                query.ValueChanged -= OnPositionChanged;
+            }
+            playerPositionQueries.Clear();
+
+            ClearChannelReferences();
+            Debug.Log("[RoomManager] 채널 구독 해제 완료");
         }
 
         public void DestroyAllPlayers()
@@ -69,46 +95,77 @@ namespace Salon.Firebase
                 }
             }
             instantiatedPlayers.Clear();
-            CurrentChannel = null;
             Debug.Log("[RoomManager] 모든 플레이어 오브젝트 제거 완료");
         }
 
         public async Task SubscribeToPlayerChanges(string channelName)
         {
-            CurrentChannel = channelName;
-            var playersReference = dbReference.Child("Channels").Child(channelName).Child("Players");
-
-            var snapshot = await playersReference
-                .OrderByChild("DisplayName")
-                .StartAt(FirebaseManager.Instance.CurrentUserName + "\uf8ff")
-                .GetValueAsync();
-
-            if (snapshot.Exists)
+            try
             {
-                foreach (var child in snapshot.Children)
+                Debug.Log($"[RoomManager] 플레이어 변경사항 구독 시작: {channelName}");
+                UpdateChannelReferences(channelName);
+
+                // 기존 플레이어 로드
+                var snapshot = await currentChannelPlayersRef.GetValueAsync();
+                if (snapshot.Exists)
                 {
-                    var displayName = child.Key;
-                    if (displayName != FirebaseManager.Instance.CurrentUserName)
+                    foreach (var child in snapshot.Children)
                     {
-                        var playerData = JsonConvert.DeserializeObject<GamePlayerData>(child.GetRawJsonValue());
-                        if (!instantiatedPlayers.ContainsKey(displayName))
+                        var displayName = child.Key;
+                        if (displayName != FirebaseManager.Instance.CurrentUserName)
                         {
-                            InstantiatePlayer(displayName, playerData);
+                            var playerData = JsonConvert.DeserializeObject<GamePlayerData>(child.GetRawJsonValue());
+                            if (!instantiatedPlayers.ContainsKey(displayName))
+                            {
+                                InstantiatePlayer(displayName, playerData);
+                                SubscribeToPlayerPosition(displayName);
+                            }
                         }
                     }
                 }
+
+                // 플레이어 변경사항 구독
+                currentPlayersQuery = currentChannelPlayersRef;
+                currentPlayersQuery.ChildAdded += OnPlayerAdded;
+                currentPlayersQuery.ChildRemoved += OnPlayerRemoved;
+
+                Debug.Log("[RoomManager] 플레이어 변경사항 구독 완료");
             }
-
-            playersReference.Child(FirebaseManager.Instance.CurrentUserName).ChildChanged -= OnPlayerUpdated;
-
-            foreach (var player in instantiatedPlayers)
+            catch (Exception ex)
             {
-                var positionRef = playersReference.Child(player.Key).Child("Position");
-                positionRef.ValueChanged += OnPositionChanged;
+                Debug.LogError($"[RoomManager] 플레이어 변경사항 구독 실패: {ex.Message}");
+                throw;
             }
+        }
 
-            playersReference.ChildAdded += OnPlayerAdded;
-            playersReference.ChildRemoved += OnPlayerRemoved;
+        private void SubscribeToPlayerPosition(string displayName)
+        {
+            try
+            {
+                if (playerPositionQueries.ContainsKey(displayName))
+                {
+                    playerPositionQueries[displayName].ValueChanged -= OnPositionChanged;
+                }
+
+                var positionQuery = currentChannelPlayersRef.Child(displayName).Child("Position");
+                positionQuery.ValueChanged += OnPositionChanged;
+                playerPositionQueries[displayName] = positionQuery;
+                Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[RoomManager] 플레이어 위치 구독 실패: {ex.Message}");
+            }
+        }
+
+        private void UnsubscribeFromPlayerPosition(string displayName)
+        {
+            if (playerPositionQueries.TryGetValue(displayName, out var query))
+            {
+                query.ValueChanged -= OnPositionChanged;
+                playerPositionQueries.Remove(displayName);
+                Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 해제 완료");
+            }
         }
 
         private void OnPositionChanged(object sender, ValueChangedEventArgs args)
@@ -130,14 +187,10 @@ namespace Salon.Firebase
 
             if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
             {
-                Debug.Log($"[RoomManager] OnPositionChanged: {displayName}의 GameObject 찾음");
                 var posData = JsonConvert.DeserializeObject<NetworkPositionData>(args.Snapshot.GetRawJsonValue());
-                Debug.Log($"[RoomManager] OnPositionChanged: 위치 데이터 - IsPositionUpdate: {posData.IsPositionUpdate}, Position: {posData.GetPosition()}, Direction: {posData.GetDirection()}");
-
                 var player = playerObject.GetComponent<RemotePlayer>();
                 if (player != null)
                 {
-                    Debug.Log($"[RoomManager] OnPositionChanged: {displayName}의 위치 업데이트 적용");
                     player.GetNetworkPosition(posData);
                 }
                 else
@@ -153,73 +206,48 @@ namespace Salon.Firebase
 
         private void OnPlayerAdded(object sender, ChildChangedEventArgs e)
         {
-            Debug.Log("[RoomManager] OnPlayerAdded 이벤트 발생");
-            if (e.Snapshot.Exists)
+            if (!e.Snapshot.Exists) return;
+
+            var displayName = e.Snapshot.Key;
+            if (displayName == FirebaseManager.Instance.CurrentUserName) return;
+
+            try
             {
-                var displayName = e.Snapshot.Key;
                 Debug.Log($"[RoomManager] OnPlayerAdded: 새로운 플레이어 감지 - {displayName}");
+                var playerData = JsonConvert.DeserializeObject<GamePlayerData>(e.Snapshot.GetRawJsonValue());
 
-                if (displayName != FirebaseManager.Instance.CurrentUserName)
+                if (!instantiatedPlayers.ContainsKey(displayName))
                 {
-                    Debug.Log($"[RoomManager] OnPlayerAdded: 리모트 플레이어 {displayName} 처리 시작");
-                    var playerData = JsonConvert.DeserializeObject<GamePlayerData>(e.Snapshot.GetRawJsonValue());
-                    Debug.Log($"[RoomManager] OnPlayerAdded: 플레이어 데이터 파싱 완료 - DisplayName: {playerData.DisplayName}");
-
-                    if (!instantiatedPlayers.ContainsKey(displayName))
-                    {
-                        Debug.Log($"[RoomManager] OnPlayerAdded: {displayName}의 프리팹 생성 시작");
-                        InstantiatePlayer(displayName, playerData);
-                        var positionRef = e.Snapshot.Reference.Child("Position");
-                        positionRef.ValueChanged += OnPositionChanged;
-                        Debug.Log($"[RoomManager] OnPlayerAdded: {displayName}의 위치 이벤트 구독 완료");
-                    }
-                    else
-                    {
-                        Debug.Log($"[RoomManager] OnPlayerAdded: {displayName}는 이미 존재하는 플레이어");
-                    }
-                }
-                else
-                {
-                    Debug.Log("[RoomManager] OnPlayerAdded: 로컬 플레이어 이벤트 무시");
+                    InstantiatePlayer(displayName, playerData);
+                    SubscribeToPlayerPosition(displayName);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                Debug.LogWarning("[RoomManager] OnPlayerAdded: 스냅샷이 존재하지 않음");
+                Debug.LogError($"[RoomManager] 플레이어 추가 처리 실패: {ex.Message}");
             }
         }
 
         private void OnPlayerRemoved(object sender, ChildChangedEventArgs e)
         {
-            if (e.Snapshot.Exists)
-            {
-                var displayName = e.Snapshot.Key;
-                if (instantiatedPlayers.ContainsKey(displayName))
-                {
-                    var positionRef = e.Snapshot.Reference.Child("Position");
-                    positionRef.ValueChanged -= OnPositionChanged;
+            if (!e.Snapshot.Exists) return;
 
-                    DestroyImmediate(instantiatedPlayers[displayName]);
+            var displayName = e.Snapshot.Key;
+            try
+            {
+                Debug.Log($"[RoomManager] OnPlayerRemoved: 플레이어 제거 - {displayName}");
+                UnsubscribeFromPlayerPosition(displayName);
+
+                if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
+                {
+                    DestroyImmediate(playerObject);
                     instantiatedPlayers.Remove(displayName);
+                    Debug.Log($"[RoomManager] {displayName}의 플레이어 오브젝트 제거 완료");
                 }
             }
-        }
-
-        private void OnPlayerUpdated(object sender, ChildChangedEventArgs e)
-        {
-            if (e.Snapshot.Exists)
+            catch (Exception ex)
             {
-                var displayName = e.Snapshot.Key;
-                var playerData = JsonConvert.DeserializeObject<GamePlayerData>(e.Snapshot.GetRawJsonValue());
-
-                if (instantiatedPlayers.ContainsKey(displayName))
-                {
-                    var player = instantiatedPlayers[displayName].GetComponent<RemotePlayer>();
-                    if (player != null)
-                    {
-                        player.GetNetworkPosition(playerData.Position);
-                    }
-                }
+                Debug.LogError($"[RoomManager] 플레이어 제거 처리 실패: {ex.Message}");
             }
         }
 
@@ -228,14 +256,10 @@ namespace Salon.Firebase
             try
             {
                 Debug.Log($"[RoomManager] 플레이어 생성 시작 - DisplayName: {displayName}, IsLocal: {isLocalPlayer}");
-
-                // 스폰 위치를 Vector3.zero로 강제 설정
                 Vector3 spawnPosition = Vector3.zero;
-                Debug.Log($"[RoomManager] 스폰 위치를 (0,0,0)으로 강제 설정");
 
                 if (isLocalPlayer)
                 {
-                    Debug.Log($"[RoomManager] 로컬 플레이어 프리팹 생성 시작");
                     if (localPlayerPrefab == null)
                     {
                         throw new Exception("[RoomManager] localPlayerPrefab이 null입니다.");
@@ -244,11 +268,9 @@ namespace Salon.Firebase
                     LocalPlayer localPlayer = Instantiate(localPlayerPrefab.gameObject, spawnPosition, Quaternion.identity, spawnParent).GetComponent<LocalPlayer>();
                     localPlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = localPlayer.gameObject;
-                    Debug.Log($"[RoomManager] 로컬 플레이어 생성 완료 - GameObject: {localPlayer.gameObject.name}");
                 }
                 else
                 {
-                    Debug.Log($"[RoomManager] 리모트 플레이어 프리팹 생성 시작");
                     if (remotePlayerPrefab == null)
                     {
                         throw new Exception("[RoomManager] remotePlayerPrefab이 null입니다.");
@@ -257,24 +279,14 @@ namespace Salon.Firebase
                     RemotePlayer remotePlayer = Instantiate(remotePlayerPrefab.gameObject, spawnPosition, Quaternion.identity, spawnParent).GetComponent<RemotePlayer>();
                     remotePlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = remotePlayer.gameObject;
-                    Debug.Log($"[RoomManager] 리모트 플레이어 생성 완료 - GameObject: {remotePlayer.gameObject.name}");
                 }
 
-                Debug.Log($"[RoomManager] 현재 생성된 플레이어 수: {instantiatedPlayers.Count}");
+                Debug.Log($"[RoomManager] 플레이어 생성 완료 - {displayName}");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[RoomManager] 플레이어 생성 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 throw;
-            }
-        }
-
-        private void UpdatePlayerPosition(GameObject playerObject, NetworkPositionData position)
-        {
-            var player = playerObject.GetComponent<RemotePlayer>();
-            if (player != null)
-            {
-                player.GetNetworkPosition(position);
             }
         }
     }

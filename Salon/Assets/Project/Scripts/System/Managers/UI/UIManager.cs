@@ -14,7 +14,6 @@ public class UIManager : MonoBehaviour, IInitializable
     private List<Panel> panels = new List<Panel>();
     [SerializeField] private List<Panel> panelsPrefabs = new List<Panel>();
     public bool IsInitialized { get; private set; }
-    public bool IsTesting { get; private set; }
     public static UIManager Instance
     {
         get
@@ -59,6 +58,7 @@ public class UIManager : MonoBehaviour, IInitializable
     {
         Initialize();
         StartCoroutine(InitializeRoutine());
+
     }
 
     void Update()
