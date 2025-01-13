@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,11 +28,15 @@ public class DartGame : MonoBehaviour
     private bool isMove = true;
     private bool isMoving = false;
 
+    private bool ranPosArrival = false;
+
     private Vector3 randomTargetPosition;
 
     private List<TextMeshProUGUI> scoreTextList = new List<TextMeshProUGUI>();
 
     private List<Arrow> darts = new List<Arrow>();
+
+    private int[] roundScore = new int[MAXROUND];
 
     [SerializeField, Header("조이스틱 무브 스피드")]
     private float joystickMoveSpeed = 0.3f;
@@ -62,8 +67,33 @@ public class DartGame : MonoBehaviour
 
     private void Start()
     {
+        Initialize();
         StartCoroutine(GameRoutine());
     }
+    public void Initialize()
+    {
+        if (scoreTextList.Any())
+        {
+            foreach(TextMeshProUGUI text in scoreTextList)
+            {
+                if(text != null)
+                {
+                    Destroy(text.gameObject);
+                }
+            }
+            scoreTextList.Clear();
+        }
+        for (int i = 0; i < MAXROUND; i++) 
+        {
+            TextMeshProUGUI scoretext = Instantiate(gameUi.scoreTextPrefab, gameUi.scoreTextField);
+            scoreTextList.Add(scoretext);
+            scoretext.text = $"R{i + 1}";
+        }
+        dart.roundscores = 0;
+        gameUi.recentScoreText.text = " ";
+
+    }
+
 
     public void NextTurnset()
     {
@@ -78,6 +108,8 @@ public class DartGame : MonoBehaviour
 
         isMove = true;
         isMoving = false;
+        ranPosArrival = false;
+    
     }
 
 
@@ -128,6 +160,11 @@ public class DartGame : MonoBehaviour
     private void RandomMove()
     {
         if (!isRandomMoving || targetAiming == null) return;
+        if (0.01f > Vector3.Distance(randomTargetPosition, targetAiming.transform.position))
+        {
+            ranPosArrival = true;
+            return;
+        }
 
         Vector3 moveDirection = (randomTargetPosition - targetAiming.transform.position).normalized;
         MoveTarget(moveDirection, randomMoveSpeed);
@@ -216,6 +253,8 @@ public class DartGame : MonoBehaviour
         float aimingDistance = Vector3.Distance(targetAiming.transform.position, targetAiming.outerLine.position);
         float maxDistance = dartDistance - aimingDistance;
 
+        maxDistance = maxDistance * (1f -turnTime/20f);
+
         Vector2 randomDirection = Random.insideUnitCircle;
         Vector3 randomPosition = dart.center.position +
                                new Vector3(randomDirection.x, randomDirection.y, -0.01f) * maxDistance;
@@ -243,6 +282,7 @@ public class DartGame : MonoBehaviour
         print("ShootDartArrow호출");
         isWaitShootButton = true;
         gameUi.shootButton.onClick?.RemoveListener(ShootDartArrow);
+        if (targetAiming == null) return;
         SpawnArrow();      
 
         Destroy(targetAiming.gameObject);
@@ -253,18 +293,21 @@ public class DartGame : MonoBehaviour
     {
 
         int dartScore = dart.roundscores;
-        if (scoreTextList.Count < round)
-        {
-            TextMeshProUGUI scoretext = Instantiate(gameUi.scoreTextPrefab, gameUi.scoreTextField);
-            scoreTextList.Add(scoretext);
-            scoreTextList[round - 1].text = dartScore.ToString();
-        }
-        else
-        {
-            int score = int.Parse(scoreTextList[round - 1].text.ToString());
-            scoreTextList[round - 1].text = (score +dartScore).ToString();
-        }
+        roundScore[round - 1] += dartScore;
+        scoreTextList[round - 1].text = $"R{round}    {roundScore[round - 1]}";
+        //if (scoreTextList.Count < round)
+        //{
+        //    TextMeshProUGUI scoretext = Instantiate(gameUi.scoreTextPrefab, gameUi.scoreTextField);
+        //    scoreTextList.Add(scoretext);
+        //    scoreTextList[round - 1].text = dartScore.ToString();
+        //}
+        //else
+        //{
+        //    int score = int.Parse(scoreTextList[round - 1].text.ToString());
+        //    scoreTextList[round - 1].text = (score +dartScore).ToString();
+        //}
         totalScore += dartScore;
+        gameUi.recentScoreText.text = $"+ {dartScore}";
         dart.roundscores = 0;
 
         RoundManagement();
@@ -338,10 +381,12 @@ public class DartGame : MonoBehaviour
         if (time >= delay)
         {
             targetAiming.transform.localScale = targetAiming.startScale;
+            yield return new WaitForSeconds(0.2f);
             ShootDartArrow();
         }
     }
 
+    //TODO: 도착하면 위치 바뀌게 수정
     private IEnumerator RingRandomMoveRoutine()
     {
         while (!isWaitBreath)
@@ -351,7 +396,8 @@ public class DartGame : MonoBehaviour
             {
                 SetRandomTargetPosition();
 
-                yield return new WaitForSeconds(1.5f);
+                yield return new WaitUntil(() => ranPosArrival == true);
+                ranPosArrival = false;
             }
             yield return null;
         }

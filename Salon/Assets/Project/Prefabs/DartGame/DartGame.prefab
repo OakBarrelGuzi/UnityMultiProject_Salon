@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4345539449138022952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8797243018481619554}
+  - component: {fileID: 1173357242120094426}
+  m_Layer: 0
+  m_Name: DartGame
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8797243018481619554
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4345539449138022952}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.7586328, y: 2.4927769, z: 19.058594}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1173357242120094426
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4345539449138022952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b88fa064048c0e3489f1b290b349678e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joystickMoveSpeed: 0.3
+  randomMoveSpeed: 0.15
+  turnWait: 1
+  gameUi: {fileID: 0}
+  dart: {fileID: 0}
+  joyStick: {fileID: 0}
+  aimingRingPrefab: {fileID: 3881073313459068768, guid: 4f37599a0fa511d4092e5ff97b9abfa5,
+    type: 3}
+  arrowPrefab: {fileID: 306664355961297160, guid: 0784f0a4ee847234a8fdf08aeef29ef9,
+    type: 3}
+  arrowShootPoint: {fileID: 0}

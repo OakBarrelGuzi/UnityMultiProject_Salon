@@ -32,10 +32,10 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
 
     private void Start()
     {
-        initialize();
+        Initialize();
     }
 
-    public void initialize()
+    public void Initialize()
     {
         widthHalf = GetComponent<RectTransform>().sizeDelta.x * 0.5f;
 
