@@ -44,8 +44,14 @@ public class DartGame : MonoBehaviour
     private float randomMoveSpeed = 0.15f;
     [SerializeField, Header("턴과 턴사이 딜레이시간")]
     private float turnWait = 1f;
+    [SerializeField, Header("조준원이 작아지는 총시간")]
+    private float aimingDelay = 0.8f;
+    [SerializeField, Header("조준원이 작아지는 딜레이시간")]
+    private float aimingRoutineDelay = 0.01f;
+    [SerializeField, Header("딜레이마다 조준원이 작아지는 배율")]
+    private float aimingShrinkScale = 0.98f;
 
-    [SerializeField]
+    [SerializeField,Header("")]
     private DartGameUI gameUi;
 
     [SerializeField]
@@ -240,7 +246,7 @@ public class DartGame : MonoBehaviour
 
         Vector3 arrowPoint = targetAiming.transform.position + new Vector3(ran.x, ran.y, 0);
 
-        arrowPoint.z = dart.transform.position.z;
+        arrowPoint.z = dart.transform.position.z-0.02f;
 
         Arrow arrow = Instantiate(arrowPrefab, arrowShootPoint);
         darts.Add(arrow);
@@ -274,7 +280,10 @@ public class DartGame : MonoBehaviour
         isMoving = false;
 
         gameUi.shootButton.onClick?.RemoveListener(ShootButtonClick);
-        StartCoroutine(reduceAimingRoutine());
+        if (targetAiming != null)
+        {
+            StartCoroutine(reduceAimingRoutine());
+        }
     }
 
     public void ShootDartArrow()
@@ -282,7 +291,6 @@ public class DartGame : MonoBehaviour
         print("ShootDartArrow호출");
         isWaitShootButton = true;
         gameUi.shootButton.onClick?.RemoveListener(ShootDartArrow);
-        if (targetAiming == null) return;
         SpawnArrow();      
 
         Destroy(targetAiming.gameObject);
@@ -367,22 +375,18 @@ public class DartGame : MonoBehaviour
 
     private IEnumerator reduceAimingRoutine()
     {
-        //최적의 조건 인스펙터로 빼서 이걸 건드리게 할수없다!
         float time = 0f;
-        float delay = 0.8f;
-        float Routinedelay = 0.01f;
-
-        while (!isWaitShootButton && time <= delay)
+        while (!isWaitShootButton && time <= aimingDelay)
         {
-            targetAiming.transform.localScale = targetAiming.transform.localScale * 0.98f;
-            yield return new WaitForSeconds(Routinedelay);
-            time += Routinedelay;
+            targetAiming.transform.localScale = targetAiming.transform.localScale * aimingShrinkScale;
+            yield return new WaitForSeconds(aimingRoutineDelay);
+            time += aimingRoutineDelay;
         }
-        if (time >= delay)
+        if (time >= aimingDelay)
         {
             targetAiming.transform.localScale = targetAiming.startScale;
             yield return new WaitForSeconds(0.2f);
-            ShootDartArrow();
+            if (targetAiming != null) { ShootDartArrow(); }
         }
     }
 
