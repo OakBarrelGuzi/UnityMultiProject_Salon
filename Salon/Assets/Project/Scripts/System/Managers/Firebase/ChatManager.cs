@@ -13,8 +13,6 @@ namespace Salon.Firebase
         private string currentChannel;
         public Action<string, string, Sprite> OnReceiveChat;
 
-
-
         public void Initialize(DatabaseReference dbReference)
         {
             this.dbReference = dbReference;
@@ -27,14 +25,14 @@ namespace Salon.Firebase
 
             try
             {
+                long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 var messageData = new MessageData(
                     senderId,
                     message,
-                    DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    timestamp
                 );
 
-                string messageKey = dbReference.Child("Channels").Child(channelName)
-                    .Child("CommonChannelData").Child("Messages").Push().Key;
+                string messageKey = $"{senderId}_{timestamp}";
 
                 await dbReference.Child("Channels").Child(channelName)
                     .Child("CommonChannelData").Child("Messages")
@@ -97,7 +95,6 @@ namespace Salon.Firebase
                 .ChildAdded -= HandleMessageReceived;
 
             currentChannel = null;
-            Debug.Log("[ChatManager] 메시지 구독 중단");
         }
 
         private void HandleMessageReceived(object sender, ChildChangedEventArgs args)

@@ -15,7 +15,9 @@ public abstract class Panel : MonoBehaviour
 
     public virtual void Close()
     {
+        Debug.Log($"{panelType} 닫기 시도");
         gameObject.SetActive(false);
         isOpen = false;
+        Debug.Log($"{panelType} 닫기 완료");
     }
 }
