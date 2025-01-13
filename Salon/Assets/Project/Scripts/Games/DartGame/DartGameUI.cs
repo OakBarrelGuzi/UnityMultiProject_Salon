@@ -12,6 +12,7 @@ public class DartGameUI : MonoBehaviour
 
     public Transform scoreTextField;
     public TextMeshProUGUI totalScoreText;
+    public TextMeshProUGUI recentScoreText;
 
     public Transform chatTextField;
     public TMP_InputField chatInputField;
