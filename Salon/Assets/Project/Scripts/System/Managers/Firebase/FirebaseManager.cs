@@ -46,7 +46,7 @@ namespace Salon.Firebase
             }
         }
         public ChannelManager ChannelManager { get; private set; }
-        public ChatManager ChatManager { get; private set; }
+        public ChatManager ChatManager { get; set; }
 
         private bool isConnected = false;
         private DatabaseReference connectionRef;
