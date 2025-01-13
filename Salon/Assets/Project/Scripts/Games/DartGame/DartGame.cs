@@ -240,7 +240,7 @@ public class DartGame : MonoBehaviour
 
         Vector3 arrowPoint = targetAiming.transform.position + new Vector3(ran.x, ran.y, 0);
 
-        arrowPoint.z = dart.transform.position.z;
+        arrowPoint.z = dart.transform.position.z-0.02f;
 
         Arrow arrow = Instantiate(arrowPrefab, arrowShootPoint);
         darts.Add(arrow);
@@ -274,7 +274,10 @@ public class DartGame : MonoBehaviour
         isMoving = false;
 
         gameUi.shootButton.onClick?.RemoveListener(ShootButtonClick);
-        StartCoroutine(reduceAimingRoutine());
+        if (targetAiming != null)
+        {
+            StartCoroutine(reduceAimingRoutine());
+        }
     }
 
     public void ShootDartArrow()
@@ -282,7 +285,6 @@ public class DartGame : MonoBehaviour
         print("ShootDartArrow»£√‚");
         isWaitShootButton = true;
         gameUi.shootButton.onClick?.RemoveListener(ShootDartArrow);
-        if (targetAiming == null) return;
         SpawnArrow();      
 
         Destroy(targetAiming.gameObject);
@@ -382,7 +384,7 @@ public class DartGame : MonoBehaviour
         {
             targetAiming.transform.localScale = targetAiming.startScale;
             yield return new WaitForSeconds(0.2f);
-            ShootDartArrow();
+            if (targetAiming != null) { ShootDartArrow(); }
         }
     }
 
