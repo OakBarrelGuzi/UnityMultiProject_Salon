@@ -17,6 +17,8 @@ namespace Salon.Character
 
         public Vector3 CurrentVelocity => cachedInput * moveSpeed;
 
+        private Rigidbody rb;
+
         void Start()
         {
             Initialize();
@@ -32,9 +34,17 @@ namespace Salon.Character
 
             if (animator == null)
                 animator = GetComponent<Animator>();
+
+            rb = GetComponent<Rigidbody>();
         }
 
         private void Update()
+        {
+            HandleInput();
+            UpdateAnimation();
+        }
+
+        private void HandleInput()
         {
             if (inputMove.isFingerDown)
             {
@@ -64,10 +74,23 @@ namespace Salon.Character
                     cachedInput = Vector3.zero;
                 }
             }
+        }
 
-            transform.Translate(cachedInput * moveSpeed * Time.deltaTime, Space.World);
-
-            UpdateAnimation();
+        private void FixedUpdate()
+        {
+            if (rb != null)
+            {
+                RaycastHit hit;
+                Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
+                if (!Physics.Raycast(transform.position, movement.normalized, out hit, movement.magnitude))
+                {
+                    rb.MovePosition(rb.position + movement);
+                }
+                else
+                {
+                    Debug.Log("충돌 감지: " + hit.collider.name);
+                }
+            }
         }
 
         private void UpdateAnimation()

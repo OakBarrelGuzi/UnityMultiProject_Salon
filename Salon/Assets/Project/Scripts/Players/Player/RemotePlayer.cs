@@ -8,10 +8,8 @@ namespace Salon.Character
         private Vector3 targetPosition;
         private Vector3 targetDirection;
         private Vector3 currentVelocity;
-        private Vector3 currentAngularVelocity;
 
         [SerializeField] private float positionSmoothTime = 0.15f;
-        [SerializeField] private float rotationSmoothTime = 0.1f;
         [SerializeField] private float maxSpeed = 20f;
 
         private Animator animator;
@@ -26,7 +24,6 @@ namespace Salon.Character
             targetPosition = transform.position;
             targetDirection = transform.forward;
             currentVelocity = Vector3.zero;
-            currentAngularVelocity = Vector3.zero;
         }
 
         private void Update()
@@ -41,23 +38,15 @@ namespace Salon.Character
                 positionSmoothTime,
                 maxSpeed);
 
-            // 방향 보간
+            // 방향 즉시 설정 (보간 제거)
             if (targetDirection != Vector3.zero)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    targetRotation,
-                    Time.deltaTime * 360f * rotationSmoothTime);
+                transform.forward = targetDirection;
             }
 
-            // 애니메이션 업데이트
+            // 애니메이션 업데이트 - isMoving 상태에 따라 즉시 변경
             float targetSpeed = isMoving ? 1f : 0f;
-            currentMoveSpeed = Mathf.SmoothDamp(
-                currentMoveSpeed,
-                targetSpeed,
-                ref moveSpeedVelocity,
-                0.1f);
+            currentMoveSpeed = targetSpeed; // 보간 제거
 
             if (animator != null)
             {

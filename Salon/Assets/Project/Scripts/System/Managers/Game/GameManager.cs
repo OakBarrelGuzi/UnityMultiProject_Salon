@@ -20,11 +20,11 @@ public class GameManager : MonoBehaviour, IInitializable
     }
     public bool IsInitialized { get; private set; }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void AutoInitialize()
-    {
-        _ = Instance;
-    }
+    //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    //private static void AutoInitialize()
+    //{
+    //    _ = Instance;
+    //}
 
     void Awake()
     {

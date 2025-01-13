@@ -60,11 +60,11 @@ namespace Salon.Firebase
             // 추가적인 초기화 로직
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        private static void AutoInitialize()
-        {
-            _ = Instance;
-        }
+        // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        // private static void AutoInitialize()
+        // {
+        //     _ = Instance;
+        // }
 
         public bool IsInitialized { get; private set; }
         private TaskCompletionSource<bool> initializationComplete;
