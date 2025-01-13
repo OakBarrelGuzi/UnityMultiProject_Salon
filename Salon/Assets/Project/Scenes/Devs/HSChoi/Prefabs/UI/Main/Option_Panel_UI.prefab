@@ -161,6 +161,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 580390399925598946}
+  - component: {fileID: 5161817638783541209}
   m_Layer: 5
   m_Name: Switch_UI_Group
   m_TagString: Untagged
@@ -189,6 +190,50 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &5161817638783541209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 784104873055723138}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 0
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 0}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1023384346934299169
 GameObject:
   m_ObjectHideFlags: 0
@@ -1027,7 +1072,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 19.2
+  m_fontSize: 52.4
   m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1161,7 +1206,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
+  m_fontSize: 41.85
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1212,7 +1257,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1859077207057679171}
-  - component: {fileID: 7038475119357598719}
+  - component: {fileID: 515021443576260328}
   m_Layer: 5
   m_Name: Option_Panel_UI
   m_TagString: Untagged
@@ -1241,7 +1286,7 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &7038475119357598719
+--- !u!114 &515021443576260328
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1250,21 +1295,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 2535347631280624055}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3be278bec9f5165418fd591b25e54a90, type: 3}
+  m_Script: {fileID: 11500000, guid: 0d169e07a354e1f4abfb2c3c166e46e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  usageDescription: "[TextLoader \uCEF4\uD3EC\uB10C\uD2B8 \uC0AC\uC6A9 \uBC29\uBC95]\r\n\r\n1.
-    \uC774 \uC624\uBE0C\uC81D\uD2B8\uB294 UI \uC624\uBE0C\uC81D\uD2B8\uC758 \uCD5C\uC0C1\uC704\uC758
-    \uBD80\uBAA8 \uC624\uBE0C\uC81D\uD2B8\uC5EC\uC57C \uD569\uB2C8\uB2E4.\r\n\r\n2.
-    \uD558\uC704\uC5D0 \uC788\uB294 \uBAA8\uB4E0 Text/TextMeshPro \uCEF4\uD3EC\uB10C\uD2B8\uB4E4\uC758
-    \uD14D\uC2A4\uD2B8\uB97C \uC790\uB3D9\uC73C\uB85C \uB85C\uB4DC\uD569\uB2C8\uB2E4.\r\n\r\n3.
-    \uD14D\uC2A4\uD2B8 ID\uB294 \uAC01 \uD14D\uC2A4\uD2B8 \uC624\uBE0C\uC81D\uD2B8\uC758
-    \uC774\uB984\uC744 \uAE30\uC900\uC73C\uB85C \uD569\uB2C8\uB2E4.\r\n   - \uC608\uC2DC:
-    \uC624\uBE0C\uC81D\uD2B8 \uC774\uB984\uC774 'Title_Text'\uBA74 \uC774 ID\uB85C
-    \uD14D\uC2A4\uD2B8\uB97C \uCC3E\uC2B5\uB2C8\uB2E4.\r\n\r\n4. \uD3F0\uD2B8\uB294
-    Resources \uD3F4\uB354\uC758 \uC9C0\uC815\uB41C \uACBD\uB85C\uC5D0\uC11C \uC790\uB3D9\uC73C\uB85C
-    \uB85C\uB4DC\uB429\uB2C8\uB2E4.\r\n   - TMP: Assets/Resources/Fonts/MainFontTmp.asset\r\n  
-    - Legacy: Assets/Resources/Fonts/MainFontLegacy.ttf"
+  panelType: 9
+  isOpen: 0
+  closeButton: {fileID: 2176825997543006128}
+  soundButton: {fileID: 5161817638783541209}
+  bgmButton: {fileID: 5013484927291026320}
+  saveButton: {fileID: 1620905185129217605}
+  signOutButton: {fileID: 7117312238699261940}
 --- !u!1 &2629722151266427604
 GameObject:
   m_ObjectHideFlags: 0
@@ -1748,7 +1788,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18.35
+  m_fontSize: 52.65
   m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -1899,7 +1939,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.2442746}
   m_AnchorMax: {x: 0.407301, y: 0.7558497}
-  m_AnchoredPosition: {x: -0.49996948, y: 0.000022888184}
+  m_AnchoredPosition: {x: -0.49993896, y: 0.000022888184}
   m_SizeDelta: {x: -1, y: -1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3041096321001818998
@@ -2482,7 +2522,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
+  m_fontSize: 53.6
   m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2766,7 +2806,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 32.95
+  m_fontSize: 72
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3031,6 +3071,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 338781317027346671}
+  - component: {fileID: 5013484927291026320}
   m_Layer: 5
   m_Name: Switch_UI_Group
   m_TagString: Untagged
@@ -3059,6 +3100,50 @@ RectTransform:
   m_AnchoredPosition: {x: 0.5, y: 0}
   m_SizeDelta: {x: -1, y: 2}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &5013484927291026320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7311843289005292096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 0
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 0}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7587755981533632958
 GameObject:
   m_ObjectHideFlags: 0
@@ -3229,7 +3314,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12.15
+  m_fontSize: 30.2
   m_fontSizeBase: 20
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3688,7 +3773,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 18
+  m_fontSize: 53.6
   m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -3822,7 +3907,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 32.2
+  m_fontSize: 72
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1

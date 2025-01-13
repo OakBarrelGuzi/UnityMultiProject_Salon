@@ -1,7 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections;
 using Salon.Interfaces;
+using Salon.Firebase;
 
 public class UIManager : MonoBehaviour, IInitializable
 {
@@ -41,11 +43,40 @@ public class UIManager : MonoBehaviour, IInitializable
         }
 
     }
-
+    public IEnumerator InitializeRoutine()
+    {
+        yield return new WaitUntil(() => FirebaseManager.Instance.IsInitialized);
+        if (FirebaseManager.Instance.CurrentUserName != null)
+        {
+            OpenPanel(PanelType.Channel);
+        }
+        else
+        {
+            OpenPanel(PanelType.SignIn);
+        }
+    }
     private void Start()
     {
         Initialize();
-        OpenPanel(PanelType.SignIn);
+        StartCoroutine(InitializeRoutine());
+    }
+
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (panels.FirstOrDefault(p => p.panelType == PanelType.Option) != null)
+            {
+                if (panels.FirstOrDefault(p => p.panelType == PanelType.Option).isOpen)
+                    ClosePanel(PanelType.Option);
+                else
+                    OpenPanel(PanelType.Option);
+            }
+            else
+            {
+                OpenPanel(PanelType.Option);
+            }
+        }
     }
 
     public void Initialize()
@@ -213,6 +244,16 @@ public class UIManager : MonoBehaviour, IInitializable
             panel.isOpen = false;
             return panel;
         }
+    }
+
+    public void CloseAllPanels()
+    {
+        Debug.Log("[UIManager] CloseAllPanels 호출");
+        foreach (Panel panel in panels)
+        {
+            panel.Close();
+        }
+        Debug.Log("[UIManager] CloseAllPanels 완료");
     }
 
     public T GetUI<T>() where T : Component
