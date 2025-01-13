@@ -1,32 +1,35 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Arrow : MonoBehaviour
 {
-    [SerializeField]
-    public Transform targetPosition;//{ get; set; }
+
+    private Vector3 targetPosition;
 
     private Vector3 startPosition;
 
     private Vector3 heigtPosition;
 
-    [SerializeField,Header("∞Óº± ¡§µµ"),Range(0f,1f)]
+    [SerializeField, Header("Ìè¨Î¨ºÏÑ†ÎÜíÏù¥"), Range(0f, 1f)]
     private float height = 0.5f;
 
-    [SerializeField, Header("∞°¥¬µ• ∞…∏Æ¥¬ Ω√∞£")]
-    private float duration=0.1f;
+    [Header("Îã§Ìä∏ÏÜçÎèÑ")]
+    public float duration = 0.1f;
 
     private bool isStop = false;
 
     private void Start()
     {
+        initialize();
+    }
+    public void initialize()
+    {
         startPosition = this.transform.position;
 
-        float distance = Vector3.Distance(startPosition, targetPosition.position);
+        float distance = Vector3.Distance(startPosition, targetPosition);
 
-        Vector3 direction = (targetPosition.position - startPosition).normalized;
+        Vector3 direction = (targetPosition - startPosition).normalized;
 
         Vector3 halfPosition = startPosition + (direction * distance * 0.5f);
 
@@ -35,6 +38,11 @@ public class Arrow : MonoBehaviour
         heigtPosition = halfPosition;
 
         StartCoroutine(ParabolaMove());
+    }
+
+    public void SetTargetPosition(Vector3 target)
+    {
+        targetPosition = target;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -65,11 +73,11 @@ public class Arrow : MonoBehaviour
 
         float time = 0f;
 
-        while (!isStop)
+        while (!isStop && time <= 1f)
         {
 
-            Vector3 p1 = Vector3.Lerp(startPosition,heigtPosition,time);
-            Vector3 p2 = Vector3.Lerp(heigtPosition,targetPosition.position,time);
+            Vector3 p1 = Vector3.Lerp(startPosition, heigtPosition, time);
+            Vector3 p2 = Vector3.Lerp(heigtPosition, targetPosition, time);
 
             Vector3 previousPos = transform.position;
             transform.position = Vector3.Lerp(p1, p2, time);

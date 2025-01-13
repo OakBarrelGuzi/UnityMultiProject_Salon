@@ -6,30 +6,29 @@ using UnityEngine.SceneManagement;
 
 public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerClickHandler
 {
-    [SerializeField, Header("Á¶ÀÌ½ºÆ½ ÇÚµé")]
+    [SerializeField, Header("ì¡°ì´ìŠ¤í‹± í•¸ë“¤")]
     private RectTransform handle;
-    //ÅÍÄ¡ÇÑ À§Ä¡¸¦ ´ãÀ» º¯¼ö
+    //í„°ì¹˜í•œ ìœ„ì¹˜ë¥¼ ë‹´ì„ ë³€ìˆ˜
     private Vector2 touch;
-    //¹İÁö¸§À» ´ãÀ» º¯¼ö
+    //ë°˜ì§€ë¦„ì„ ë‹´ì„ ë³€ìˆ˜
     private float widthHalf;
-    //ÇÚµé ½ÃÀÛÁöÁ¡
+    //í•¸ë“¤ ì‹œì‘ì§€ì 
     private Vector2 startHandlePoint;
 
-    [SerializeField, Header("ÇÚµé ¿òÁ÷ÀÓ ¼Óµµ")]
+    [SerializeField, Header("í•¸ë“¤ ì›€ì§ì„ ì†ë„")]
     private float speed = 0.35f;
 
-    [SerializeField, Header("ÇÚµé ÃÖ´ë ÀÌµ¿°Å¸®")]
+    [SerializeField, Header("í•¸ë“¤ ìµœëŒ€ ì´ë™ê±°ë¦¬")]
     private float length = 50f;
-    
-    [SerializeField,Header("ÇÚµé Æ÷Ä¿½º ¹Î°¨µµ")]
+
+    [SerializeField, Header("í•¸ë“¤ í¬ì»¤ìŠ¤ ë¯¼ê°ë„")]
     private float joyStickSensitive = 10f;
 
-    [SerializeField, Header("ÇÚµé ÀÌµ¿¹æÇâ Æ÷Ä¿½º ¿ÀºêÁ§Æ®")]
+    [SerializeField, Header("í•¸ë“¤ ì´ë™ë°©í–¥ í¬ì»¤ìŠ¤ ì˜¤ë¸Œì íŠ¸")]
     private JoyStickFocus[] handleFocus;
 
-    private Dictionary<FOCUSTYPE,JoyStickFocus> handleFocusDict =
-        new Dictionary<FOCUSTYPE,JoyStickFocus>();
-
+    private Dictionary<FOCUSTYPE, JoyStickFocus> handleFocusDict =
+        new Dictionary<FOCUSTYPE, JoyStickFocus>();
 
     private void Start()
     {
@@ -44,18 +43,18 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
 
         foreach (JoyStickFocus joyStickFocus in handleFocus)
         {
-            handleFocusDict.Add(joyStickFocus.focusType,joyStickFocus);
+            handleFocusDict.Add(joyStickFocus.focusType, joyStickFocus);
             joyStickFocus.gameObject.SetActive(false);
         }
     }
 
-    //ÅÍÄ¡ÇÏ´Â ¼ø°£ ¸Ş¼¼Áö ÇÔ¼ö
+    //í„°ì¹˜í•˜ëŠ” ìˆœê°„ ë©”ì„¸ì§€ í•¨ìˆ˜
     public void OnPointerClick(PointerEventData eventData)
     {
-        print("Å¬¸¯ÇÔ");
+        print("í´ë¦­í•¨");
     }
 
-    //µå·¡±×Áß ¸Ş¼¼Áö ÇÔ¼ö
+    //ë“œë˜ê·¸ì¤‘ ë©”ì„¸ì§€ í•¨ìˆ˜
     public void OnDrag(PointerEventData eventData)
     {
         Vector2 touchPos = ((Vector2)transform.position - eventData.position) * speed / widthHalf;
@@ -70,7 +69,7 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
         FocusSetActive();
     }
 
-    //¹æÇâ¿¡µû¸¥ Æ÷Ä¿½º ²¨ÁüÄÑÁü
+    //ë°©í–¥ì—ë”°ë¥¸ í¬ì»¤ìŠ¤ êº¼ì§ì¼œì§
     private void FocusSetActive()
     {
 
@@ -82,12 +81,10 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
         { (-touch.y, joyStickSensitive), FOCUSTYPE.BOTTOM }
     };
 
-
         foreach (var focus in handleFocusDict.Values)
         {
             focus.gameObject.SetActive(false);
         }
-
 
         foreach (var direction in directionMap)
         {
@@ -101,7 +98,7 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
         }
     }
 
-    //µå·¡±×³¡ ¸Ş¼¼Áö ÇÔ¼ö
+    //ë“œë˜ê·¸ë ë©”ì„¸ì§€ í•¨ìˆ˜
     public void OnEndDrag(PointerEventData eventData)
     {
         handle.anchoredPosition = startHandlePoint;
@@ -112,13 +109,13 @@ public class JoyStick : MonoBehaviour, IEndDragHandler, IDragHandler, IPointerCl
         }
     }
 
-    //Á¶ÀÌ½ºÆ½ÀÌ ÇâÇÏ°íÀÖ´Â ¹æÇâ
+    //ì¡°ì´ìŠ¤í‹±ì´ í–¥í•˜ê³ ìˆëŠ” ë°©í–¥
     public Vector2 GetDirection()
     {
         return touch.normalized;
     }
 
-    //Á¶ÀÌ½ºÆ½ÀÇ °­µµ
+    //ì¡°ì´ìŠ¤í‹±ì˜ ê°•ë„
     public float GetMagnitude()
     {
         return touch.magnitude / length;
