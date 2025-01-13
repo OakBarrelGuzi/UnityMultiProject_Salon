@@ -12,7 +12,7 @@ public class ChatBox : MonoBehaviour
 
     public void SetChatBox(string sender, string message, Sprite emoji = null)
     {
-        senderText.text = sender;
+        senderText.text = $"{sender} : ";
         messageText.text = message;
         if (emoji != null)
         {

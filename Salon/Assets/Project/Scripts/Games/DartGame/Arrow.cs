@@ -21,9 +21,9 @@ public class Arrow : MonoBehaviour
 
     private void Start()
     {
-        initialize();
+        Initialize();
     }
-    public void initialize()
+    public void Initialize()
     {
         startPosition = this.transform.position;
 
