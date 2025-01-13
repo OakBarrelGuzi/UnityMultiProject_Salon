@@ -126,8 +126,9 @@ namespace Salon.Firebase.Database
                 PosZ = position.z;
             }
 
-            DirX = direction.x;
-            DirZ = direction.z;
+            Vector3 normalizedDir = direction.normalized;
+            DirX = normalizedDir.x;
+            DirZ = normalizedDir.z;
         }
 
         public Vector3? GetPosition()
@@ -140,7 +141,8 @@ namespace Salon.Firebase.Database
 
         public Vector3 GetDirection()
         {
-            return new Vector3(DirX, 0f, DirZ).normalized;
+            Vector3 direction = new Vector3(DirX, 0f, DirZ);
+            return direction.magnitude > 0.01f ? direction.normalized : Vector3.zero;
         }
 
         public bool HasSignificantChange(NetworkPositionData other)
