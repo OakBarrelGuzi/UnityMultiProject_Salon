@@ -18,6 +18,10 @@ namespace Salon.System
                         DontDestroyOnLoad(go);
                     }
                 }
+                else
+                {
+                    instance = FindObjectOfType<T>();
+                }
                 return instance;
             }
         }

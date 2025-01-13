@@ -53,14 +53,12 @@ namespace Salon.Firebase.Database
     [Serializable]
     public class UserData
     {
-        public string UserId { get; set; }
         public long LastOnline { get; set; }
         public Dictionary<string, bool> Friends { get; set; }
         public Dictionary<GameType, UserStats> GameStats { get; set; }
 
-        public UserData(string userId)
+        public UserData()
         {
-            UserId = userId;
             LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             Friends = new Dictionary<string, bool>();
             GameStats = new Dictionary<GameType, UserStats>();
@@ -100,25 +98,21 @@ namespace Salon.Firebase.Database
     [Serializable]
     public class NetworkPositionData
     {
-        public byte Data1 { get; set; }
-        public byte Data2 { get; set; }
-        public byte Data3 { get; set; }
+        public float PosX { get; set; }
+        public float PosZ { get; set; }
+        public float DirX { get; set; }
+        public float DirZ { get; set; }
+        public bool IsPositionUpdate { get; set; }
 
-        private const float MAP_OFFSET = 50f;
-        private const float MAP_SIZE = 400f;
-        private const float POSITION_SCALE = MAP_SIZE / 255f;
-
-        public bool IsPositionUpdate
-        {
-            get => (Data1 & 0x80) != 0;
-            private set => Data1 = (byte)((Data1 & 0x7F) | (value ? 0x80 : 0));
-        }
+        private const float POSITION_THRESHOLD = 0.01f;
+        private const float DIRECTION_THRESHOLD = 0.1f;
 
         public NetworkPositionData()
         {
-            Data1 = 0;
-            Data2 = 0;
-            Data3 = 0;
+            PosX = 0f;
+            PosZ = 0f;
+            DirX = 0f;
+            DirZ = 1f;
             IsPositionUpdate = true;
         }
 
@@ -128,19 +122,12 @@ namespace Salon.Firebase.Database
 
             if (isPositionUpdate)
             {
-                float normalizedX = (position.x + MAP_OFFSET) / MAP_SIZE;
-                float normalizedZ = (position.z + MAP_OFFSET) / MAP_SIZE;
+                PosX = position.x;
+                PosZ = position.z;
+            }
 
-                Data2 = (byte)(Mathf.Clamp01(normalizedX) * 255);
-                Data3 = (byte)(Mathf.Clamp01(normalizedZ) * 255);
-                Data1 &= 0x80;
-            }
-            else
-            {
-                int dirX = Mathf.RoundToInt((direction.x * 0.5f + 0.5f) * 15);
-                int dirZ = Mathf.RoundToInt((direction.z * 0.5f + 0.5f) * 7);
-                Data1 = (byte)((Data1 & 0x80) | ((dirX << 3) & 0x78) | (dirZ & 0x07));
-            }
+            DirX = direction.x;
+            DirZ = direction.z;
         }
 
         public Vector3? GetPosition()
@@ -148,21 +135,27 @@ namespace Salon.Firebase.Database
             if (!IsPositionUpdate)
                 return null;
 
-            float x = (Data2 * POSITION_SCALE) - MAP_OFFSET;
-            float z = (Data3 * POSITION_SCALE) - MAP_OFFSET;
-
-            return new Vector3(x, 0f, z);
+            return new Vector3(PosX, 0f, PosZ);
         }
 
         public Vector3 GetDirection()
         {
-            if (IsPositionUpdate)
-                return Vector3.forward;
+            return new Vector3(DirX, 0f, DirZ).normalized;
+        }
 
-            float x = ((Data1 >> 3) & 0x0F) / 15f * 2f - 1f;
-            float z = (Data1 & 0x07) / 7f * 2f - 1f;
+        public bool HasSignificantChange(NetworkPositionData other)
+        {
+            if (other == null) return true;
 
-            return new Vector3(x, 0f, z).normalized;
+            float posDiff = Vector2.Distance(
+                new Vector2(PosX, PosZ),
+                new Vector2(other.PosX, other.PosZ));
+
+            float dirDiff = Vector2.Distance(
+                new Vector2(DirX, DirZ).normalized,
+                new Vector2(other.DirX, other.DirZ).normalized);
+
+            return posDiff > POSITION_THRESHOLD || dirDiff > DIRECTION_THRESHOLD;
         }
     }
 
