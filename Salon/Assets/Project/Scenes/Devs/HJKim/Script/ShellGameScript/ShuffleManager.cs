@@ -1,18 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UIElements;
 
 public class ShuffleManager : MonoBehaviour
 {
-    [SerializeField]
-    public GameObject spinner_Prefab;
+    //[SerializeField]
+    //public GameObject spinner_Prefab;
     [SerializeField]
     private List<Cup> cups = new List<Cup>();
     [SerializeField]
     private float spinDuration = 1f;//회전 속도 
+    private GameObject spinner;//빈껍데기 스피너
 
-    
+       
     private int cupCount;
 
 
@@ -46,6 +49,7 @@ public class ShuffleManager : MonoBehaviour
 
         CupShuffle();
     }
+
     private void CupShuffle()
     {//컵 두개뽑기 
         int firstCup = Random.Range(0,cupCount);
@@ -59,19 +63,21 @@ public class ShuffleManager : MonoBehaviour
         {
             print("구슬컵이 포함되어있습니다.");
         }
-     
-        //컵 움직이기
 
+        //컵 움직이기
         Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
         //프리팹 생성과 회전 초기화
-        GameObject spinner = Instantiate(spinner_Prefab, spinnerPos, Quaternion.identity);
+
+        spinner = new GameObject("Spinner");
+        spinner.transform.position = spinnerPos;
+
         //자식으로 설정
         cups[firstCup].transform.SetParent(spinner.transform);
         cups[secondCup].transform.SetParent(spinner.transform);
 
         //회전 설정
 
-        spinner.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+        //spinner.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
 
 
     }
