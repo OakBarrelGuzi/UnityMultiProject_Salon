@@ -6,13 +6,20 @@ using UnityEngine.Rendering;
 public class ShuffleManager : MonoBehaviour
 {
     [SerializeField]
+    public GameObject spinner_Prefab;
+    [SerializeField]
     private List<Cup> cups = new List<Cup>();
+    [SerializeField]
+    private float spinDuration = 1f;//회전 속도 
+
+    
+    private int cupCount;
+
 
     private SHELLDIFFICULTY shellDifficulty;
 
-    private int cupCount;
     private void Start()
-    {
+    {//무적권 1번(가운데 컵)이 구슬 가지고있음.
         cups[1].hasBall = true;
 
         foreach (Cup cup in cups)
@@ -40,24 +47,36 @@ public class ShuffleManager : MonoBehaviour
         CupShuffle();
     }
     private void CupShuffle()
-    {
-        int a = Random.Range(0,cupCount);
-        int b = Random.Range(0, cupCount);
-        while (a == b)
+    {//컵 두개뽑기 
+        int firstCup = Random.Range(0,cupCount);
+        int secondCup = Random.Range(0, cupCount);
+        while (firstCup == secondCup)
         {
-            a = Random.Range(0, cupCount);
+            firstCup = Random.Range(0, cupCount);
         }
 
-        if (cups[a].hasBall == true)
+        if (cups[firstCup].hasBall == true)
         {
-            print("어 여기있어");
+            print("구슬컵이 포함되어있습니다.");
         }
+     
+        //컵 움직이기
+
+        Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
+        //프리팹 생성과 회전 초기화
+        GameObject spinner = Instantiate(spinner_Prefab, spinnerPos, Quaternion.identity);
+        //자식으로 설정
+        cups[firstCup].transform.SetParent(spinner.transform);
+        cups[secondCup].transform.SetParent(spinner.transform);
+
+        //회전 설정
+
+        spinner.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
 
 
-        cups[a].gameObject.SetActive(false);
-        cups[b].gameObject.SetActive(false);
     }
 }
+
 
 public enum SHELLDIFFICULTY
 {
