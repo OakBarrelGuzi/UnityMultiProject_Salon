@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Salon.Interfaces;
 using UnityEngine.SceneManagement;
 using Salon.System;
+using Salon.Firebase.Database;
 
 namespace Salon.Firebase
 {
@@ -157,12 +158,32 @@ namespace Salon.Firebase
             if (pause)
             {
                 Debug.Log("[Firebase] 앱 일시정지, 연결 해제");
+                _ = UpdateUserStatus(UserStatus.Away);
                 FirebaseDatabase.DefaultInstance.GoOffline();
             }
             else
             {
                 Debug.Log("[Firebase] 앱 재개, 연결 복구");
                 FirebaseDatabase.DefaultInstance.GoOnline();
+                _ = UpdateUserStatus(UserStatus.Online);
+            }
+        }
+
+        private async void OnApplicationQuit()
+        {
+            if (!Application.isPlaying) return;
+
+            try
+            {
+                Debug.Log("[Firebase Manager] OnApplicationQuit 시작");
+                await UpdateUserStatus(UserStatus.Offline);
+                auth.StateChanged -= AuthStateChanged;
+                SceneManager.sceneLoaded -= OnSceneLoaded;
+                Debug.Log("[Firebase Manager] OnApplicationQuit 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Firebase Manager] OnApplicationQuit 처리 실패: {ex.Message}");
             }
         }
 
@@ -299,17 +320,20 @@ namespace Salon.Firebase
                 {
                     Debug.Log("[Firebase] 사용자 데이터 생성 시도...");
 
-                    // 사용자 데이터를 Dictionary로 직접 생성
-                    var userData = new Dictionary<string, object>
+                    var userData = new Database.UserData
                     {
-                        ["LastOnline"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                        ["Friends"] = new Dictionary<string, bool>(),
-                        ["GameStats"] = new Dictionary<string, object>()
+                        LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+                        IsOnline = true,
+                        Status = UserStatus.Online,
+                        Friends = new Dictionary<string, bool>(),
+                        GameStats = new Dictionary<GameType, UserStats>(),
+                        Invites = new Dictionary<string, InviteData>()
                     };
 
                     // 데이터베이스에 저장 (DisplayName을 키로 사용)
                     Debug.Log("[Firebase] 데이터베이스에 사용자 데이터 저장 시도...");
-                    await dbReference.Child("Users").Child(uniqueDisplayName).UpdateChildrenAsync(userData);
+                    string jsonData = JsonConvert.SerializeObject(userData);
+                    await dbReference.Child("Users").Child(uniqueDisplayName).SetRawJsonValueAsync(jsonData);
                     Debug.Log("[Firebase] 사용자 데이터 저장 완료");
 
                     Debug.Log("[Firebase] 모든 데이터베이스 작업 완료");
@@ -399,11 +423,13 @@ namespace Salon.Firebase
         {
             try
             {
-                var updates = new Dictionary<string, object>
-                {
-                    ["LastOnline"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                };
-                await dbReference.Child("Users").Child(displayName).UpdateChildrenAsync(updates);
+                var userData = await GetUserDataAsync(displayName) ?? new Database.UserData();
+                userData.LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                userData.IsOnline = true;
+                userData.Status = UserStatus.Online;
+
+                string jsonData = JsonConvert.SerializeObject(userData);
+                await dbReference.Child("Users").Child(displayName).SetRawJsonValueAsync(jsonData);
             }
             catch (Exception ex)
             {
@@ -413,18 +439,33 @@ namespace Salon.Firebase
 
         public async Task<Database.UserData> GetUserDataAsync(string displayName)
         {
+            if (string.IsNullOrEmpty(displayName))
+            {
+                Debug.LogWarning("[Firebase] displayName이 null이거나 비어있습니다.");
+                return null;
+            }
+
             try
             {
                 var snapshot = await dbReference.Child("Users").Child(displayName).GetValueAsync();
-                if (snapshot.Exists)
+                if (!snapshot.Exists)
                 {
-                    return JsonConvert.DeserializeObject<Database.UserData>(snapshot.GetRawJsonValue());
+                    Debug.LogWarning($"[Firebase] 사용자 {displayName}의 데이터가 없습니다.");
+                    return null;
                 }
-                return null;
+
+                var rawJson = snapshot.GetRawJsonValue();
+                if (string.IsNullOrEmpty(rawJson))
+                {
+                    Debug.LogWarning($"[Firebase] 사용자 {displayName}의 JSON 데이터가 비어있습니다.");
+                    return null;
+                }
+
+                return JsonConvert.DeserializeObject<Database.UserData>(rawJson);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 사용자 정보 조회 실패: {ex.Message}");
+                Debug.LogError($"[Firebase] 사용자 정보 조회 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 return null;
             }
         }
@@ -451,55 +492,6 @@ namespace Salon.Firebase
             catch (Exception ex)
             {
                 Debug.LogError($"[Firebase] 사용자 검색 실패: {ex.Message}");
-                return null;
-            }
-        }
-
-        public async Task<bool> AddFriendAsync(string friendUserId)
-        {
-            if (currentUser == null) return false;
-
-            try
-            {
-                var updates = new Dictionary<string, object>
-                {
-                    [$"Users/{currentUser.UserId}/Friends/{friendUserId}"] = true,
-                    [$"Users/{friendUserId}/Friends/{currentUser.UserId}"] = true
-                };
-
-                await dbReference.UpdateChildrenAsync(updates);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[Firebase] 친구 추가 실패: {ex.Message}");
-                return false;
-            }
-        }
-
-        public async Task<Dictionary<string, Database.UserData>> GetFriendsAsync()
-        {
-            if (currentUser == null) return null;
-
-            try
-            {
-                var result = new Dictionary<string, Database.UserData>();
-                var snapshot = await dbReference.Child("Users").Child(currentUser.UserId).Child("Friends").GetValueAsync();
-
-                foreach (var child in snapshot.Children)
-                {
-                    var friendData = await GetUserDataAsync(child.Key);
-                    if (friendData != null)
-                    {
-                        result[child.Key] = friendData;
-                    }
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[Firebase] 친구 목록 조회 실패: {ex.Message}");
                 return null;
             }
         }
@@ -643,6 +635,28 @@ namespace Salon.Firebase
             {
                 Debug.Log("[Firebase Manager] 재연결 시도");
                 ReconnectFirebase();
+            }
+        }
+
+        public async Task UpdateUserStatus(UserStatus status)
+        {
+            if (currentUser == null || string.IsNullOrEmpty(currentUserName)) return;
+
+            try
+            {
+                var userData = await GetUserDataAsync(currentUserName) ?? new Database.UserData();
+                userData.LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                userData.Status = status;
+                userData.IsOnline = status != UserStatus.Offline;
+
+                string jsonData = JsonConvert.SerializeObject(userData);
+                await dbReference.Child("Users").Child(currentUserName).SetRawJsonValueAsync(jsonData);
+
+                Debug.Log($"[Firebase] 사용자 상태 업데이트: {status}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Firebase] 사용자 상태 업데이트 실패: {ex.Message}");
             }
         }
     }
