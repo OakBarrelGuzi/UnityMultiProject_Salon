@@ -18,35 +18,6 @@ namespace Salon.Firebase
         public DatabaseReference DbReference { get => dbReference; }
         private FirebaseAuth auth;
         private FirebaseUser currentUser;
-        private RoomManager roomManager;
-        public RoomManager RoomManager
-        {
-            get
-            {
-                if (roomManager == null)
-                {
-                    Debug.Log("[FirebaseManager] RoomManager 초기화 시도");
-                    var existingRM = transform.Find("RoomManager")?.GetComponent<RoomManager>();
-                    if (existingRM != null)
-                    {
-                        Debug.Log("[FirebaseManager] 기존 RoomManager 발견, 재사용");
-                        roomManager = existingRM;
-                    }
-                    else
-                    {
-                        GameObject RM = new GameObject("RoomManager");
-                        roomManager = RM.AddComponent<RoomManager>();
-                        RM.transform.SetParent(transform);
-                        Debug.Log("[FirebaseManager] 새로운 RoomManager 생성");
-                    }
-                    roomManager.Initialize();
-                    Debug.Log("[FirebaseManager] RoomManager 초기화 완료");
-                }
-                return roomManager;
-            }
-        }
-        public ChannelManager ChannelManager { get; private set; }
-        public ChatManager ChatManager { get; set; }
 
         private bool isConnected = false;
         private DatabaseReference connectionRef;
@@ -54,20 +25,13 @@ namespace Salon.Firebase
         private string currentUserName;
         public string CurrentUserName => currentUserName;
 
-        protected override void Awake()
-        {
-            base.Awake();
-            // 추가적인 초기화 로직
-        }
-
-        // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-        // private static void AutoInitialize()
-        // {
-        //     _ = Instance;
-        // }
-
         public bool IsInitialized { get; private set; }
         private TaskCompletionSource<bool> initializationComplete;
+
+        void Start()
+        {
+            Initialize();
+        }
 
         public async void Initialize()
         {
@@ -78,18 +42,6 @@ namespace Salon.Firebase
                 if (dependencyStatus == DependencyStatus.Available)
                 {
                     InitializeFirebase();
-
-                    if (ChannelManager == null)
-                    {
-                        GameObject CM = new GameObject("ChannelManager");
-                        ChannelManager = CM.AddComponent<ChannelManager>();
-                        CM.transform.SetParent(transform);
-                        ChannelManager.Initialize();
-                    }
-
-                    // RoomManager 초기화는 프로퍼티 getter에서 처리됨
-                    _ = RoomManager;
-
                     IsInitialized = true;
                     initializationComplete.SetResult(true);
                     Debug.Log("[Firebase] 초기화 성공");
@@ -119,11 +71,6 @@ namespace Salon.Firebase
             }
         }
 
-        void Start()
-        {
-            Initialize();
-        }
-
         private void InitializeFirebase()
         {
             auth = FirebaseAuth.DefaultInstance;
@@ -147,10 +94,9 @@ namespace Salon.Firebase
                     currentUserName = currentUser.DisplayName;
                     Debug.Log($"[Firebase] 현재 사용자 이름: {currentUserName}");
 
-                    // ChannelManager에 현재 사용자 이름 설정
-                    if (ChannelManager != null)
+                    if (ChannelManager.Instance != null)
                     {
-                        ChannelManager.SetCurrentUserName(currentUserName);
+                        ChannelManager.Instance.SetCurrentUserName(currentUserName);
                     }
                 }
                 else
@@ -159,10 +105,9 @@ namespace Salon.Firebase
                     currentUser = null;
                     currentUserName = null;
 
-                    // ChannelManager의 사용자 이름도 null로 설정
-                    if (ChannelManager != null)
+                    if (ChannelManager.Instance != null)
                     {
-                        ChannelManager.SetCurrentUserName(null);
+                        ChannelManager.Instance.SetCurrentUserName(null);
                     }
                 }
             }
@@ -221,103 +166,13 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task CleanupChannelData(string channelName, string userName, bool isNormalDisconnect)
-        {
-            try
-            {
-                Debug.Log($"[FirebaseManager] 채널 데이터 정리 시작 - Channel: {channelName}, User: {userName}");
-
-                if (string.IsNullOrEmpty(channelName) || string.IsNullOrEmpty(userName))
-                {
-                    Debug.LogWarning("[FirebaseManager] 채널명 또는 사용자명이 비어있어 정리를 건너뜁니다.");
-                    return;
-                }
-
-                if (!isNormalDisconnect)
-                {
-                    Debug.Log("[FirebaseManager] 비정상 종료로 인해 데이터 정리를 건너뜁니다.");
-                    return;
-                }
-
-                if (dbReference == null || FirebaseDatabase.DefaultInstance == null)
-                {
-                    Debug.LogError("[FirebaseManager] Firebase 참조가 유효하지 않습니다.");
-                    return;
-                }
-
-                try
-                {
-                    Debug.Log($"[FirebaseManager] 플레이어 데이터 삭제 시도 - 경로: Channels/{channelName}/Players/{userName}");
-                    var playerRef = dbReference.Child("Channels").Child(channelName)
-                        .Child("Players").Child(userName);
-
-                    if (playerRef != null)
-                    {
-                        await playerRef.RemoveValueAsync();
-                        Debug.Log("[FirebaseManager] 플레이어 데이터 삭제 완료");
-
-                        Debug.Log("[FirebaseManager] UserCount 업데이트 시도");
-                        var userCountRef = dbReference.Child("Channels").Child(channelName)
-                            .Child("CommonChannelData").Child("UserCount");
-
-                        if (userCountRef != null)
-                        {
-                            var currentCount = await userCountRef.GetValueAsync();
-                            int count = currentCount.Value != null ? Convert.ToInt32(currentCount.Value) : 0;
-                            var newCount = Math.Max(0, count - 1);
-
-                            var updates = new Dictionary<string, object>
-                            {
-                                ["UserCount"] = newCount,
-                                ["isFull"] = newCount >= 10
-                            };
-
-                            await userCountRef.Parent.UpdateChildrenAsync(updates);
-                            Debug.Log($"[FirebaseManager] UserCount 업데이트 완료: {newCount}");
-                        }
-                        else
-                        {
-                            Debug.LogWarning("[FirebaseManager] UserCount 참조가 유효하지 않습니다.");
-                        }
-                    }
-                    else
-                    {
-                        Debug.LogWarning("[FirebaseManager] 플레이어 참조가 유효하지 않습니다.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogError($"[FirebaseManager] Firebase 데이터 정리 중 오류: {ex.Message}\n{ex.StackTrace}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[FirebaseManager] 채널 데이터 정리 실패: {ex.Message}\n{ex.StackTrace}");
-            }
-        }
-
-        private async void OnDestroy()
+        private void OnDestroy()
         {
             if (!Application.isPlaying) return;
 
             try
             {
-                Debug.Log("[FirebaseManager] OnDestroy 시작");
-
-                // 채널 데이터 정리
-                if (!string.IsNullOrEmpty(ChannelManager?.CurrentChannel) && !string.IsNullOrEmpty(currentUserName))
-                {
-                    try
-                    {
-                        Debug.Log("[FirebaseManager] 채널 데이터 정리 시작");
-                        await CleanupChannelData(ChannelManager.CurrentChannel, currentUserName, true);
-                        Debug.Log("[FirebaseManager] 채널 데이터 정리 완료");
-                    }
-                    catch (Exception cleanupEx)
-                    {
-                        Debug.LogError($"[FirebaseManager] 채널 데이터 정리 실패: {cleanupEx.Message}");
-                    }
-                }
+                Debug.Log("[Firebase Manager] OnDestroy 시작");
 
                 // 이벤트 핸들러 제거
                 if (connectionRef != null)
@@ -331,26 +186,11 @@ namespace Salon.Firebase
 
                 SceneManager.sceneLoaded -= OnSceneLoaded;
 
-                // Firebase 연결 해제
-                if (FirebaseDatabase.DefaultInstance != null)
-                {
-                    try
-                    {
-                        Debug.Log("[FirebaseManager] Firebase 연결 해제 시도");
-                        FirebaseDatabase.DefaultInstance.GoOffline();
-                        Debug.Log("[FirebaseManager] Firebase 연결 해제 완료");
-                    }
-                    catch (Exception fbEx)
-                    {
-                        Debug.LogError($"[FirebaseManager] Firebase 연결 해제 실패: {fbEx.Message}");
-                    }
-                }
-
-                Debug.Log("[FirebaseManager] 모든 리소스 정리 완료");
+                Debug.Log("[Firebase Manager] 핸들러 제거 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[FirebaseManager] OnDestroy 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[Firebase Manager] OnDestroy 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -510,9 +350,9 @@ namespace Salon.Firebase
                 Debug.Log($"[Firebase] 로그인 성공: {result.User.Email} (DisplayName: {currentUserName})");
 
                 // ChannelManager에 현재 사용자 이름 설정
-                if (ChannelManager != null)
+                if (ChannelManager.Instance != null)
                 {
-                    ChannelManager.SetCurrentUserName(currentUserName);
+                    ChannelManager.Instance.SetCurrentUserName(currentUserName);
                 }
                 else
                 {
@@ -520,7 +360,7 @@ namespace Salon.Firebase
                 }
 
                 LogManager.Instance.ShowLog("로그인 성공!");
-                await ChannelManager.ExistRooms();
+                await ChannelManager.Instance.ExistRooms();
                 return true;
             }
             catch (FirebaseException ex)
@@ -664,24 +504,14 @@ namespace Salon.Firebase
             }
         }
 
-        public async void SignOut()
+        public void SignOut()
         {
             try
             {
-                string userName = currentUserName;  // 현재 사용자 이름을 미리 저장
-
-                // AuthStateChanged 이벤트 핸들러 일시 제거
                 auth.StateChanged -= AuthStateChanged;
 
                 if (SceneManager.GetActiveScene().name != "MainScene")
                 {
-                    Debug.Log("[Firebase Manager] 채널에서 나가기 시도");
-                    if (ChannelManager != null)
-                    {
-                        await ChannelManager.LeaveChannel();
-                    }
-                    Debug.Log("[Firebase Manager] 채널에서 나가기 완료");
-
                     Debug.Log("[Firebase Manager] MainScene으로 이동");
                     SceneManager.LoadScene("MainScene");
                 }
@@ -692,7 +522,6 @@ namespace Salon.Firebase
                 currentUserName = null;
                 Debug.Log("[Firebase Manager] 로그아웃 처리 완료");
 
-                // AuthStateChanged 이벤트 핸들러 다시 등록
                 auth.StateChanged += AuthStateChanged;
 
                 LogManager.Instance.ShowLog("[Firebase Manager] 로그아웃 완료");
@@ -702,7 +531,6 @@ namespace Salon.Firebase
                 Debug.LogError($"[Firebase Manager] 로그아웃 중 오류 발생: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 LogManager.Instance.ShowLog("로그아웃 중 오류가 발생했습니다.");
 
-                // 오류 발생 시에도 이벤트 핸들러 다시 등록
                 auth.StateChanged += AuthStateChanged;
             }
         }
