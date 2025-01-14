@@ -108,7 +108,6 @@ namespace Salon.Firebase
                 currentMessagesQuery.ChildAdded += HandleMessageReceived;
                 Debug.Log($"[ChatManager] 채널 {channelName}의 메시지 구독 시작 (Timestamp: {lastMessageTimestamp})");
 
-                // 시스템 메시지 전송
                 await SendChat($"{FirebaseManager.Instance.GetCurrentDisplayName()}님이 입장하셨습니다.", channelName, "System");
             }
             catch (Exception ex)
@@ -147,20 +146,34 @@ namespace Salon.Firebase
             }
         }
 
-        public void StopListeningToMessages()
+        public async void StopListeningToMessages()
         {
             try
             {
-                if (currentMessagesQuery != null)
+                if (currentMessagesQuery != null && !string.IsNullOrEmpty(currentChannel))
                 {
+                    string channelName = currentChannel;  // 로컬 변수에 저장
+
+                    // 1. 메시지 구독 해제
                     currentMessagesQuery.ChildAdded -= HandleMessageReceived;
                     currentMessagesQuery = null;
                     Debug.Log("[ChatManager] 메시지 구독 해제 완료");
-                }
 
-                currentChannelMessagesRef = null;
-                currentChannelRef = null;
-                currentChannel = null;
+                    // 2. 퇴장 메시지 전송
+                    try
+                    {
+                        await SendChat($"{FirebaseManager.Instance.GetCurrentDisplayName()}님이 퇴장하셨습니다.", channelName, "System");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[ChatManager] 퇴장 메시지 전송 실패: {ex.Message}");
+                    }
+
+                    // 3. 채널 참조 정리
+                    currentChannelMessagesRef = null;
+                    currentChannelRef = null;
+                    currentChannel = null;
+                }
             }
             catch (Exception ex)
             {

@@ -215,15 +215,28 @@ namespace Salon.Firebase
 
             if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
             {
-                var posData = JsonConvert.DeserializeObject<NetworkPositionData>(args.Snapshot.GetRawJsonValue());
-                var player = playerObject.GetComponent<RemotePlayer>();
-                if (player != null)
+                try
                 {
-                    player.GetNetworkPosition(posData);
+                    string compressedData = args.Snapshot.Value as string;
+                    if (string.IsNullOrEmpty(compressedData))
+                    {
+                        Debug.LogWarning($"[RoomManager] OnPositionChanged: {displayName}의 위치 데이터가 null이거나 비어있음");
+                        return;
+                    }
+
+                    var player = playerObject.GetComponent<RemotePlayer>();
+                    if (player != null)
+                    {
+                        player.GetNetworkPosition(compressedData);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[RoomManager] OnPositionChanged: {displayName}의 RemotePlayer 컴포넌트를 찾을 수 없음");
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Debug.LogError($"[RoomManager] OnPositionChanged: {displayName}의 RemotePlayer 컴포넌트를 찾을 수 없음");
+                    Debug.LogError($"[RoomManager] OnPositionChanged: 위치 데이터 처리 중 오류 발생 - {ex.Message}");
                 }
             }
             else

@@ -291,17 +291,6 @@ namespace Salon.Firebase
                 // 1. 채팅 처리
                 if (ChatManager.Instance != null)
                 {
-                    if (isNormalDisconnect)
-                    {
-                        try
-                        {
-                            await ChatManager.Instance.SendChat($"{currentUserName}님이 나갔습니다.", channelName, "System");
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.LogError($"[ChannelManager] 퇴장 메시지 전송 실패: {ex.Message}");
-                        }
-                    }
                     ChatManager.Instance.StopListeningToMessages();
                 }
 
