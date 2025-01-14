@@ -4,12 +4,13 @@ using Salon.Firebase.Database;
 using Salon.Firebase;
 using System;
 using Newtonsoft.Json;
+using Firebase.Database;
 
 namespace Salon.Character
 {
     public class LocalPlayer : Player
     {
-        private GamePlayerData cachedPlayerData;
+        private DatabaseReference posRef;
         private float positionUpdateInterval = 0.1f;
         private float lastPositionUpdateTime;
         private InputController inputController;
@@ -26,7 +27,7 @@ namespace Salon.Character
             }
             lastPositionUpdateTime = Time.time;
             lastSentPosition = new NetworkPositionData(transform.position, transform.forward, true);
-            cachedPlayerData = new GamePlayerData(displayName);
+            posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
         }
 
         private void Update()
@@ -51,25 +52,11 @@ namespace Salon.Character
                     lastPositionUpdateTime = Time.time;
                     lastSentPosition = newPosition;
 
-                    var channelManager = FirebaseManager.Instance.ChannelManager;
-                    if (channelManager != null && !string.IsNullOrEmpty(channelManager.CurrentChannel))
-                    {
-                        var dbReference = FirebaseManager.Instance.DbReference;
-                        if (dbReference != null)
-                        {
-                            var playerRef = dbReference.Child("Channels")
-                                .Child(channelManager.CurrentChannel)
-                                .Child("Players")
-                                .Child(FirebaseManager.Instance.CurrentUserName)
-                                .Child("Position");
+                    string jsonData = JsonConvert.SerializeObject(newPosition);
+                    Debug.Log($"[LocalPlayer] Firebase에 전송할 위치 데이터: {jsonData}");
+                    await posRef.SetRawJsonValueAsync(jsonData);
+                    Debug.Log("[LocalPlayer] Firebase에 위치 데이터 전송 완료");
 
-                            string jsonData = JsonConvert.SerializeObject(newPosition);
-                            Debug.Log($"[LocalPlayer] Firebase에 전송할 위치 데이터: {jsonData}");
-
-                            await playerRef.SetRawJsonValueAsync(jsonData);
-                            Debug.Log("[LocalPlayer] Firebase에 위치 데이터 전송 완료");
-                        }
-                    }
                 }
             }
             catch (Exception ex)

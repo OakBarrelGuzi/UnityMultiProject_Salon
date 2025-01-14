@@ -12,17 +12,15 @@ public class ShuffleManager : MonoBehaviour
     [SerializeField]
     private List<Cup> cups = new List<Cup>();
     [SerializeField]
-    private float spinDuration = 1f;//È¸Àü ¼Óµµ 
-    private GameObject spinner;//ºó²®µ¥±â ½ºÇÇ³Ê
+    //private float spinDuration = 1f;//íšŒì „ ì†ë„ 
+    private GameObject spinner;//ë¹ˆê»ë°ê¸° ìŠ¤í”¼ë„ˆ
 
-       
     private int cupCount;
 
-
-    private SHELLDIFFICULTY shellDifficulty;
+    //private SHELLDIFFICULTY shellDifficulty;
 
     private void Start()
-    {//¹«Àû±Ç 1¹ø(°¡¿îµ¥ ÄÅ)ÀÌ ±¸½½ °¡Áö°íÀÖÀ½.
+    {//ë¬´ì ê¶Œ 1ë²ˆ(ê°€ìš´ë° ì»µ)ì´ êµ¬ìŠ¬ ê°€ì§€ê³ ìˆìŒ.
         cups[1].hasBall = true;
 
         foreach (Cup cup in cups)
@@ -30,8 +28,8 @@ public class ShuffleManager : MonoBehaviour
             cup.gameObject.SetActive(false);
         }
 
-        //TODO:³­ÀÌµµ ¼³Á¤ ¹öÆ° ÇÒ´çÇØ¾ß ÇÔ.
-        shellDifficulty = SHELLDIFFICULTY.Easy;
+        //TODO:ë‚œì´ë„ ì„¤ì • ë²„íŠ¼ í• ë‹¹í•´ì•¼ í•¨.
+        //shellDifficulty = SHELLDIFFICULTY.Easy;
         cupCount = (int)SHELLDIFFICULTY.Easy;
 
         //if (shellDifficulty == SHELLDIFFICULTY.Easy)
@@ -51,8 +49,8 @@ public class ShuffleManager : MonoBehaviour
     }
 
     private void CupShuffle()
-    {//ÄÅ µÎ°³»Ì±â 
-        int firstCup = Random.Range(0,cupCount);
+    {//ì»µ ë‘ê°œë½‘ê¸° 
+        int firstCup = Random.Range(0, cupCount);
         int secondCup = Random.Range(0, cupCount);
         while (firstCup == secondCup)
         {
@@ -61,32 +59,30 @@ public class ShuffleManager : MonoBehaviour
 
         if (cups[firstCup].hasBall == true)
         {
-            print("±¸½½ÄÅÀÌ Æ÷ÇÔµÇ¾îÀÖ½À´Ï´Ù.");
+            print("êµ¬ìŠ¬ì»µì´ í¬í•¨ë˜ì–´ìˆìŠµë‹ˆë‹¤.");
         }
 
-        //ÄÅ ¿òÁ÷ÀÌ±â
+        //ì»µ ì›€ì§ì´ê¸°
         Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
-        //ÇÁ¸®ÆÕ »ı¼º°ú È¸Àü ÃÊ±âÈ­
+        //í”„ë¦¬íŒ¹ ìƒì„±ê³¼ íšŒì „ ì´ˆê¸°í™”
 
         spinner = new GameObject("Spinner");
         spinner.transform.position = spinnerPos;
 
-        //ÀÚ½ÄÀ¸·Î ¼³Á¤
+        //ìì‹ìœ¼ë¡œ ì„¤ì •
         cups[firstCup].transform.SetParent(spinner.transform);
         cups[secondCup].transform.SetParent(spinner.transform);
 
-        //È¸Àü ¼³Á¤
+        //íšŒì „ ì„¤ì •
 
         //spinner.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-
 
     }
 }
 
-
 public enum SHELLDIFFICULTY
 {
-    Easy= 3,
+    Easy = 3,
     Nomal,
     Hard,
 }

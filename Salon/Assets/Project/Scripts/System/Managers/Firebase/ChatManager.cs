@@ -4,10 +4,11 @@ using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Salon.Firebase.Database;
+using Salon.System;
 
 namespace Salon.Firebase
 {
-    public class ChatManager : MonoBehaviour
+    public class ChatManager : Singleton<ChatManager>
     {
         private DatabaseReference dbReference;
         private DatabaseReference channelsRef;
@@ -18,13 +19,39 @@ namespace Salon.Firebase
         private string currentChannel;
         private long lastMessageTimestamp;
 
-        public void Initialize(DatabaseReference dbReference)
+        void Start()
         {
-            this.dbReference = dbReference;
-            this.channelsRef = dbReference.Child("Channels");
+            _ = Initialize();
+        }
+
+        public async Task Initialize()
+        {
+            dbReference = await GetDbReference();
+            channelsRef = dbReference.Child("Channels");
             lastMessageTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            FirebaseManager.Instance.ChatManager = this;
             Debug.Log("[ChatManager] 초기화 완료");
+        }
+
+        private async Task<DatabaseReference> GetDbReference()
+        {
+            int maxRetries = 5;
+            int currentRetry = 0;
+            int delayMs = 1000;
+
+            while (currentRetry < maxRetries)
+            {
+                if (FirebaseManager.Instance.DbReference != null)
+                {
+                    return FirebaseManager.Instance.DbReference;
+                }
+
+                Debug.Log($"[ChatManager] Firebase 데이터베이스 참조 대기 중... (시도 {currentRetry + 1}/{maxRetries})");
+                await Task.Delay(delayMs);
+                currentRetry++;
+                delayMs *= 2;
+            }
+
+            throw new Exception("[ChatManager] Firebase 데이터베이스 참조를 가져올 수 없습니다.");
         }
 
         private void UpdateChannelReferences(string channelName)
@@ -67,24 +94,27 @@ namespace Salon.Firebase
             }
         }
 
-        public void StartListeningToMessages(string channelName)
+        public async Task StartListeningToMessages(string channelName)
         {
             try
             {
-                StopListeningToMessages();  // 기존 구독 해제
+                StopListeningToMessages();
                 UpdateChannelReferences(channelName);
 
-                // 최근 메시지부터 구독 시작
                 currentMessagesQuery = currentChannelMessagesRef
                     .OrderByChild("Timestamp")
-                    .StartAt(lastMessageTimestamp - 1); // 1초 전부터 시작하여 누락 방지
+                    .StartAt(lastMessageTimestamp - 1);
 
                 currentMessagesQuery.ChildAdded += HandleMessageReceived;
                 Debug.Log($"[ChatManager] 채널 {channelName}의 메시지 구독 시작 (Timestamp: {lastMessageTimestamp})");
+
+                // 시스템 메시지 전송
+                await SendChat($"{FirebaseManager.Instance.GetCurrentDisplayName()}님이 입장하셨습니다.", channelName, "System");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[ChatManager] 메시지 구독 시작 실패: {ex.Message}");
+                throw;
             }
         }
 
@@ -92,7 +122,6 @@ namespace Salon.Firebase
         {
             try
             {
-                // 최근 50개의 메시지만 로드
                 var snapshot = await currentChannelMessagesRef
                     .OrderByChild("Timestamp")
                     .LimitToLast(50)
@@ -147,7 +176,6 @@ namespace Salon.Firebase
             {
                 var messageData = JsonConvert.DeserializeObject<MessageData>(args.Snapshot.GetRawJsonValue());
 
-                // 이미 처리한 메시지는 스킵
                 if (messageData.Timestamp <= lastMessageTimestamp)
                 {
                     return;
