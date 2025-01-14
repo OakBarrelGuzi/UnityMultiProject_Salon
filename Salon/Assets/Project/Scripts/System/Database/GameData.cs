@@ -169,7 +169,7 @@ namespace Salon.Firebase.Database
         public bool IsHost { get; set; }
         public GamePlayerState State { get; set; }
         public Dictionary<string, object> GameSpecificData { get; set; }
-        public NetworkPositionData Position { get; set; }
+        public string Position { get; set; }
 
         public GamePlayerData(string displayName, bool isHost = false)
         {
@@ -178,7 +178,7 @@ namespace Salon.Firebase.Database
             IsHost = isHost;
             State = GamePlayerState.Waiting;
             GameSpecificData = new Dictionary<string, object>();
-            Position = new NetworkPositionData();
+            Position = NetworkPositionCompressor.CompressVector3(Vector3.zero, Vector3.forward, false);
         }
     }
 }

@@ -14,12 +14,12 @@ public class LobbyPanel : Panel
     public override void Initialize()
     {
         chatPopUp.Initialize();
-        FirebaseManager.Instance.ChannelManager.OnReceiveChat += HandleChat;
+        ChatManager.Instance.OnReceiveChat += HandleChat;
     }
 
     public override void Close()
     {
-        FirebaseManager.Instance.ChannelManager.OnReceiveChat -= HandleChat;
+        ChatManager.Instance.OnReceiveChat -= HandleChat;
         chatPopUp.ClearChat();
         base.Close();
     }
