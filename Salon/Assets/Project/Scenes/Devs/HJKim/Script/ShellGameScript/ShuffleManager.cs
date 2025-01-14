@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 
 public class ShuffleManager : MonoBehaviour
 {
@@ -12,62 +10,49 @@ public class ShuffleManager : MonoBehaviour
     [SerializeField]
     private List<Cup> cups = new List<Cup>();
     [SerializeField]
-    private float spinDuration = 1f;//회전 속도 
+    private float spinSpeed = 10f;//회전 속도 
+     
     private GameObject spinner;//빈껍데기 스피너
+    [SerializeField]
+    private Transform table_pos;
 
-       
     private int cupCount;
+    private bool isStart = false;
+    private bool isCanSelect = false;
 
 
     private SHELLDIFFICULTY shellDifficulty;
 
-    private void Start()
-    {//무적권 1번(가운데 컵)이 구슬 가지고있음.
-        cups[1].hasBall = true;
 
-        foreach (Cup cup in cups)
+    private void Update()
+    {
+        if (spinner != null)
         {
-            cup.gameObject.SetActive(false);
+            CupShuffle();
         }
-
-        //TODO:난이도 설정 버튼 할당해야 함.
-        shellDifficulty = SHELLDIFFICULTY.Easy;
-        cupCount = (int)SHELLDIFFICULTY.Easy;
-
-        //if (shellDifficulty == SHELLDIFFICULTY.Easy)
-        //{
-        //    cups[0].gameObject.SetActive(true);
-        //    cups[1].gameObject.SetActive(true);
-        //    cups[2].gameObject.SetActive(true);
-        //}
-        //else { }
-
-        for (int i = 0; i < cupCount; i++)
+      else if (spinner ==null&& isStart==true)
         {
-            cups[i].gameObject.SetActive(true);
+            SpawnSpinner();
         }
-
-        CupShuffle();
     }
-
-    private void CupShuffle()
+    private void SpawnSpinner()
     {//컵 두개뽑기 
-        int firstCup = Random.Range(0,cupCount);
+        int firstCup = Random.Range(0, cupCount);
         int secondCup = Random.Range(0, cupCount);
         while (firstCup == secondCup)
         {
             firstCup = Random.Range(0, cupCount);
         }
 
-        if (cups[firstCup].hasBall == true)
-        {
-            print("구슬컵이 포함되어있습니다.");
-        }
+        //if (cups[firstCup].hasBall == true)
+        //{
+        //    print("구슬컵이 포함되어있습니다.");
+        //}
 
         //컵 움직이기
         Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
-        //프리팹 생성과 회전 초기화
 
+        //스피너 가운데에 생성
         spinner = new GameObject("Spinner");
         spinner.transform.position = spinnerPos;
 
@@ -81,12 +66,80 @@ public class ShuffleManager : MonoBehaviour
 
 
     }
+    private void CupShuffle()
+    {
+        spinner.transform.rotation = Quaternion.Lerp
+            (spinner.transform.rotation,
+            Quaternion.Euler(0f, 180f, 0f),
+            Time.deltaTime * spinSpeed);
+        if (Quaternion.Angle(spinner.transform.rotation,
+            Quaternion.Euler(0f, 180f, 0f))<0.05f){
+            while (spinner.transform.childCount > 0)
+            {
+                spinner.transform.GetChild(0).SetParent(table_pos);
+            }
+
+            Destroy(spinner);
+        }
+    }
+
+    private IEnumerator ShuffleStart()
+    {
+        yield return new WaitForSeconds(10);
+
+        isStart=false;
+        isCanSelect = true;
+    }
+
+    public void OnCupSelected(Cup cup)
+    {
+        if (isCanSelect == false)
+        {
+            return;
+        }
+        if (cup.hasBall == true)
+        { 
+            print("승리");
+        }
+        else if (cup.hasBall == false)
+        {
+            print("패배");
+        }
+        isCanSelect = false;
+    } 
+
+
+    public void StartGame()
+    {
+        isStart = true;
+        cups[1].hasBall = true;
+
+
+        foreach (Cup cup in cups)
+        {
+            cup.Initialize(this);
+            cup.gameObject.SetActive(false);
+        }
+
+        //난이도에 따른만큼 컵 켜기
+        for (int i = 0; i < cupCount; i++)
+        {
+            cups[i].gameObject.SetActive(true);
+        }
+        StartCoroutine(ShuffleStart());
+    }
+
+    public void SetDifficulty(SHELLDIFFICULTY difficulty)
+    {
+        shellDifficulty = difficulty;
+        cupCount = (int)shellDifficulty;
+    }
 }
 
 
 public enum SHELLDIFFICULTY
 {
-    Easy= 3,
+    Easy = 3,
     Nomal,
     Hard,
 }
