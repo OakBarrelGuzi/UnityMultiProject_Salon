@@ -1,20 +1,22 @@
+using UnityEngine;
 using Firebase.Database;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
 using Salon.Firebase.Database;
+using System.Threading.Tasks;
 using Salon.Character;
+using Salon.System;
 
 namespace Salon.Firebase
 {
-    public class RoomManager : MonoBehaviour
+    public class RoomManager : Singleton<RoomManager>
     {
         private DatabaseReference dbReference;
         private DatabaseReference channelsRef;
         private DatabaseReference currentChannelRef;
-        private DatabaseReference currentChannelPlayersRef;
+        public DatabaseReference CurrentChannelPlayersRef { get; private set; }
         private Query currentPlayersQuery;
         private Dictionary<string, GameObject> instantiatedPlayers = new Dictionary<string, GameObject>();
         private Dictionary<string, Query> playerPositionQueries = new Dictionary<string, Query>();
@@ -23,7 +25,12 @@ namespace Salon.Firebase
         public Transform spawnParent;
         private string currentChannel;
 
-        public void Initialize()
+        void Start()
+        {
+            _ = Initialize();
+        }
+
+        public async Task Initialize()
         {
             try
             {
@@ -31,7 +38,7 @@ namespace Salon.Firebase
                 if (dbReference == null)
                 {
                     Debug.Log("[RoomManager] 데이터베이스 참조 설정 시작");
-                    dbReference = FirebaseManager.Instance.DbReference;
+                    dbReference = await GetDbReference();
                     channelsRef = dbReference.Child("Channels");
                     Debug.Log("[RoomManager] 데이터베이스 참조 설정 완료");
                 }
@@ -46,12 +53,34 @@ namespace Salon.Firebase
             }
         }
 
+        private async Task<DatabaseReference> GetDbReference()
+        {
+            int maxRetries = 5;
+            int currentRetry = 0;
+            int delayMs = 1000;
+
+            while (currentRetry < maxRetries)
+            {
+                if (FirebaseManager.Instance.DbReference != null)
+                {
+                    return FirebaseManager.Instance.DbReference;
+                }
+
+                Debug.Log($"[ChannelManager] Firebase 데이터베이스 참조 대기 중... (시도 {currentRetry + 1}/{maxRetries})");
+                await Task.Delay(delayMs);
+                currentRetry++;
+                delayMs *= 2;
+            }
+
+            throw new Exception("[ChannelManager] Firebase 데이터베이스 참조를 가져올 수 없습니다.");
+        }
+
         private void UpdateChannelReferences(string channelName)
         {
             if (string.IsNullOrEmpty(channelName)) return;
 
             currentChannelRef = channelsRef.Child(channelName);
-            currentChannelPlayersRef = currentChannelRef.Child("Players");
+            CurrentChannelPlayersRef = currentChannelRef.Child("Players");
             currentChannel = channelName;
             Debug.Log($"[RoomManager] 채널 레퍼런스 업데이트 완료: {channelName}");
         }
@@ -59,7 +88,7 @@ namespace Salon.Firebase
         private void ClearChannelReferences()
         {
             currentChannelRef = null;
-            currentChannelPlayersRef = null;
+            CurrentChannelPlayersRef = null;
             currentPlayersQuery = null;
             currentChannel = null;
             Debug.Log("[RoomManager] 채널 레퍼런스 초기화 완료");
@@ -106,7 +135,7 @@ namespace Salon.Firebase
                 UpdateChannelReferences(channelName);
 
                 // 기존 플레이어 로드
-                var snapshot = await currentChannelPlayersRef.GetValueAsync();
+                var snapshot = await CurrentChannelPlayersRef.GetValueAsync();
                 if (snapshot.Exists)
                 {
                     foreach (var child in snapshot.Children)
@@ -124,8 +153,7 @@ namespace Salon.Firebase
                     }
                 }
 
-                // 플레이어 변경사항 구독
-                currentPlayersQuery = currentChannelPlayersRef;
+                currentPlayersQuery = CurrentChannelPlayersRef;
                 currentPlayersQuery.ChildAdded += OnPlayerAdded;
                 currentPlayersQuery.ChildRemoved += OnPlayerRemoved;
 
@@ -147,7 +175,7 @@ namespace Salon.Firebase
                     playerPositionQueries[displayName].ValueChanged -= OnPositionChanged;
                 }
 
-                var positionQuery = currentChannelPlayersRef.Child(displayName).Child("Position");
+                var positionQuery = CurrentChannelPlayersRef.Child(displayName).Child("Position");
                 positionQuery.ValueChanged += OnPositionChanged;
                 playerPositionQueries[displayName] = positionQuery;
                 Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 완료");
@@ -187,15 +215,28 @@ namespace Salon.Firebase
 
             if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
             {
-                var posData = JsonConvert.DeserializeObject<NetworkPositionData>(args.Snapshot.GetRawJsonValue());
-                var player = playerObject.GetComponent<RemotePlayer>();
-                if (player != null)
+                try
                 {
-                    player.GetNetworkPosition(posData);
+                    string compressedData = args.Snapshot.Value as string;
+                    if (string.IsNullOrEmpty(compressedData))
+                    {
+                        Debug.LogWarning($"[RoomManager] OnPositionChanged: {displayName}의 위치 데이터가 null이거나 비어있음");
+                        return;
+                    }
+
+                    var player = playerObject.GetComponent<RemotePlayer>();
+                    if (player != null)
+                    {
+                        player.GetNetworkPosition(compressedData);
+                    }
+                    else
+                    {
+                        Debug.LogError($"[RoomManager] OnPositionChanged: {displayName}의 RemotePlayer 컴포넌트를 찾을 수 없음");
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Debug.LogError($"[RoomManager] OnPositionChanged: {displayName}의 RemotePlayer 컴포넌트를 찾을 수 없음");
+                    Debug.LogError($"[RoomManager] OnPositionChanged: 위치 데이터 처리 중 오류 발생 - {ex.Message}");
                 }
             }
             else
@@ -286,6 +327,36 @@ namespace Salon.Firebase
             catch (Exception ex)
             {
                 Debug.LogError($"[RoomManager] 플레이어 생성 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
+                throw;
+            }
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Debug.Log($"[RoomManager] 씬 로드됨: {scene.name}");
+        }
+
+        public async Task JoinChannel(string channelName)
+        {
+            try
+            {
+                Debug.Log($"[RoomManager] 채널 {channelName} 입장 시작");
+
+                // 채널 참조 업데이트
+                UpdateChannelReferences(channelName);
+
+                // 로컬 플레이어 생성
+                var playerData = new GamePlayerData(FirebaseManager.Instance.CurrentUserName);
+                InstantiatePlayer(FirebaseManager.Instance.CurrentUserName, playerData, isLocalPlayer: true);
+
+                // 다른 플레이어들 구독
+                await SubscribeToPlayerChanges(channelName);
+
+                Debug.Log($"[RoomManager] 채널 {channelName} 입장 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[RoomManager] 채널 입장 실패: {ex.Message}");
                 throw;
             }
         }

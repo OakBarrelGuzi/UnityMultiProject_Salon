@@ -4,6 +4,44 @@ using UnityEngine;
 
 namespace Salon.Firebase.Database
 {
+    public static class DisplayNameUtils
+    {
+        public static string ToDisplayFormat(string serverName)
+        {
+            if (string.IsNullOrEmpty(serverName)) return string.Empty;
+            return serverName.Replace("_", "#");
+        }
+
+        public static string ToServerFormat(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return string.Empty;
+            return displayName.Replace("#", "_");
+        }
+        public static string RemoveTag(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return string.Empty;
+            return displayName.Split('_')[0];
+        }
+
+        public static bool IsValidDisplayName(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return false;
+
+            int hashCount = displayName.Split('#').Length - 1;
+            if (hashCount != 1) return false;
+
+            int hashIndex = displayName.IndexOf('#');
+            if (hashIndex <= 0 || hashIndex >= displayName.Length - 1) return false;
+
+            return true;
+        }
+
+        public static string GenerateDisplayName(string baseName, string tag)
+        {
+            return $"{baseName}#{tag}";
+        }
+    }
+
     [Serializable]
     public class CommonChannelData
     {
@@ -54,16 +92,42 @@ namespace Salon.Firebase.Database
     public class UserData
     {
         public long LastOnline { get; set; }
+        public bool IsOnline { get; set; }
+        public UserStatus Status { get; set; }
         public Dictionary<string, bool> Friends { get; set; }
         public Dictionary<GameType, UserStats> GameStats { get; set; }
+        public Dictionary<string, InviteData> Invites { get; set; }
+        public Dictionary<string, FriendRequestData> FriendRequests { get; set; }
 
         public UserData()
         {
             LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            IsOnline = false;
+            Status = UserStatus.Offline;
             Friends = new Dictionary<string, bool>();
             GameStats = new Dictionary<GameType, UserStats>();
+            Invites = new Dictionary<string, InviteData>();
+            FriendRequests = new Dictionary<string, FriendRequestData>();
         }
     }
+
+    [Serializable]
+    public class InviteData
+    {
+        public string Inviter { get; set; }
+        public string ChannelName { get; set; }
+        public long Timestamp { get; set; }
+        public InviteStatus Status { get; set; }
+
+        public InviteData(string inviter, string channelName)
+        {
+            Inviter = inviter;
+            ChannelName = channelName;
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            Status = InviteStatus.Pending;
+        }
+    }
+
     [Serializable]
     public class UserMapping
     {
@@ -169,7 +233,7 @@ namespace Salon.Firebase.Database
         public bool IsHost { get; set; }
         public GamePlayerState State { get; set; }
         public Dictionary<string, object> GameSpecificData { get; set; }
-        public NetworkPositionData Position { get; set; }
+        public string Position { get; set; }
 
         public GamePlayerData(string displayName, bool isHost = false)
         {
@@ -178,7 +242,15 @@ namespace Salon.Firebase.Database
             IsHost = isHost;
             State = GamePlayerState.Waiting;
             GameSpecificData = new Dictionary<string, object>();
-            Position = new NetworkPositionData();
+            Position = NetworkPositionCompressor.CompressVector3(Vector3.zero, Vector3.forward, false);
         }
+    }
+
+    public enum UserStatus
+    {
+        Online,
+        Away,
+        Busy,
+        Offline
     }
 }

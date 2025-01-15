@@ -54,21 +54,18 @@ namespace Salon.Character
             }
         }
 
-        public void GetNetworkPosition(NetworkPositionData posData)
+        public void GetNetworkPosition(string compressedData)
         {
-            if (posData == null) return;
+            if (string.IsNullOrEmpty(compressedData)) return;
 
-            var position = posData.GetPosition();
-            if (position.HasValue)
-            {
-                targetPosition = position.Value;
-            }
+            (Vector3 position, Vector3 direction, bool moving) = NetworkPositionCompressor.DecompressToVectors(compressedData);
 
-            Vector3 newDirection = posData.GetDirection();
-            if (newDirection.magnitude > 0.01f)
+            targetPosition = position;
+            if (direction.magnitude > 0.01f)
             {
-                targetDirection = newDirection;
+                targetDirection = direction;
             }
+            isMoving = moving;
 
             Debug.Log($"[RemotePlayer] {displayName} 업데이트 - Pos: {targetPosition}, Dir: {targetDirection}, Moving: {isMoving}");
         }

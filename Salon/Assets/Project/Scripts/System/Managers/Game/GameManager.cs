@@ -20,11 +20,11 @@ public class GameManager : MonoBehaviour, IInitializable
     }
     public bool IsInitialized { get; private set; }
 
-    //[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    //private static void AutoInitialize()
-    //{
-    //    _ = Instance;
-    //}
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void AutoInitialize()
+    {
+        _ = Instance;
+    }
 
     void Awake()
     {
@@ -47,7 +47,11 @@ public class GameManager : MonoBehaviour, IInitializable
 
     private void InitializeManagers()
     {
+        _ = FriendManager.Instance;
         _ = FirebaseManager.Instance;
+        _ = ChannelManager.Instance;
+        _ = RoomManager.Instance;
+        _ = ChatManager.Instance;
         _ = UIManager.Instance;
         _ = ResourceManager.Instance;
         _ = CSVManager.Instance;

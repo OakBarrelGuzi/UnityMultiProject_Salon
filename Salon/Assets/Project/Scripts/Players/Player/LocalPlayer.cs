@@ -3,17 +3,17 @@ using Salon.Controller;
 using Salon.Firebase.Database;
 using Salon.Firebase;
 using System;
-using Newtonsoft.Json;
+using Firebase.Database;
 
 namespace Salon.Character
 {
     public class LocalPlayer : Player
     {
-        private GamePlayerData cachedPlayerData;
-        private float positionUpdateInterval = 0.1f;
+        private DatabaseReference posRef;
+        private float positionUpdateInterval = 0.5f;
         private float lastPositionUpdateTime;
         private InputController inputController;
-        private NetworkPositionData lastSentPosition;
+        private string lastSentPositionData;
 
         public override void Initialize(string displayName)
         {
@@ -25,8 +25,8 @@ namespace Salon.Character
                 inputController.Initialize();
             }
             lastPositionUpdateTime = Time.time;
-            lastSentPosition = new NetworkPositionData(transform.position, transform.forward, true);
-            cachedPlayerData = new GamePlayerData(displayName);
+            lastSentPositionData = NetworkPositionCompressor.CompressVector3(transform.position, transform.forward, true);
+            posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
         }
 
         private void Update()
@@ -44,32 +44,21 @@ namespace Salon.Character
         {
             try
             {
-                var newPosition = UpdateNetworkPosition();
+                Vector3 velocity = inputController != null ? inputController.CurrentVelocity : Vector3.zero;
+                Vector3 direction = velocity.normalized;
+                if (direction == Vector3.zero) direction = transform.forward;
 
-                if (HasPositionChanged(newPosition))
+                bool isMoving = velocity.magnitude > 0.01f;
+                string newPositionData = NetworkPositionCompressor.CompressVector3(transform.position, direction, isMoving);
+
+                if (HasPositionChanged(newPositionData))
                 {
                     lastPositionUpdateTime = Time.time;
-                    lastSentPosition = newPosition;
+                    lastSentPositionData = newPositionData;
 
-                    var channelManager = FirebaseManager.Instance.ChannelManager;
-                    if (channelManager != null && !string.IsNullOrEmpty(channelManager.CurrentChannel))
-                    {
-                        var dbReference = FirebaseManager.Instance.DbReference;
-                        if (dbReference != null)
-                        {
-                            var playerRef = dbReference.Child("Channels")
-                                .Child(channelManager.CurrentChannel)
-                                .Child("Players")
-                                .Child(FirebaseManager.Instance.CurrentUserName)
-                                .Child("Position");
-
-                            string jsonData = JsonConvert.SerializeObject(newPosition);
-                            Debug.Log($"[LocalPlayer] Firebase에 전송할 위치 데이터: {jsonData}");
-
-                            await playerRef.SetRawJsonValueAsync(jsonData);
-                            Debug.Log("[LocalPlayer] Firebase에 위치 데이터 전송 완료");
-                        }
-                    }
+                    Debug.Log($"[LocalPlayer] Firebase에 전송할 압축 데이터: {newPositionData}");
+                    await posRef.SetValueAsync(newPositionData);
+                    Debug.Log("[LocalPlayer] Firebase에 위치 데이터 전송 완료");
                 }
             }
             catch (Exception ex)
@@ -78,34 +67,23 @@ namespace Salon.Character
             }
         }
 
-        private bool HasPositionChanged(NetworkPositionData newPosition)
+        private bool HasPositionChanged(string newPositionData)
         {
-            if (lastSentPosition == null)
+            if (string.IsNullOrEmpty(lastSentPositionData))
             {
                 Debug.Log("[LocalPlayer] 첫 위치 업데이트");
                 return true;
             }
 
-            bool hasChanged = newPosition.HasSignificantChange(lastSentPosition);
+            bool hasChanged = newPositionData != lastSentPositionData;
             if (hasChanged)
             {
-                Debug.Log($"[LocalPlayer] 위치 변경 감지 - 이전: ({lastSentPosition.PosX}, {lastSentPosition.PosZ}), " +
-                    $"새 위치: ({newPosition.PosX}, {newPosition.PosZ})");
+                (Vector3 oldPos, Vector3 _, bool _) = NetworkPositionCompressor.DecompressToVectors(lastSentPositionData);
+                (Vector3 newPos, Vector3 _, bool _) = NetworkPositionCompressor.DecompressToVectors(newPositionData);
+                Debug.Log($"[LocalPlayer] 위치 변경 감지 - 이전: ({oldPos.x}, {oldPos.z}), 새 위치: ({newPos.x}, {newPos.z})");
             }
 
             return hasChanged;
-        }
-
-        public NetworkPositionData UpdateNetworkPosition()
-        {
-            Vector3 velocity = inputController != null ? inputController.CurrentVelocity : Vector3.zero;
-            Vector3 direction = velocity.normalized;
-            if (direction == Vector3.zero) direction = transform.forward;
-
-            Vector3 currentPos = transform.position;
-            bool isMoving = velocity.magnitude > 0.01f;
-
-            return new NetworkPositionData(currentPos, direction, isMoving);
         }
     }
 }

@@ -21,14 +21,14 @@ public class ChatPopUp : MonoBehaviour
     public async void SendChat(string message)
     {
         if (string.IsNullOrEmpty(message)) return;
-        await FirebaseManager.Instance.ChatManager.SendChat(message, FirebaseManager.Instance.ChannelManager.CurrentChannel, FirebaseManager.Instance.GetCurrentDisplayName());
+        await ChatManager.Instance.SendChat(message, ChannelManager.Instance.CurrentChannel, FirebaseManager.Instance.GetCurrentDisplayName());
         messageInputField.text = "";
     }
 
     public void ReceiveChat(string sender, string message, Sprite emoji = null)
     {
         ChatBox chatBox = Instantiate(chatBoxPrefab, chatBoxParent);
-        chatBox.SetChatBox(sender, message, emoji);
+        chatBox.SetChatBox(DisplayNameUtils.RemoveTag(sender), message, emoji);
     }
 
     public void ClearChat()
