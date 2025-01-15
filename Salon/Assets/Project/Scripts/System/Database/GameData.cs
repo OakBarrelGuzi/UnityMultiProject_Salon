@@ -319,5 +319,6 @@ namespace Salon.Firebase.Database
             IsFlipped = false;
             Owner = null;
         }
+
     }
 }

@@ -40,7 +40,7 @@ public class MemoryGameManager : MonoBehaviour
         {
             Card card = Instantiate(cardPrefab, cardSpawnPos[i]);
             
-            card.cardData = new CardData 
+            card.cardData = new InGameCard
             {
                  cardType = (CARDTYPE)cardnum,
                  cardSprite = cardsprite[cardnum],

@@ -9,7 +9,7 @@ public class Card : MonoBehaviour
 
     private MemoryGameManager memoryGameManager;
 
-    public CardData cardData {get;set;}
+    public InGameCard cardData {get;set;}
 
     public Quaternion startQuaternion { get;set;}
 
@@ -63,11 +63,12 @@ public class Card : MonoBehaviour
 
 }
 
-public struct CardData
+public struct InGameCard
 {
     public CARDTYPE cardType;
     public Sprite cardSprite;
 }
+
 
 public enum CARDTYPE
 {
