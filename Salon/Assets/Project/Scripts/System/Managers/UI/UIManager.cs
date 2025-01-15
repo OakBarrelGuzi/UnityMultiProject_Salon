@@ -14,7 +14,6 @@ public class UIManager : MonoBehaviour, IInitializable
     private List<Panel> panels = new List<Panel>();
     [SerializeField] private List<Panel> panelsPrefabs = new List<Panel>();
     public bool IsInitialized { get; private set; }
-    public bool IsTesting { get; private set; }
     public static UIManager Instance
     {
         get
@@ -59,6 +58,7 @@ public class UIManager : MonoBehaviour, IInitializable
     {
         Initialize();
         StartCoroutine(InitializeRoutine());
+
     }
 
     void Update()
@@ -211,13 +211,30 @@ public class UIManager : MonoBehaviour, IInitializable
     {
         if (panels.FirstOrDefault(p => p.panelType == panelType) == null)
         {
-            panels.Add(GetPanel(panelType));
-            panels.FirstOrDefault(p => p.panelType == panelType).Open();
+            var newPanel = GetPanel(panelType);
+            panels.Add(newPanel);
+
+            // PopUp 패널인 경우 항상 맨 위로 이동
+            if (panelType == PanelType.PopUp)
+            {
+                newPanel.transform.SetAsLastSibling();
+            }
+
+            newPanel.Open();
         }
         else
         {
-            if (!panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
-                panels.FirstOrDefault(p => p.panelType == panelType).Open();
+            var existingPanel = panels.FirstOrDefault(p => p.panelType == panelType);
+            if (!existingPanel.isOpen)
+            {
+                // PopUp 패널인 경우 항상 맨 위로 이동
+                if (panelType == PanelType.PopUp)
+                {
+                    existingPanel.transform.SetAsLastSibling();
+                }
+
+                existingPanel.Open();
+            }
         }
     }
 

@@ -11,8 +11,16 @@ public enum PanelType
     SignUp,
     Option,
     Exit,
+    PopUp,
+    Friends,
 }
-
+public enum InviteStatus
+{
+    Pending,
+    Accepted,
+    Declined,
+    Expired
+}
 public enum GamePlayerState
 {
     Waiting,

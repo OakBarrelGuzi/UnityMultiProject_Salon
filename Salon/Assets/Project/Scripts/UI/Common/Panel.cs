@@ -1,11 +1,16 @@
 using UnityEngine;
+using System;
 
 public abstract class Panel : MonoBehaviour
 {
     public PanelType panelType;
     public bool isOpen;
 
-    public abstract void Initialize();
+    public virtual void Initialize() { }
+
+    public virtual void Initialize(Action parameter = null, string message = "")
+    {
+    }
 
     public virtual void Open()
     {

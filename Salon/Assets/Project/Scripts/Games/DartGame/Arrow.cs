@@ -19,6 +19,8 @@ public class Arrow : MonoBehaviour
 
     private bool isStop = false;
 
+    private float time = 0f;
+
     private void Start()
     {
         Initialize();
@@ -70,10 +72,7 @@ public class Arrow : MonoBehaviour
 
     public IEnumerator ParabolaMove()
     {
-
-        float time = 0f;
-
-        while (!isStop && time <= 1f)
+        while (false == isStop && time <= 1f)
         {
 
             Vector3 p1 = Vector3.Lerp(startPosition, heigtPosition, time);

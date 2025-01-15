@@ -1,10 +1,12 @@
 using UnityEngine;
 using Salon.Firebase;
 using Salon.Controller;
+using UnityEngine.UI;
 
 public class LobbyPanel : Panel
 {
     public ChatPopUp chatPopUp;
+    public Button friendsButton;
 
     private void OnEnable()
     {
@@ -14,12 +16,18 @@ public class LobbyPanel : Panel
     public override void Initialize()
     {
         chatPopUp.Initialize();
-        FirebaseManager.Instance.ChannelManager.OnReceiveChat += HandleChat;
+        ChatManager.Instance.OnReceiveChat += HandleChat;
+        friendsButton.onClick.AddListener(OnFriendsButtonClick);
+    }
+
+    private void OnFriendsButtonClick()
+    {
+        UIManager.Instance.OpenPanel(PanelType.Friends);
     }
 
     public override void Close()
     {
-        FirebaseManager.Instance.ChannelManager.OnReceiveChat -= HandleChat;
+        ChatManager.Instance.OnReceiveChat -= HandleChat;
         chatPopUp.ClearChat();
         base.Close();
     }

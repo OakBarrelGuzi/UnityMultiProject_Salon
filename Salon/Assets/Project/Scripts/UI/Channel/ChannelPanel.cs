@@ -50,7 +50,7 @@ public class ChannelPanel : Panel
             return;
         }
 
-        var channelData = await FirebaseManager.Instance.ChannelManager.WaitForChannelData();
+        var channelData = await ChannelManager.Instance.WaitForChannelData();
         if (channelData == null)
         {
             Debug.LogError("채널 데이터를 가져오지 못했습니다!");
@@ -90,7 +90,7 @@ public class ChannelPanel : Panel
             SetButtonsInteractable(false);
             SceneManager.LoadScene("LobbyScene");
             UIManager.Instance.OpenPanel(PanelType.Lobby);
-            await FirebaseManager.Instance.ChannelManager.JoinChannel(channelName);
+            await ChannelManager.Instance.JoinChannel(channelName);
             Close();
         }
         catch (Exception ex)
