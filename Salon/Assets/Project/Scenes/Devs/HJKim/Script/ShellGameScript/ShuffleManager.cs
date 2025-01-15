@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 
 public class ShuffleManager : MonoBehaviour
 {
@@ -12,44 +10,35 @@ public class ShuffleManager : MonoBehaviour
     [SerializeField]
     private List<Cup> cups = new List<Cup>();
     [SerializeField]
-    //private float spinDuration = 1f;//ÌöåÏ†Ñ ÏÜçÎèÑ 
-    private GameObject spinner;//ÎπàÍªçÎç∞Í∏∞ Ïä§ÌîºÎÑà
+    private float spinSpeed =5f;//»∏¿¸ º”µµ 
+    [SerializeField]
+    private float shuffleDuration = 5;
+     
+    private GameObject spinner;//∫Û≤Æµ•±‚ Ω∫««≥ 
+    [SerializeField]
+    private Transform table_pos;
 
     private int cupCount;
+    private bool isStart = false;
+    private bool isCanSelect = false;
 
-    //private SHELLDIFFICULTY shellDifficulty;
 
-    private void Start()
-    {//Î¨¥Ï†ÅÍ∂å 1Î≤à(Í∞ÄÏö¥Îç∞ Ïªµ)Ïù¥ Íµ¨Ïä¨ Í∞ÄÏßÄÍ≥†ÏûàÏùå.
-        cups[1].hasBall = true;
+    private SHELLDIFFICULTY shellDifficulty;
 
-        foreach (Cup cup in cups)
+
+    private void Update()
+    {
+        if (spinner != null)
         {
-            cup.gameObject.SetActive(false);
+            CupShuffle();
         }
-
-        //TODO:ÎÇúÏù¥ÎèÑ ÏÑ§Ï†ï Î≤ÑÌäº Ìï†ÎãπÌï¥Ïïº Ìï®.
-        //shellDifficulty = SHELLDIFFICULTY.Easy;
-        cupCount = (int)SHELLDIFFICULTY.Easy;
-
-        //if (shellDifficulty == SHELLDIFFICULTY.Easy)
-        //{
-        //    cups[0].gameObject.SetActive(true);
-        //    cups[1].gameObject.SetActive(true);
-        //    cups[2].gameObject.SetActive(true);
-        //}
-        //else { }
-
-        for (int i = 0; i < cupCount; i++)
+      else if (spinner ==null&& isStart==true)
         {
-            cups[i].gameObject.SetActive(true);
+            SpawnSpinner();
         }
-
-        CupShuffle();
     }
-
-    private void CupShuffle()
-    {//Ïªµ ÎëêÍ∞úÎΩëÍ∏∞ 
+    private void SpawnSpinner()
+    {//ƒ≈ µŒ∞≥ªÃ±‚ 
         int firstCup = Random.Range(0, cupCount);
         int secondCup = Random.Range(0, cupCount);
         while (firstCup == secondCup)
@@ -57,28 +46,98 @@ public class ShuffleManager : MonoBehaviour
             firstCup = Random.Range(0, cupCount);
         }
 
-        if (cups[firstCup].hasBall == true)
-        {
-            print("Íµ¨Ïä¨ÏªµÏù¥ Ìè¨Ìï®ÎêòÏñ¥ÏûàÏäµÎãàÎã§.");
-        }
+        //if (cups[firstCup].hasBall == true)
+        //{
+        //    print("±∏ΩΩƒ≈¿Ã ∆˜«‘µ«æÓ¿÷Ω¿¥œ¥Ÿ.");
+        //}
 
-        //Ïªµ ÏõÄÏßÅÏù¥Í∏∞
+        //ƒ≈ øÚ¡˜¿Ã±‚
         Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
-        //ÌîÑÎ¶¨Ìåπ ÏÉùÏÑ±Í≥º ÌöåÏ†Ñ Ï¥àÍ∏∞Ìôî
 
+        //Ω∫««≥  ∞°øÓµ•ø° ª˝º∫
         spinner = new GameObject("Spinner");
         spinner.transform.position = spinnerPos;
 
-        //ÏûêÏãùÏúºÎ°ú ÏÑ§Ï†ï
+        //¿⁄Ωƒ¿∏∑Œ º≥¡§
         cups[firstCup].transform.SetParent(spinner.transform);
         cups[secondCup].transform.SetParent(spinner.transform);
 
-        //ÌöåÏ†Ñ ÏÑ§Ï†ï
+        //»∏¿¸ º≥¡§
 
         //spinner.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
 
+
+    }
+    private void CupShuffle()
+    {
+        spinner.transform.rotation = Quaternion.Lerp
+            (spinner.transform.rotation,
+            Quaternion.Euler(0f, 180f, 0f),
+            Time.deltaTime * spinSpeed);
+        if (Quaternion.Angle(spinner.transform.rotation,
+            Quaternion.Euler(0f, -180f, 0f))<0.05f){
+            while (spinner.transform.childCount > 0)
+            {
+                spinner.transform.GetChild(0).SetParent(table_pos);
+            }
+
+            Destroy(spinner);
+        }
+    }
+
+    private IEnumerator ShuffleStart()
+    {
+        yield return new WaitForSeconds(10);
+
+        isStart=false;
+        isCanSelect = true;
+    }
+
+    public void OnCupSelected(Cup cup)
+    {
+        if (isCanSelect == false)
+        {
+            return;
+        }
+        if (cup.hasBall == true)
+        { 
+            print("Ω¬∏Æ");
+        }
+        else if (cup.hasBall == false)
+        {
+            print("∆–πË");
+        }
+        isCanSelect = false;
+    } 
+
+
+    public void StartGame()
+    {
+        isStart = true;
+        cups[1].hasBall = true;
+
+
+        foreach (Cup cup in cups)
+        {
+            cup.Initialize(this);
+            cup.gameObject.SetActive(false);
+        }
+
+        //≥≠¿Ãµµø° µ˚∏•∏∏≈≠ ƒ≈ ƒ—±‚
+        for (int i = 0; i < cupCount; i++)
+        {
+            cups[i].gameObject.SetActive(true);
+        }
+        StartCoroutine(ShuffleStart());
+    }
+
+    public void SetDifficulty(SHELLDIFFICULTY difficulty)
+    {
+        shellDifficulty = difficulty;
+        cupCount = (int)shellDifficulty;
     }
 }
+
 
 public enum SHELLDIFFICULTY
 {

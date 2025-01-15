@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.Animations;
 using UnityEngine;
 using static UnityEngine.UI.GridLayoutGroup;
 
@@ -10,15 +11,23 @@ public class AnimController : MonoBehaviour
     public List<AnimationClip> clipList = new List<AnimationClip>();
     
     public AnimationClip TestClip;
+    public AnimationClip TestClip2;
 
     public Animator animator;
 
     private AnimatorOverrideController currentController;
 
+    [SerializeField,Header("바꿀려고하는 Animator의 State이름 다르면 오류뜸")]
+    private string targetClipName = "ActionState";
+
+    private string originalClipName = "";
+
     private void Start()
     {
-        ClipChange(TestClip);
-        animator.SetTrigger("ASTrigger");
+       GetOriginalClipName();
+       ClipChange(TestClip);
+       ClipChange(TestClip2);
+       animator.SetTrigger("ASTrigger");
     }
  
     public void Initialize()
@@ -27,6 +36,7 @@ public class AnimController : MonoBehaviour
 
         currentController = SetupOverrideController();
 
+        GetOriginalClipName();
     }
 
     private AnimatorOverrideController SetupOverrideController()
@@ -35,6 +45,26 @@ public class AnimController : MonoBehaviour
         AnimatorOverrideController overrideController = new AnimatorOverrideController(Controller);
         animator.runtimeAnimatorController = overrideController;
         return overrideController;
+    }
+
+    private void GetOriginalClipName()
+    {
+        if(animator.runtimeAnimatorController is AnimatorController controller)
+        {
+             ChildAnimatorState[] states = controller.layers[0].stateMachine.states;
+
+           foreach(ChildAnimatorState state in states)
+            {
+                if(state.state.name == targetClipName &&
+                    state.state.motion is AnimationClip clip)
+                {
+                    originalClipName = clip.name;
+                    print(originalClipName);
+                }
+            }
+        }
+
+
     }
 
     public void ClipChange(string clipname)
@@ -48,11 +78,11 @@ public class AnimController : MonoBehaviour
         AnimationClip targetClip = clipList.Find(clip => clip.name == clipname);
         if(targetClip != null)
         {
-            currentController["ActionState"] = targetClip;
+            currentController[originalClipName] = targetClip;
         }
         else
         {
-            print($"Animation clip '{clipname}' not found in clipList");
+            print($"리스트에 '{clipname}' 이거없음");
         }
     }
 
@@ -63,18 +93,19 @@ public class AnimController : MonoBehaviour
             currentController = SetupOverrideController();
         }
 
-        //클립 자체로 변경(클립 이름을 꺼내야 바꿀수있음)
         if (animationClip != null)
         {
-            currentController["IdleArmSwing"] = animationClip;
+            currentController[originalClipName] = animationClip;
         }
     }
 
+    [Tooltip("Animator를 변경할때 사용 변경할려는 State이름 동일하게 해야함")]
     public void AnimatorChange(RuntimeAnimatorController controller)
     {
         animator.runtimeAnimatorController = controller;
 
         currentController = SetupOverrideController();
+        GetOriginalClipName();
     }
 
 }

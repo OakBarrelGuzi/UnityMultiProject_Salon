@@ -89,7 +89,7 @@ public class ChannelPanel : Panel
         {
             isProcessing = true;
             SetButtonsInteractable(false);
-            SceneManager.LoadScene("LobbyScene");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("LobbyScene");
             UIManager.Instance.OpenPanel(PanelType.Lobby);
             await ChannelManager.Instance.JoinChannel(channelName);
             Close();
@@ -99,7 +99,7 @@ public class ChannelPanel : Panel
             Debug.LogError($"채널 입장 실패: {ex.Message}");
             if (ex.Message.Contains("이미 방에 존재"))
             {
-                SceneManager.LoadScene("LobbyScene");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("LobbyScene");
             }
         }
         finally
