@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using System;
 
 public class LogManager : MonoBehaviour
 {
@@ -23,6 +22,7 @@ public class LogManager : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoInitialize()
     {
+        _ = ResourceManager.Instance;
         _ = Instance;
     }
 
@@ -37,7 +37,6 @@ public class LogManager : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
-            Initialize();
         }
         else if (instance != this)
         {
@@ -45,14 +44,24 @@ public class LogManager : MonoBehaviour
         }
     }
 
+    private void Start()
+    {
+        Initialize();
+    }
+
     private void Initialize()
     {
+        Debug.Log("LogManager 초기화 시작");
         Application.logMessageReceived += HandleLog;
 
         logPanelPrefab = ResourceManager.Instance.LoadResource<GameObject>("Log/LogPanel");
         if (logPanelPrefab == null)
         {
             Debug.LogError("LogPanel 프리팹을 찾을 수 없습니다.");
+        }
+        else
+        {
+            Debug.Log("LogManager 초기화 완료");
         }
     }
 
@@ -123,6 +132,7 @@ public class LogManager : MonoBehaviour
                 Debug.LogError("LogPanel 프리팹이 로드되지 않았습니다.");
                 return;
             }
+
         }
 
         currentLogPanel.ShowError(message, stackTrace, () =>
