@@ -253,4 +253,71 @@ namespace Salon.Firebase.Database
         Busy,
         Offline
     }
+
+    [Serializable]
+    public class GameRoomData
+    {
+        public string RoomName { get; set; }
+        public string HostPlayerId { get; set; }
+        public bool IsActive { get; set; }
+        public Dictionary<string, GamePlayerData> Players { get; set; }
+
+        public GameState GameState { get; set; }
+        public Dictionary<string, CardData> Board { get; set; }
+
+        public GameRoomData(string roomName, string hostPlayerId)
+        {
+            RoomName = roomName;
+            HostPlayerId = hostPlayerId;
+            IsActive = true;
+            Players = new Dictionary<string, GamePlayerData>();
+
+            GameState = new GameState();
+            Board = new Dictionary<string, CardData>();
+        }
+    }
+
+    [Serializable]
+    public class GameState
+    {
+        public bool IsGameActive { get; set; }
+        public string CurrentTurnPlayerId { get; set; } // 현재 턴의 플레이어를 관리
+        public string Winner { get; set; }
+        public long LastActionTimestamp { get; set; } // 일정 시간이 경과했을 때, 자동으로 턴을 넘기거나 게임에서 패배하도록
+        public GameState()
+        {
+            IsGameActive = true;
+            CurrentTurnPlayerId = null;
+            Winner = null;
+            LastActionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
+    }
+
+    [Serializable]
+    public class PlayerData
+    {
+        public string DisplayName { get; set; }
+        public bool IsHost { get; set; } // 게임 시작 버튼을 누를 수 있음
+        public int Score { get; set; }
+
+        public PlayerData(string displayName, bool isHost)
+        {
+            DisplayName = displayName;
+            IsHost = isHost;
+            Score = 0;
+        }
+    }
+
+    [Serializable]
+    public class CardData
+    {
+        public bool IsFlipped { get; set; }
+        public string Owner { get; set; } // PlayerName
+
+        public CardData()
+        {
+            IsFlipped = false;
+            Owner = null;
+        }
+    }
 }

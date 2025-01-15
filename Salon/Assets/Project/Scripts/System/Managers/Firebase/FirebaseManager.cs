@@ -178,7 +178,7 @@ namespace Salon.Firebase
                 Debug.Log("[Firebase Manager] OnApplicationQuit 시작");
                 await UpdateUserStatus(UserStatus.Offline);
                 auth.StateChanged -= AuthStateChanged;
-                SceneManager.sceneLoaded -= OnSceneLoaded;
+                UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
                 Debug.Log("[Firebase Manager] OnApplicationQuit 완료");
             }
             catch (Exception ex)
@@ -205,7 +205,7 @@ namespace Salon.Firebase
                     auth.StateChanged -= AuthStateChanged;
                 }
 
-                SceneManager.sceneLoaded -= OnSceneLoaded;
+                UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
 
                 Debug.Log("[Firebase Manager] 핸들러 제거 완료");
             }
@@ -502,10 +502,10 @@ namespace Salon.Firebase
             {
                 auth.StateChanged -= AuthStateChanged;
 
-                if (SceneManager.GetActiveScene().name != "MainScene")
+                if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "MainScene")
                 {
                     Debug.Log("[Firebase Manager] MainScene으로 이동");
-                    SceneManager.LoadScene("MainScene");
+                    UnityEngine.SceneManagement.SceneManager.LoadScene("MainScene");
                 }
 
                 Debug.Log("[Firebase Manager] 로그아웃 처리 시작");
@@ -619,12 +619,12 @@ namespace Salon.Firebase
 
         private void OnEnable()
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
         private void OnDisable()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
