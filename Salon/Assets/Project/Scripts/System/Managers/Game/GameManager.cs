@@ -47,6 +47,7 @@ public class GameManager : MonoBehaviour, IInitializable
 
     private void InitializeManagers()
     {
+        _ = FriendManager.Instance;
         _ = FirebaseManager.Instance;
         _ = ChannelManager.Instance;
         _ = RoomManager.Instance;

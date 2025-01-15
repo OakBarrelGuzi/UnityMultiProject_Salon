@@ -211,13 +211,30 @@ public class UIManager : MonoBehaviour, IInitializable
     {
         if (panels.FirstOrDefault(p => p.panelType == panelType) == null)
         {
-            panels.Add(GetPanel(panelType));
-            panels.FirstOrDefault(p => p.panelType == panelType).Open();
+            var newPanel = GetPanel(panelType);
+            panels.Add(newPanel);
+
+            // PopUp 패널인 경우 항상 맨 위로 이동
+            if (panelType == PanelType.PopUp)
+            {
+                newPanel.transform.SetAsLastSibling();
+            }
+
+            newPanel.Open();
         }
         else
         {
-            if (!panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
-                panels.FirstOrDefault(p => p.panelType == panelType).Open();
+            var existingPanel = panels.FirstOrDefault(p => p.panelType == panelType);
+            if (!existingPanel.isOpen)
+            {
+                // PopUp 패널인 경우 항상 맨 위로 이동
+                if (panelType == PanelType.PopUp)
+                {
+                    existingPanel.transform.SetAsLastSibling();
+                }
+
+                existingPanel.Open();
+            }
         }
     }
 

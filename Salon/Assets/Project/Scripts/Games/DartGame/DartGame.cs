@@ -384,6 +384,7 @@ public class DartGame : MonoBehaviour
         }
         if (time >= aimingDelay)
         {
+            //TODO: 고쳐야함
             targetAiming.transform.localScale = targetAiming.startScale;
             yield return new WaitForSeconds(0.2f);
             if (targetAiming != null) { ShootDartArrow(); }
