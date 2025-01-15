@@ -5,19 +5,21 @@ using UnityEngine.UI;
 
 public class ShellGameUIManager : MonoBehaviour
 {
-    [SerializeField]
-    private Button[] difficulty_Button;
-    public GameObject difficult_Panel;
-    public GameObject betting_Panel;
-    public Button start_button;
     private ShuffleManager shuffleManager;
 
-    private void ShowBettingUI()
-    {
-        difficult_Panel.SetActive(false);
-        betting_Panel.SetActive(true);
+    [SerializeField]
+    private Button[] difficulty_Button;
 
-    }
+    [Header("Panel Setting")]
+    public GameObject difficult_Panel;
+    public GameObject betting_Panel;
+    public GameObject gameInfo_Panel;
+    public GameObject clear_Panel;
+    public GameObject gameOver_Panel;
+
+    [Header("Button Setting")]
+    public Button start_button;
+
 
     private void Start()
     {
@@ -45,8 +47,16 @@ public class ShellGameUIManager : MonoBehaviour
         // 시작 버튼 설정
         start_button.onClick.AddListener(() => {
             betting_Panel.SetActive(false);  // 배팅 UI 숨기기
+            gameInfo_Panel.SetActive(true);//라운드가 적혀있음
             shuffleManager.StartGame();      // 게임 시작
         });
+    }
+
+    private void ShowBettingUI()
+    {
+        difficult_Panel.SetActive(false);
+        betting_Panel.SetActive(true);
+
     }
 
 

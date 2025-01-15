@@ -10,7 +10,9 @@ public class ShuffleManager : MonoBehaviour
     [SerializeField]
     private List<Cup> cups = new List<Cup>();
     [SerializeField]
-    private float spinSpeed = 10f;//회전 속도 
+    private float spinSpeed =5f;//회전 속도 
+    [SerializeField]
+    private float shuffleDuration = 5;
      
     private GameObject spinner;//빈껍데기 스피너
     [SerializeField]
@@ -73,7 +75,7 @@ public class ShuffleManager : MonoBehaviour
             Quaternion.Euler(0f, 180f, 0f),
             Time.deltaTime * spinSpeed);
         if (Quaternion.Angle(spinner.transform.rotation,
-            Quaternion.Euler(0f, 180f, 0f))<0.05f){
+            Quaternion.Euler(0f, -180f, 0f))<0.05f){
             while (spinner.transform.childCount > 0)
             {
                 spinner.transform.GetChild(0).SetParent(table_pos);
