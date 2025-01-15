@@ -27,6 +27,7 @@ namespace Salon.Firebase
         // 매니저들의 초기화 상태를 추적
         private bool isChatManagerInitialized;
         private bool isRoomManagerInitialized;
+        private bool isFriendManagerInitialized;
 
         private bool isQuitting = false;
 
@@ -72,6 +73,11 @@ namespace Salon.Firebase
                 {
                     await RoomManager.Instance.Initialize();
                     isRoomManagerInitialized = true;
+                }
+                if (!isFriendManagerInitialized && FriendManager.Instance != null)
+                {
+                    FriendManager.Instance.Initialize();
+                    isFriendManagerInitialized = true;
                 }
 
                 Debug.Log("[ChannelManager] 모든 매니저 초기화 완료");
@@ -374,13 +380,13 @@ namespace Salon.Firebase
 
         private void OnEnable()
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
             Application.quitting += OnApplicationQuit;
         }
 
         private void OnDisable()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
+            UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
             Application.quitting -= OnApplicationQuit;
         }
 

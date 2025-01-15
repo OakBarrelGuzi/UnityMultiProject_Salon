@@ -4,6 +4,44 @@ using UnityEngine;
 
 namespace Salon.Firebase.Database
 {
+    public static class DisplayNameUtils
+    {
+        public static string ToDisplayFormat(string serverName)
+        {
+            if (string.IsNullOrEmpty(serverName)) return string.Empty;
+            return serverName.Replace("_", "#");
+        }
+
+        public static string ToServerFormat(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return string.Empty;
+            return displayName.Replace("#", "_");
+        }
+        public static string RemoveTag(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return string.Empty;
+            return displayName.Split('_')[0];
+        }
+
+        public static bool IsValidDisplayName(string displayName)
+        {
+            if (string.IsNullOrEmpty(displayName)) return false;
+
+            int hashCount = displayName.Split('#').Length - 1;
+            if (hashCount != 1) return false;
+
+            int hashIndex = displayName.IndexOf('#');
+            if (hashIndex <= 0 || hashIndex >= displayName.Length - 1) return false;
+
+            return true;
+        }
+
+        public static string GenerateDisplayName(string baseName, string tag)
+        {
+            return $"{baseName}#{tag}";
+        }
+    }
+
     [Serializable]
     public class CommonChannelData
     {
@@ -54,16 +92,42 @@ namespace Salon.Firebase.Database
     public class UserData
     {
         public long LastOnline { get; set; }
+        public bool IsOnline { get; set; }
+        public UserStatus Status { get; set; }
         public Dictionary<string, bool> Friends { get; set; }
         public Dictionary<GameType, UserStats> GameStats { get; set; }
+        public Dictionary<string, InviteData> Invites { get; set; }
+        public Dictionary<string, FriendRequestData> FriendRequests { get; set; }
 
         public UserData()
         {
             LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            IsOnline = false;
+            Status = UserStatus.Offline;
             Friends = new Dictionary<string, bool>();
             GameStats = new Dictionary<GameType, UserStats>();
+            Invites = new Dictionary<string, InviteData>();
+            FriendRequests = new Dictionary<string, FriendRequestData>();
         }
     }
+
+    [Serializable]
+    public class InviteData
+    {
+        public string Inviter { get; set; }
+        public string ChannelName { get; set; }
+        public long Timestamp { get; set; }
+        public InviteStatus Status { get; set; }
+
+        public InviteData(string inviter, string channelName)
+        {
+            Inviter = inviter;
+            ChannelName = channelName;
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            Status = InviteStatus.Pending;
+        }
+    }
+
     [Serializable]
     public class UserMapping
     {
@@ -179,6 +243,81 @@ namespace Salon.Firebase.Database
             State = GamePlayerState.Waiting;
             GameSpecificData = new Dictionary<string, object>();
             Position = NetworkPositionCompressor.CompressVector3(Vector3.zero, Vector3.forward, false);
+        }
+    }
+
+    public enum UserStatus
+    {
+        Online,
+        Away,
+        Busy,
+        Offline
+    }
+
+    [Serializable]
+    public class GameRoomData
+    {
+        public string RoomName { get; set; }
+        public string HostPlayerId { get; set; }
+        public bool IsActive { get; set; }
+        public Dictionary<string, GamePlayerData> Players { get; set; }
+
+        public GameState GameState { get; set; }
+        public Dictionary<string, CardData> Board { get; set; }
+
+        public GameRoomData(string roomName, string hostPlayerId)
+        {
+            RoomName = roomName;
+            HostPlayerId = hostPlayerId;
+            IsActive = true;
+            Players = new Dictionary<string, GamePlayerData>();
+
+            GameState = new GameState();
+            Board = new Dictionary<string, CardData>();
+        }
+    }
+
+    [Serializable]
+    public class GameState
+    {
+        public bool IsGameActive { get; set; }
+        public string CurrentTurnPlayerId { get; set; } // 현재 턴의 플레이어를 관리
+        public string Winner { get; set; }
+        public long LastActionTimestamp { get; set; } // 일정 시간이 경과했을 때, 자동으로 턴을 넘기거나 게임에서 패배하도록
+        public GameState()
+        {
+            IsGameActive = true;
+            CurrentTurnPlayerId = null;
+            Winner = null;
+            LastActionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        }
+    }
+
+    [Serializable]
+    public class PlayerData
+    {
+        public string DisplayName { get; set; }
+        public bool IsHost { get; set; } // 게임 시작 버튼을 누를 수 있음
+        public int Score { get; set; }
+
+        public PlayerData(string displayName, bool isHost)
+        {
+            DisplayName = displayName;
+            IsHost = isHost;
+            Score = 0;
+        }
+    }
+
+    [Serializable]
+    public class CardData
+    {
+        public bool IsFlipped { get; set; }
+        public string Owner { get; set; } // PlayerName
+
+        public CardData()
+        {
+            IsFlipped = false;
+            Owner = null;
         }
     }
 }

@@ -28,7 +28,7 @@ public class ChatPopUp : MonoBehaviour
     public void ReceiveChat(string sender, string message, Sprite emoji = null)
     {
         ChatBox chatBox = Instantiate(chatBoxPrefab, chatBoxParent);
-        chatBox.SetChatBox(sender, message, emoji);
+        chatBox.SetChatBox(DisplayNameUtils.RemoveTag(sender), message, emoji);
     }
 
     public void ClearChat()
