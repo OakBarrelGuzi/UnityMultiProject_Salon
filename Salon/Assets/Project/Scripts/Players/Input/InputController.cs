@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Salon.Controller;
+using UnityEngine.UI;
 
 namespace Salon.Character
 {
@@ -11,6 +12,7 @@ namespace Salon.Character
         [SerializeField] private Camera mainCamera;
         [SerializeField] private Animator animator;
 
+        public PopupButton popupButton;
         private Vector3 cachedInput;
         public bool lerpStopping;
         public float moveSpeed;
@@ -28,6 +30,13 @@ namespace Salon.Character
         {
             if (inputMove == null)
                 inputMove = UIManager.Instance.gameObject.GetComponentInChildren<MobileController>();
+
+            if(popupButton == null)
+            {
+                popupButton = UIManager.Instance.gameObject.GetComponentInChildren<PopupButton>();
+
+                popupButton.gameObject.SetActive(false);
+            }
 
             if (mainCamera == null)
                 mainCamera = Camera.main;
@@ -89,7 +98,8 @@ namespace Salon.Character
         {
             RaycastHit hit;
             Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
-            if (!Physics.Raycast(transform.position + Vector3.up * 5f, movement.normalized, out hit, movement.magnitude))
+            if (!Physics.Raycast(transform.position + Vector3.up * 5f, movement.normalized, out hit, movement.magnitude
+                , Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
             {
                 transform.position += movement;
             }
