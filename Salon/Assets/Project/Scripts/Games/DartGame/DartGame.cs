@@ -97,7 +97,7 @@ public class DartGame : MonoBehaviour
         }
         dart.roundscores = 0;
         gameUi.recentScoreText.text = " ";
-
+        NextTurnset();
     }
 
 
@@ -123,6 +123,7 @@ public class DartGame : MonoBehaviour
     {
         AimingMove();
         RandomMove();
+
         DartGameTimeDecay();
 
         DartGameUiUpdate();
@@ -165,7 +166,9 @@ public class DartGame : MonoBehaviour
 
     private void RandomMove()
     {
-        if (!isRandomMoving || targetAiming == null) return;
+        if (isRandomMoving == false) return;
+        if(targetAiming == null) return;
+
         if (0.01f > Vector3.Distance(randomTargetPosition, targetAiming.transform.position))
         {
             ranPosArrival = true;
@@ -303,17 +306,7 @@ public class DartGame : MonoBehaviour
         int dartScore = dart.roundscores;
         roundScore[round - 1] += dartScore;
         scoreTextList[round - 1].text = $"R{round}    {roundScore[round - 1]}";
-        //if (scoreTextList.Count < round)
-        //{
-        //    TextMeshProUGUI scoretext = Instantiate(gameUi.scoreTextPrefab, gameUi.scoreTextField);
-        //    scoreTextList.Add(scoretext);
-        //    scoreTextList[round - 1].text = dartScore.ToString();
-        //}
-        //else
-        //{
-        //    int score = int.Parse(scoreTextList[round - 1].text.ToString());
-        //    scoreTextList[round - 1].text = (score +dartScore).ToString();
-        //}
+
         totalScore += dartScore;
         gameUi.recentScoreText.text = $"+ {dartScore}";
         dart.roundscores = 0;
@@ -382,9 +375,9 @@ public class DartGame : MonoBehaviour
             yield return new WaitForSeconds(aimingRoutineDelay);
             time += aimingRoutineDelay;
         }
-        if (time >= aimingDelay)
+        if (!isWaitShootButton&&time >= aimingDelay)
         {
-            //TODO: 고쳐야함
+            gameUi.shootButton.onClick?.RemoveListener(ShootDartArrow);
             targetAiming.transform.localScale = targetAiming.startScale;
             yield return new WaitForSeconds(0.2f);
             if (targetAiming != null) { ShootDartArrow(); }

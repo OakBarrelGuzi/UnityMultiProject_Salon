@@ -27,7 +27,7 @@ namespace Salon.Character
         public void Initialize()
         {
             if (inputMove == null)
-                inputMove = UIManager.Instance.GetUI<MobileController>();
+                inputMove = UIManager.Instance.gameObject.GetComponentInChildren<MobileController>();
 
             if (mainCamera == null)
                 mainCamera = Camera.main;

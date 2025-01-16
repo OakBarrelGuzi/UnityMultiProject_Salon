@@ -4,6 +4,14 @@ using UnityEngine;
 
 namespace Salon.Firebase.Database
 {
+
+    public class FriendRequestData
+    {
+        public string sender { get; set; }
+        public long timestamp { get; set; }
+        public string status { get; set; }
+    }
+
     public static class DisplayNameUtils
     {
         public static string ToDisplayFormat(string serverName)
@@ -46,8 +54,6 @@ namespace Salon.Firebase.Database
     public class CommonChannelData
     {
         public Dictionary<string, MessageData> Messages { get; set; }
-        public int UserCount;
-        public bool isFull;
 
         public CommonChannelData()
         {
@@ -55,8 +61,6 @@ namespace Salon.Firebase.Database
             {
                 { "welcome", new MessageData("system", "Welcome to the room!", DateTimeOffset.UtcNow.ToUnixTimeSeconds()) }
             };
-            UserCount = 0;
-            isFull = false;
         }
     }
 
@@ -110,7 +114,6 @@ namespace Salon.Firebase.Database
             FriendRequests = new Dictionary<string, FriendRequestData>();
         }
     }
-
     [Serializable]
     public class InviteData
     {
@@ -319,5 +322,6 @@ namespace Salon.Firebase.Database
             IsFlipped = false;
             Owner = null;
         }
+
     }
 }
