@@ -90,7 +90,9 @@ public class ChannelPanel : Panel
             isProcessing = true;
             SetButtonsInteractable(false);
             UnityEngine.SceneManagement.SceneManager.LoadScene("LobbyScene");
+            Debug.Log(UIManager.Instance);
             UIManager.Instance.OpenPanel(PanelType.Lobby);
+            Debug.Log("ChannelManager : " + ChannelManager.Instance);
             await ChannelManager.Instance.JoinChannel(channelName);
             Close();
         }
