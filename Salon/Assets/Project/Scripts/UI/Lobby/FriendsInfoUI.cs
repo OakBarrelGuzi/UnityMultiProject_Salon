@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using Salon.Firebase;
 using Salon.Firebase.Database;
+using System.Threading.Tasks;
 
 public class FriendsInfoUI : MonoBehaviour
 {
@@ -30,10 +31,12 @@ public class FriendsInfoUI : MonoBehaviour
     {
         if (userData != null)
         {
-            bool isOnline = userData.IsOnline;
+            bool isOnline = userData.Status == UserStatus.Online;
 
             onlineImage.SetActive(isOnline);
             offlineImage.SetActive(!isOnline);
+
+            inviteFriendButton.interactable = isOnline;
 
             switch (userData.Status)
             {
@@ -73,10 +76,10 @@ public class FriendsInfoUI : MonoBehaviour
             return;
         }
 
-        InviteFriendToChannel();
+        _ = InviteFriendToChannel();
     }
 
-    private async void InviteFriendToChannel()
+    private async Task InviteFriendToChannel()
     {
         try
         {
@@ -86,13 +89,18 @@ public class FriendsInfoUI : MonoBehaviour
                 return;
             }
 
-            string serverFriendName = DisplayNameUtils.ToServerFormat(friendDisplayName);
-            //await FriendManager.Instance.SendInvite(serverFriendName, ChannelManager.Instance.CurrentChannel);
+            inviteFriendButton.interactable = false;
+            await FriendManager.Instance.SendInvite(friendDisplayName);
+            LogManager.Instance.ShowLog($"{friendDisplayName}님에게 채널 초대를 보냈습니다.");
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"친구 초대 실패: {ex.Message}");
             LogManager.Instance.ShowLog("친구 초대에 실패했습니다.");
+        }
+        finally
+        {
+            inviteFriendButton.interactable = true;
         }
     }
 }

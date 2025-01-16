@@ -331,20 +331,24 @@ namespace Salon.Firebase
             Debug.Log($"[RoomManager] 씬 로드됨: {scene.name}");
         }
 
+        void OnApplicationQuit()
+        {
+            UnsubscribeFromChannel();
+        }
+
         public async Task JoinChannel(string channelName)
         {
             try
             {
                 Debug.Log($"[RoomManager] 채널 {channelName} 입장 시작");
 
-                // 채널 참조 업데이트
+                DestroyAllPlayers();
+
                 UpdateChannelReferences(channelName);
 
-                // 로컬 플레이어 생성
                 var playerData = new GamePlayerData(FirebaseManager.Instance.CurrentUserName);
                 InstantiatePlayer(FirebaseManager.Instance.CurrentUserName, playerData, isLocalPlayer: true);
 
-                // 다른 플레이어들 구독
                 await SubscribeToPlayerChanges(channelName);
 
                 Debug.Log($"[RoomManager] 채널 {channelName} 입장 완료");

@@ -8,6 +8,7 @@ using Salon.Firebase.Database;
 using Salon.System;
 using UnityEngine.Events;
 using Salon.UI;
+using System.Drawing.Text;
 
 namespace Salon.Firebase
 {
@@ -15,6 +16,8 @@ namespace Salon.Firebase
     {
         private DatabaseReference dbReference;
         private DatabaseReference friendRequestsRef;
+        private DatabaseReference invitesRef;
+        private string currentUserName;
 
         public UnityEvent<string> OnFriendRequestReceived = new UnityEvent<string>();
 
@@ -24,7 +27,8 @@ namespace Salon.Firebase
         {
             try
             {
-                Debug.Log("[FriendManager] 초기화 시작");
+                currentUserName = FirebaseManager.Instance.CurrentUserName;
+                Debug.Log($"[FriendManager] 초기화 시작");
                 await ResetAndSetupReferences();
                 isInitialized = true;
                 Debug.Log("[FriendManager] 초기화 완료");
@@ -48,15 +52,18 @@ namespace Salon.Firebase
                 // 2. 새로운 참조 설정
                 dbReference = FirebaseManager.Instance.DbReference;
 
-                if (string.IsNullOrEmpty(FirebaseManager.Instance.CurrentUserName))
+                if (string.IsNullOrEmpty(currentUserName))
                 {
                     Debug.LogWarning("[FriendManager] 현재 로그인된 사용자가 없습니다.");
                     return;
                 }
 
                 // 3. 새로운 FriendRequests 참조 설정
-                string currentUserPath = $"Users/{FirebaseManager.Instance.CurrentUserName}";
+                string currentUserPath = $"Users/{currentUserName}";
                 friendRequestsRef = dbReference.Child(currentUserPath).Child("FriendRequests");
+
+                invitesRef = dbReference.Child(currentUserPath).Child("Invites");
+
                 Debug.Log($"[FriendManager] 친구 요청 참조 설정: {friendRequestsRef.Reference.ToString()}");
 
                 // 4. 리스너 시작
@@ -74,7 +81,9 @@ namespace Salon.Firebase
             if (friendRequestsRef != null)
             {
                 friendRequestsRef.ChildAdded += OnFriendRequestAdded;
-                Debug.Log("[FriendManager] 친구 요청 리스닝 시작");
+                Debug.Log("[FriendManager] 친구요청 리스닝 시작");
+                invitesRef.ChildAdded += OnInvitesAdded;
+                Debug.Log("[FriendManager] 초대 리스닝 시작");
             }
         }
 
@@ -83,7 +92,12 @@ namespace Salon.Firebase
             if (friendRequestsRef != null)
             {
                 friendRequestsRef.ChildAdded -= OnFriendRequestAdded;
-                Debug.Log("[FriendManager] 친구 요청 리스닝 중지");
+                Debug.Log("[FriendManager] 친구요청 리스닝 중지");
+            }
+            if (invitesRef != null)
+            {
+                invitesRef.ChildAdded -= OnInvitesAdded;
+                Debug.Log("[FriendManager] 초대 리스닝 중지");
             }
         }
 
@@ -261,21 +275,94 @@ namespace Salon.Firebase
             }
         }
 
-        public void Cleanup()
+        #region Channel Invite
+
+        public async Task SendInvite(string targetDisplayName)
+        {
+            if (!await ValdiateInivite(targetDisplayName))
+            {
+                return;
+            }
+            string targetServerName = DisplayNameUtils.ToServerFormat(targetDisplayName);
+            string currentUserName = FirebaseManager.Instance.CurrentUserName;
+            var targetRef = dbReference.Child("Users").Child(targetServerName).Child("Invites").Child(currentUserName);
+
+            InviteData inviteData = new InviteData();
+            inviteData.ChannelName = ChannelManager.Instance.CurrentChannel;
+            inviteData.Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            inviteData.Status = InviteStatus.Pending;
+
+            string jsonData = JsonConvert.SerializeObject(inviteData);
+            await targetRef.SetRawJsonValueAsync(jsonData);
+        }
+
+        public void OnInvitesAdded(object sender, ChildChangedEventArgs args)
+        {
+            Debug.Log($"[FriendManager] 초대 감지: {args.Snapshot.Key}");
+            string inviteData = args.Snapshot.GetRawJsonValue();
+            InviteData invite = JsonConvert.DeserializeObject<InviteData>(inviteData);
+            if (invite.Status == InviteStatus.Pending)
+            {
+                string senderDisplayName = DisplayNameUtils.ToDisplayFormat(args.Snapshot.Key);
+                PopUpManager.Instance.ShowPopUp(
+                    $"{senderDisplayName}님이 채널 초대를 보냈습니다.",
+                    async () => await AcceptInvite(args.Snapshot.Key, invite.ChannelName),
+                    async () => await DeclineInvite(args.Snapshot.Key)
+                );
+            }
+        }
+
+        private async Task<bool> ValdiateInivite(string targetUserName)
         {
             try
             {
-                Debug.Log("[FriendManager] 정리 작업 시작");
-                StopListening();
-                friendRequestsRef = null;
-                dbReference = null;
-                isInitialized = false;
-                Debug.Log("[FriendManager] 정리 작업 완료");
+                Debug.Log($"[FriendManager] 초대 검증 시작: {targetUserName}");
+
+                // 1. 채널 데이터 확인
+                var targetChannelRef = dbReference.Child("Channels").Child(ChannelManager.Instance.CurrentChannel);
+                var playersRef = targetChannelRef.Child("Players");
+
+                var playersSnapshot = await playersRef.GetValueAsync();
+                if (!playersSnapshot.Exists)
+                {
+                    Debug.Log("[FriendManager] Players 데이터가 없습니다.");
+                    return true;
+                }
+
+                var players = JsonConvert.DeserializeObject<Dictionary<string, GamePlayerData>>(playersSnapshot.GetRawJsonValue());
+                if (players != null && players.ContainsKey(targetUserName))
+                {
+                    LogManager.Instance.ShowLog($"{targetUserName}님이 이미 채널에 존재합니다.");
+                    return false;
+                }
+
+                return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[FriendManager] 정리 작업 중 오류: {ex.Message}");
+                Debug.LogError($"[FriendManager] 초대 검증 실패: {ex.Message}");
+                Debug.LogError($"[FriendManager] 스택 트레이스: {ex.StackTrace}");
+                return false;
             }
+        }
+
+        private async Task AcceptInvite(string senderServerName, string targetServer)
+        {
+            var targetInviteRef = dbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserName).Child("Invites").Child(senderServerName);
+            await targetInviteRef.RemoveValueAsync();
+            await ChannelManager.Instance.JoinChannel(targetServer);
+        }
+
+        private async Task DeclineInvite(string senderServerName)
+        {
+            await invitesRef.Child(senderServerName).RemoveValueAsync();
+        }
+
+        #endregion
+
+        private void OnApplicationQuit()
+        {
+            StopListening();
         }
     }
 }

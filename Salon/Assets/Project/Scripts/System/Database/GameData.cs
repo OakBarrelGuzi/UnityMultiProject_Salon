@@ -96,7 +96,6 @@ namespace Salon.Firebase.Database
     public class UserData
     {
         public long LastOnline { get; set; }
-        public bool IsOnline { get; set; }
         public UserStatus Status { get; set; }
         public Dictionary<string, bool> Friends { get; set; }
         public Dictionary<GameType, UserStats> GameStats { get; set; }
@@ -106,7 +105,6 @@ namespace Salon.Firebase.Database
         public UserData()
         {
             LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            IsOnline = false;
             Status = UserStatus.Offline;
             Friends = new Dictionary<string, bool>();
             GameStats = new Dictionary<GameType, UserStats>();
@@ -117,15 +115,20 @@ namespace Salon.Firebase.Database
     [Serializable]
     public class InviteData
     {
-        public string Inviter { get; set; }
         public string ChannelName { get; set; }
         public long Timestamp { get; set; }
         public InviteStatus Status { get; set; }
 
-        public InviteData(string inviter, string channelName)
+        public InviteData()
         {
-            Inviter = inviter;
-            ChannelName = channelName;
+            ChannelName = string.Empty;
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            Status = InviteStatus.Pending;
+        }
+
+        public InviteData(string channelName)
+        {
+            ChannelName = channelName ?? string.Empty;
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             Status = InviteStatus.Pending;
         }
@@ -284,9 +287,9 @@ namespace Salon.Firebase.Database
     public class GameState
     {
         public bool IsGameActive { get; set; }
-        public string CurrentTurnPlayerId { get; set; } // ÇöÀç ÅÏÀÇ ÇÃ·¹ÀÌ¾î¸¦ °ü¸®
+        public string CurrentTurnPlayerId { get; set; } // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾î¸¦ ï¿½ï¿½ï¿½ï¿½
         public string Winner { get; set; }
-        public long LastActionTimestamp { get; set; } // ÀÏÁ¤ ½Ã°£ÀÌ °æ°úÇßÀ» ¶§, ÀÚµ¿À¸·Î ÅÏÀ» ³Ñ±â°Å³ª °ÔÀÓ¿¡¼­ ÆÐ¹èÇÏµµ·Ï
+        public long LastActionTimestamp { get; set; } // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½, ï¿½Úµï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ±ï¿½Å³ï¿½ ï¿½ï¿½ï¿½Ó¿ï¿½ï¿½ï¿½ ï¿½Ð¹ï¿½ï¿½Ïµï¿½ï¿½ï¿½
         public GameState()
         {
             IsGameActive = true;
@@ -300,7 +303,7 @@ namespace Salon.Firebase.Database
     public class PlayerData
     {
         public string DisplayName { get; set; }
-        public bool IsHost { get; set; } // °ÔÀÓ ½ÃÀÛ ¹öÆ°À» ´©¸¦ ¼ö ÀÖÀ½
+        public bool IsHost { get; set; } // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         public int Score { get; set; }
 
         public PlayerData(string displayName, bool isHost)
