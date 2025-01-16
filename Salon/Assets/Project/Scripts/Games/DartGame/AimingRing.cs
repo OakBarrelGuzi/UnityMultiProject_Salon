@@ -4,7 +4,8 @@ using UnityEngine;
 
 public class AimingRing : MonoBehaviour
 {
-    private Vector3 startScale;
+    [HideInInspector]
+    public Vector3 startScale;
 
     public Transform innerLine;
 

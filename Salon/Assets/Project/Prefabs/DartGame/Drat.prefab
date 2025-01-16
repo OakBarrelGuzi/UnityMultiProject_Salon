@@ -54,7 +54,7 @@ MeshRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1878601315158233164}
   m_Enabled: 1
-  m_CastShadows: 1
+  m_CastShadows: 0
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
   m_StaticShadowCaster: 0
@@ -149,8 +149,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 48dd0729043fbfc40acf34a2a5309535, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  joyStick: {fileID: 0}
   center: {fileID: 3633606105108605852}
+  outerLine: {fileID: 1571320304315494494}
   scroeMultiplyPoint:
     FiftyPoint: {fileID: 2051561245269019489}
     TwentyfivePoint: {fileID: 6904665894161217876}
@@ -251,37 +251,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3633606105108605852}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5873512477992518391
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1831718256482252342}
-  m_Layer: 0
-  m_Name: Point
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1831718256482252342
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5873512477992518391}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3633606105108605852}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6612987743045459929
 GameObject:
   m_ObjectHideFlags: 0
@@ -292,9 +261,8 @@ GameObject:
   m_Component:
   - component: {fileID: 4791147656134674315}
   - component: {fileID: 8475059393653374624}
-  - component: {fileID: 1135996974515468118}
   m_Layer: 0
-  m_Name: DartBoard
+  m_Name: DartRenderer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -335,7 +303,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -367,20 +335,6 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &1135996974515468118
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6612987743045459929}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ece68a2b846c4a14d92b69a4680c3817, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  center: {fileID: 3633606105108605852}
-  Point: {fileID: 1831718256482252342}
 --- !u!1 &6638400802182338180
 GameObject:
   m_ObjectHideFlags: 0
@@ -437,12 +391,11 @@ Transform:
   m_GameObject: {fileID: 6757091774734670029}
   serializedVersion: 2
   m_LocalRotation: {x: -0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0.0015316455, y: 0, z: 0.012}
+  m_LocalPosition: {x: 0, y: 0, z: 0.012}
   m_LocalScale: {x: 0.043164555, y: 0.043164544, z: 3.4099984}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1607999821844126659}
-  - {fileID: 1831718256482252342}
   - {fileID: 1571320304315494494}
   m_Father: {fileID: 6463354664065603539}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

@@ -1,17 +1,23 @@
 public enum PanelType
 {
-    MainDisplay,
-    Customize,
-    Log,
-    Lobby,
-    Game,
-    Result,
+    None,
     SignIn,
     SignUp,
+    Channel,
+    Lobby,
     Option,
-    Exit,
+    Friends,
+    Chat,
+    Customize,
+    MainDisplay
 }
-
+public enum InviteStatus
+{
+    Pending,
+    Accepted,
+    Declined,
+    Expired
+}
 public enum GamePlayerState
 {
     Waiting,
