@@ -1,15 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Animations;
 using UnityEngine;
-using static UnityEngine.UI.GridLayoutGroup;
 
-
-//TODO: ¾Ö´ÏÅ¬¸³±³Ã¼ °³¹ß°³¹ßÁß
-public class AnimController : MonoBehaviour 
+//TODO: ì• ë‹ˆí´ë¦½êµì²´ ê°œë°œê°œë°œì¤‘
+public class AnimController : MonoBehaviour
 {
     public List<AnimationClip> clipList = new List<AnimationClip>();
-    
+
     public AnimationClip TestClip;
     public AnimationClip TestClip2;
 
@@ -17,19 +14,19 @@ public class AnimController : MonoBehaviour
 
     private AnimatorOverrideController currentController;
 
-    [SerializeField,Header("¹Ù²Ü·Á°íÇÏ´Â AnimatorÀÇ StateÀÌ¸§ ´Ù¸£¸é ¿À·ù¶ä")]
+    [SerializeField, Header("ë°”ê¿€ë ¤ê³ í•˜ëŠ” Animatorì˜ Stateì´ë¦„ ë‹¤ë¥´ë©´ ì˜¤ë¥˜ëœ¸")]
     private string targetClipName = "ActionState";
 
     private string originalClipName = "";
 
     private void Start()
     {
-       GetOriginalClipName();
-       ClipChange(TestClip);
-       ClipChange(TestClip2);
-       animator.SetTrigger("ASTrigger");
+        GetOriginalClipName();
+        ClipChange(TestClip);
+        ClipChange(TestClip2);
+        animator.SetTrigger("ASTrigger");
     }
- 
+
     public void Initialize()
     {
         animator = GetComponent<Animator>();
@@ -49,40 +46,37 @@ public class AnimController : MonoBehaviour
 
     private void GetOriginalClipName()
     {
-        if(animator.runtimeAnimatorController is AnimatorController controller)
+        var controller = animator.runtimeAnimatorController;
+        if (controller != null)
         {
-             ChildAnimatorState[] states = controller.layers[0].stateMachine.states;
-
-           foreach(ChildAnimatorState state in states)
+            foreach (var clip in controller.animationClips)
             {
-                if(state.state.name == targetClipName &&
-                    state.state.motion is AnimationClip clip)
+                if (clip.name == targetClipName)
                 {
                     originalClipName = clip.name;
                     print(originalClipName);
+                    break;
                 }
             }
         }
-
-
     }
 
     public void ClipChange(string clipname)
     {
-        if (currentController == null)       
+        if (currentController == null)
         {
             currentController = SetupOverrideController();
         }
 
-        //Å¬¸³ stringÀ¸·Î Ã£¾Æ º¯°æ
+        //í´ë¦½ stringìœ¼ë¡œ ì°¾ì•„ ë³€ê²½
         AnimationClip targetClip = clipList.Find(clip => clip.name == clipname);
-        if(targetClip != null)
+        if (targetClip != null)
         {
             currentController[originalClipName] = targetClip;
         }
         else
         {
-            print($"¸®½ºÆ®¿¡ '{clipname}' ÀÌ°Å¾øÀ½");
+            print($"ë¦¬ìŠ¤íŠ¸ì— '{clipname}' ì´ê±°ì—†ìŒ");
         }
     }
 
@@ -99,7 +93,7 @@ public class AnimController : MonoBehaviour
         }
     }
 
-    [Tooltip("Animator¸¦ º¯°æÇÒ¶§ »ç¿ë º¯°æÇÒ·Á´Â StateÀÌ¸§ µ¿ÀÏÇÏ°Ô ÇØ¾ßÇÔ")]
+    [Tooltip("Animatorë¥¼ ë³€ê²½í• ë•Œ ì‚¬ìš© ë³€ê²½í• ë ¤ëŠ” Stateì´ë¦„ ë™ì¼í•˜ê²Œ í•´ì•¼í•¨")]
     public void AnimatorChange(RuntimeAnimatorController controller)
     {
         animator.runtimeAnimatorController = controller;

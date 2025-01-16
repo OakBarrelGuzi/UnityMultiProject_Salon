@@ -76,21 +76,28 @@ namespace Salon.Character
             }
         }
 
-        private void FixedUpdate()
+        private void Move()
         {
             if (rb != null)
             {
-                RaycastHit hit;
                 Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
-                if (!Physics.Raycast(transform.position, movement.normalized, out hit, movement.magnitude))
-                {
-                    rb.MovePosition(rb.position + movement);
-                }
-                else
-                {
-                    Debug.Log("충돌 감지: " + hit.collider.name);
-                }
+
             }
+        }
+
+        private void FixedUpdate()
+        {
+            RaycastHit hit;
+            Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
+            if (!Physics.Raycast(transform.position + Vector3.up * 5f, movement.normalized, out hit, movement.magnitude))
+            {
+                transform.position += movement;
+            }
+            else
+            {
+                print("충돌 감지: " + hit.collider.name);
+            }
+
         }
 
         private void UpdateAnimation()
