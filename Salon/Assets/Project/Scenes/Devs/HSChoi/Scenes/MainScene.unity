@@ -230,6 +230,7 @@ GameObject:
   - component: {fileID: 771450507}
   - component: {fileID: 771450506}
   - component: {fileID: 771450510}
+  - component: {fileID: 771450511}
   m_Layer: 5
   m_Name: UIManager
   m_TagString: Untagged
@@ -338,8 +339,22 @@ MonoBehaviour:
   - {fileID: 3745734390296999260, guid: b46be8afdc65c1940a658b257b8782cc, type: 3}
   - {fileID: 3796262687335587547, guid: 5ef7f4247374b534e97d39a937ab7023, type: 3}
   - {fileID: 515021443576260328, guid: 720242470b3900640a17b5e5f716d217, type: 3}
-  - {fileID: 4254700860887460285, guid: 9892d996eeb83bd4cb8ac1805272005d, type: 3}
   - {fileID: 7286715830809605, guid: 488fa7889d4c4a74ea182a05d530582d, type: 3}
+--- !u!114 &771450511
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 771450505}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efa44934a806b2e4eba28962dd2d02d3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popUpPanelPrefab: {fileID: 4254700860887460285, guid: a94cf7ca6a374a0449dc7b9853184e05,
+    type: 3}
+  popUpParent: {fileID: 771450509}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0

@@ -24,67 +24,46 @@ namespace Salon.Firebase
         private const float DISCONNECT_TIMEOUT = 5f;
         private EventHandler<ValueChangedEventArgs> disconnectHandler;
 
-        // 매니저들의 초기화 상태를 추적
-        private bool isChatManagerInitialized;
-        private bool isRoomManagerInitialized;
-        private bool isFriendManagerInitialized;
-
         private bool isQuitting = false;
-
-        void Start()
-        {
-            _ = Initialize();
-        }
 
         public async Task Initialize()
         {
             try
             {
                 Debug.Log("[ChannelManager] Initialize 시작");
+
+                // Firebase가 초기화될 때까지 대기
+                if (!FirebaseManager.Instance.IsInitialized)
+                {
+                    Debug.Log("[ChannelManager] Firebase 초기화 대기 중...");
+                    await Task.Delay(1000);  // 잠시 대기 후 재시도
+                    if (!FirebaseManager.Instance.IsInitialized)
+                    {
+                        throw new Exception("Firebase가 초기화되지 않았습니다.");
+                    }
+                }
+
                 if (dbReference == null)
                 {
                     dbReference = await GetDbReference();
+                    if (dbReference == null)
+                    {
+                        throw new Exception("데이터베이스 참조를 가져올 수 없습니다.");
+                    }
+                    currentUserName = FirebaseManager.Instance.CurrentUserName;
+
                     channelsRef = dbReference.Child("Channels");
                     Debug.Log("[ChannelManager] 데이터베이스 참조 설정 완료");
+
                     SetupDisconnectHandlers();
+                    await ExistRooms();  // 채널이 존재하는지 확인하고 필요한 경우 생성
                 }
 
-                await InitializeManagers();
+                Debug.Log("[ChannelManager] 초기화 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[ChannelManager] 초기화 실패: {ex.Message}");
-            }
-        }
-
-        private async Task InitializeManagers()
-        {
-            try
-            {
-                // ChatManager 초기화
-                if (!isChatManagerInitialized && ChatManager.Instance != null)
-                {
-                    await ChatManager.Instance.Initialize();
-                    isChatManagerInitialized = true;
-                }
-
-                // RoomManager 초기화
-                if (!isRoomManagerInitialized && RoomManager.Instance != null)
-                {
-                    await RoomManager.Instance.Initialize();
-                    isRoomManagerInitialized = true;
-                }
-                if (!isFriendManagerInitialized && FriendManager.Instance != null)
-                {
-                    FriendManager.Instance.Initialize();
-                    isFriendManagerInitialized = true;
-                }
-
-                Debug.Log("[ChannelManager] 모든 매니저 초기화 완료");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[ChannelManager] 매니저 초기화 실패: {ex.Message}");
+                Debug.LogError($"[ChannelManager] 초기화 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 throw;
             }
         }
@@ -405,20 +384,48 @@ namespace Salon.Firebase
         {
             try
             {
+                if (channelsRef == null)
+                {
+                    Debug.LogWarning("[ChannelManager] 채널 참조가 초기화되지 않았습니다. 초기화를 시도합니다.");
+                    await Initialize();
+
+                    if (channelsRef == null)
+                    {
+                        Debug.LogError("[ChannelManager] 채널 참조 초기화 실패");
+                        return new Dictionary<string, ChannelData>();
+                    }
+                }
+
                 var snapshot = await channelsRef.GetValueAsync();
-                if (!snapshot.Exists) return null;
+                if (!snapshot.Exists)
+                {
+                    Debug.LogWarning("[ChannelManager] 채널 데이터가 존재하지 않습니다.");
+                    return new Dictionary<string, ChannelData>();
+                }
 
                 var channelData = new Dictionary<string, ChannelData>();
                 foreach (var channelSnapshot in snapshot.Children)
                 {
-                    channelData[channelSnapshot.Key] = JsonConvert.DeserializeObject<ChannelData>(channelSnapshot.GetRawJsonValue());
+                    try
+                    {
+                        var data = JsonConvert.DeserializeObject<ChannelData>(channelSnapshot.GetRawJsonValue());
+                        if (data != null)
+                        {
+                            channelData[channelSnapshot.Key] = data;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"[ChannelManager] 채널 {channelSnapshot.Key} 데이터 파싱 실패: {ex.Message}");
+                        continue;
+                    }
                 }
                 return channelData;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[ChannelManager] 채널 데이터 로드 실패: {ex.Message}");
-                return null;
+                Debug.LogError($"[ChannelManager] 채널 데이터 로드 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
+                return new Dictionary<string, ChannelData>();
             }
         }
 

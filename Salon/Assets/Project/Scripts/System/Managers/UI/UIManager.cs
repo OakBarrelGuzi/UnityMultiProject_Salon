@@ -4,44 +4,18 @@ using System.Linq;
 using System.Collections;
 using Salon.Interfaces;
 using Salon.Firebase;
+using System;
+using Salon.System;
 
-public class UIManager : MonoBehaviour, IInitializable
+public class UIManager : Singleton<UIManager>, IInitializable
 {
-    private static UIManager instance;
     private DataManager.DataFile[] LanguageFile;
     private Dictionary<string, string> processedData = new Dictionary<string, string>();
     private string DefaultLangFile = "Assets/Resources/Langtable/LangTable.CSV";
     private List<Panel> panels = new List<Panel>();
     [SerializeField] private List<Panel> panelsPrefabs = new List<Panel>();
     public bool IsInitialized { get; private set; }
-    public static UIManager Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                GameObject go = new GameObject("UIManager");
-                instance = go.AddComponent<UIManager>();
-                DontDestroyOnLoad(go);
-            }
-            return instance;
-        }
-    }
 
-    void Awake()
-    {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else if (instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-    }
     public IEnumerator InitializeRoutine()
     {
         yield return new WaitUntil(() => FirebaseManager.Instance.IsInitialized);
@@ -213,13 +187,6 @@ public class UIManager : MonoBehaviour, IInitializable
         {
             var newPanel = GetPanel(panelType);
             panels.Add(newPanel);
-
-            // PopUp 패널인 경우 항상 맨 위로 이동
-            if (panelType == PanelType.PopUp)
-            {
-                newPanel.transform.SetAsLastSibling();
-            }
-
             newPanel.Open();
         }
         else
@@ -227,12 +194,6 @@ public class UIManager : MonoBehaviour, IInitializable
             var existingPanel = panels.FirstOrDefault(p => p.panelType == panelType);
             if (!existingPanel.isOpen)
             {
-                // PopUp 패널인 경우 항상 맨 위로 이동
-                if (panelType == PanelType.PopUp)
-                {
-                    existingPanel.transform.SetAsLastSibling();
-                }
-
                 existingPanel.Open();
             }
         }
@@ -240,27 +201,28 @@ public class UIManager : MonoBehaviour, IInitializable
 
     public void ClosePanel(PanelType panelType)
     {
-        if (panels.FirstOrDefault(p => p.panelType == panelType) == null)
+        var panel = panels.FirstOrDefault(p => p.panelType == panelType);
+        if (panel == null)
         {
             LogManager.Instance.ShowLog($"패널 {panelType}이 존재하지 않습니다.");
             return;
         }
-        if (panels.FirstOrDefault(p => p.panelType == panelType).isOpen)
-            panels.FirstOrDefault(p => p.panelType == panelType).Close();
+        if (panel.isOpen)
+        {
+            panel.Close();
+        }
     }
 
     private Panel GetPanel(PanelType panelType)
     {
-        if (panelsPrefabs.FirstOrDefault(p => p.panelType == panelType) == null)
+        var prefab = panelsPrefabs.FirstOrDefault(p => p.panelType == panelType);
+        if (prefab == null)
         {
-            return ResourceManager.Instance.LoadResource<Panel>($"Assets/Resources/UI/Panels/{panelType}.prefab");
+            Debug.LogError($"[UIManager] {panelType} 프리팹을 찾을 수 없습니다.");
+            return null;
         }
-        else
-        {
-            Panel panel = Instantiate(panelsPrefabs.FirstOrDefault(p => p.panelType == panelType), transform);
-            panel.isOpen = false;
-            return panel;
-        }
+
+        return Instantiate(prefab, transform);
     }
 
     public void CloseAllPanels()
@@ -273,8 +235,8 @@ public class UIManager : MonoBehaviour, IInitializable
         Debug.Log("[UIManager] CloseAllPanels 완료");
     }
 
-    public T GetUI<T>() where T : Component
+    public T GetUI<T>() where T : Panel
     {
-        return gameObject.GetComponentInChildren<T>();
+        return panels.FirstOrDefault(p => p is T) as T;
     }
 }

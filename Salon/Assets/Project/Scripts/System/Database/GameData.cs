@@ -4,6 +4,14 @@ using UnityEngine;
 
 namespace Salon.Firebase.Database
 {
+
+    public class FriendRequestData
+    {
+        public string sender { get; set; }
+        public long timestamp { get; set; }
+        public string status { get; set; }
+    }
+
     public static class DisplayNameUtils
     {
         public static string ToDisplayFormat(string serverName)
@@ -110,7 +118,6 @@ namespace Salon.Firebase.Database
             FriendRequests = new Dictionary<string, FriendRequestData>();
         }
     }
-
     [Serializable]
     public class InviteData
     {
