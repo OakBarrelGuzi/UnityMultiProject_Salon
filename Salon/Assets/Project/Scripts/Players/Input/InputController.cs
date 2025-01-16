@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Salon.Controller;
+using UnityEngine.UI;
 
 namespace Salon.Character
 {
@@ -11,6 +12,7 @@ namespace Salon.Character
         [SerializeField] private Camera mainCamera;
         [SerializeField] private Animator animator;
 
+        public PopupButton popupButton;
         private Vector3 cachedInput;
         public bool lerpStopping;
         public float moveSpeed;
@@ -27,7 +29,14 @@ namespace Salon.Character
         public void Initialize()
         {
             if (inputMove == null)
-                inputMove = UIManager.Instance.GetUI<MobileController>();
+                inputMove = UIManager.Instance.gameObject.GetComponentInChildren<MobileController>();
+
+            if(popupButton == null)
+            {
+                popupButton = UIManager.Instance.gameObject.GetComponentInChildren<PopupButton>();
+
+                popupButton.gameObject.SetActive(false);
+            }
 
             if (mainCamera == null)
                 mainCamera = Camera.main;
@@ -76,21 +85,29 @@ namespace Salon.Character
             }
         }
 
-        private void FixedUpdate()
+        private void Move()
         {
             if (rb != null)
             {
-                RaycastHit hit;
                 Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
-                if (!Physics.Raycast(transform.position, movement.normalized, out hit, movement.magnitude))
-                {
-                    rb.MovePosition(rb.position + movement);
-                }
-                else
-                {
-                    Debug.Log("충돌 감지: " + hit.collider.name);
-                }
+
             }
+        }
+
+        private void FixedUpdate()
+        {
+            RaycastHit hit;
+            Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
+            if (!Physics.Raycast(transform.position + Vector3.up * 5f, movement.normalized, out hit, movement.magnitude
+                , Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            {
+                transform.position += movement;
+            }
+            else
+            {
+                print("충돌 감지: " + hit.collider.name);
+            }
+
         }
 
         private void UpdateAnimation()

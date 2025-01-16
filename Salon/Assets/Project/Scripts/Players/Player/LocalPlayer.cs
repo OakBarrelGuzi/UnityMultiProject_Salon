@@ -27,6 +27,8 @@ namespace Salon.Character
             lastPositionUpdateTime = Time.time;
             lastSentPositionData = NetworkPositionCompressor.CompressVector3(transform.position, transform.forward, true);
             posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
+            CameraController cc = Camera.main.GetComponent<CameraController>();
+            cc.SetTarget(transform);
         }
 
         private void Update()
@@ -84,6 +86,28 @@ namespace Salon.Character
             }
 
             return hasChanged;
+        }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("Interactive"))
+            {
+                var interactionComponent = other.GetComponent<InteractionComponent>();
+                if (interactionComponent != null)
+                {
+                    inputController.popupButton.SetInteraction(interactionComponent.InteractionType);
+                    inputController.popupButton.gameObject.SetActive(true);
+                }
+            }
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other.CompareTag("Interactive"))
+            {
+                inputController.popupButton.SetInteraction(InteractionType.None);
+                inputController.popupButton.gameObject.SetActive(false);
+            }
         }
     }
 }

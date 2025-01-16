@@ -19,13 +19,9 @@ namespace Salon.Firebase
         private string currentChannel;
         private long lastMessageTimestamp;
 
-        void Start()
-        {
-            _ = Initialize();
-        }
-
         public async Task Initialize()
         {
+            Debug.Log("[ChatManager] 초기화 시작");
             dbReference = await GetDbReference();
             channelsRef = dbReference.Child("Channels");
             lastMessageTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -205,6 +201,16 @@ namespace Salon.Firebase
         }
 
         private void OnDisable()
+        {
+            StopListeningToMessages();
+        }
+
+        private void OnApplicationQuit()
+        {
+            StopListeningToMessages();
+        }
+
+        private void OnDestroy()
         {
             StopListeningToMessages();
         }

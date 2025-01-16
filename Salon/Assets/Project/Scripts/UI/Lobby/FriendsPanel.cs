@@ -14,7 +14,7 @@ public class FriendsPanel : Panel
     [SerializeField] private Button closeButton;
     [SerializeField] private TMP_InputField addFriendInputField;
     [SerializeField] private TMP_InputField inviteFriendInputField;
-    [SerializeField] private Button addFriendButton;
+    [SerializeField] private Button sendFriendRequestButton;
     [SerializeField] private Button inviteFriendButton;
 
     private List<FriendsInfoUI> friendsInfoUIList = new List<FriendsInfoUI>();
@@ -36,8 +36,9 @@ public class FriendsPanel : Panel
     {
         friendsInfoUIList.Clear();
         closeButton.onClick.AddListener(() => Close());
-        addFriendButton.onClick.AddListener(OnAddFriendButtonClick);
+        sendFriendRequestButton.onClick.AddListener(OnSendFriendRequestButtonClick);
         inviteFriendButton.onClick.AddListener(OnInviteFriendButtonClick);
+
     }
 
     private void ClearFriendsList()
@@ -72,32 +73,24 @@ public class FriendsPanel : Panel
         friendsInfoUIList.Add(friendUI);
     }
 
-    private async void OnAddFriendButtonClick()
+    private async void OnSendFriendRequestButtonClick()
     {
-        string friendId = addFriendInputField.text.Trim();
-        if (string.IsNullOrEmpty(friendId))
+        sendFriendRequestButton.interactable = false;
+        try
         {
-            LogManager.Instance.ShowLog("친구 ID를 입력해주세요.");
-            return;
-        }
+            string friendId = addFriendInputField.text.Trim();
+            if (string.IsNullOrEmpty(friendId))
+            {
+                LogManager.Instance.ShowLog("친구 ID를 입력해주세요.");
+                return;
+            }
 
-        var userData = await FirebaseManager.Instance.GetUserDataAsync(DisplayNameUtils.ToServerFormat(friendId));
-        if (userData == null)
-        {
-            LogManager.Instance.ShowLog("존재하지 않는 사용자입니다.");
-            return;
-        }
-
-        bool success = await FriendManager.Instance.AddFriend(friendId);
-        if (success)
-        {
-            LogManager.Instance.ShowLog("친구 추가가 완료되었습니다.");
+            await FriendManager.Instance.SendFriendRequest(friendId);
             addFriendInputField.text = "";
-            LoadFriendsList();
         }
-        else
+        finally
         {
-            LogManager.Instance.ShowLog("친구 추가에 실패했습니다.");
+            sendFriendRequestButton.interactable = true;
         }
     }
 
@@ -116,21 +109,17 @@ public class FriendsPanel : Panel
             return;
         }
 
-        await InviteFriendToChannel(friendId);
+        string serverFriendId = DisplayNameUtils.ToServerFormat(friendId);
+        await InviteFriendToChannel(serverFriendId);
     }
 
     private async Task InviteFriendToChannel(string friendId)
     {
         try
         {
-            if (string.IsNullOrEmpty(ChannelManager.Instance.CurrentChannel))
-            {
-                LogManager.Instance.ShowLog("채널에 입장한 후 초대해주세요.");
-                return;
-            }
-
-            await FriendManager.Instance.SendInvite(friendId, ChannelManager.Instance.CurrentChannel);
+            await FriendManager.Instance.SendInvite(friendId);
             inviteFriendInputField.text = "";
+            LogManager.Instance.ShowLog($"{friendId}님에게 채널 초대를 보냈습니다.");
         }
         catch (System.Exception ex)
         {

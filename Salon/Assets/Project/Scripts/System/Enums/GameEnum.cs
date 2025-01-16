@@ -1,18 +1,15 @@
 public enum PanelType
 {
-    MainDisplay,
-    Customize,
-    Channel,
-    Log,
-    Lobby,
-    Game,
-    Result,
+    None,
     SignIn,
     SignUp,
+    Channel,
+    Lobby,
     Option,
-    Exit,
-    PopUp,
     Friends,
+    Chat,
+    Customize,
+    MainDisplay
 }
 public enum InviteStatus
 {

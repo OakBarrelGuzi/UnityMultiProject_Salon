@@ -29,11 +29,12 @@ public class ChannelPanel : Panel
 
     private void ClearChannelButtons()
     {
-        channelButtons.Clear();
-        foreach (Transform child in channelParent)
+        foreach (ChannelButton button in channelButtons)
         {
-            Destroy(child.gameObject);
+            button.button.onClick.RemoveAllListeners();
+            Destroy(button.gameObject);
         }
+        channelButtons.Clear();
     }
 
     private void SetupButtons()
@@ -57,15 +58,15 @@ public class ChannelPanel : Panel
             return;
         }
 
-        CreateChannelButtons(channelData);
+        await CreateChannelButtons(channelData);
     }
 
-    private void CreateChannelButtons(Dictionary<string, ChannelData> channelData)
+    private async Task CreateChannelButtons(Dictionary<string, ChannelData> channelData)
     {
         foreach (var channel in channelData)
         {
             var button = Instantiate(channelButtonPrefab, channelParent);
-            button.Initialize(channel.Key, channel.Value.CommonChannelData.UserCount);
+            button.Initialize(channel.Key, await ChannelManager.Instance.GetChannelUserCount(channel.Key));
             button.button.onClick.AddListener(() => OnChannelButtonClick(channel.Key));
             channelButtons.Add(button);
         }
@@ -89,7 +90,9 @@ public class ChannelPanel : Panel
             isProcessing = true;
             SetButtonsInteractable(false);
             UnityEngine.SceneManagement.SceneManager.LoadScene("LobbyScene");
+            Debug.Log(UIManager.Instance);
             UIManager.Instance.OpenPanel(PanelType.Lobby);
+            Debug.Log("ChannelManager : " + ChannelManager.Instance);
             await ChannelManager.Instance.JoinChannel(channelName);
             Close();
         }
@@ -119,6 +122,10 @@ public class ChannelPanel : Panel
         if (closeButton != null) closeButton.interactable = interactable;
     }
 
-    public void OnRefreshButtonClick() => Initialize();
+    public void OnRefreshButtonClick()
+    {
+        ClearChannelButtons();
+        GetChannels();
+    }
     public void OnCloseButtonClick() => Close();
 }
