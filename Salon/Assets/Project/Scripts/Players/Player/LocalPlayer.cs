@@ -27,6 +27,8 @@ namespace Salon.Character
             lastPositionUpdateTime = Time.time;
             lastSentPositionData = NetworkPositionCompressor.CompressVector3(transform.position, transform.forward, true);
             posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
+            CameraController cc = Camera.main.GetComponent<CameraController>();
+            cc.SetTarget(transform);
         }
 
         private void Update()
