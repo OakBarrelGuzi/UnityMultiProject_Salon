@@ -327,4 +327,14 @@ namespace Salon.Firebase.Database
         }
 
     }
+
+    [Serializable]
+    public enum InteractionType
+    {
+        None,
+        Shop,
+        DartGame,
+        ShellGame,
+        CardGame
+    }
 }
