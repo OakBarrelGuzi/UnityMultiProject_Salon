@@ -25,11 +25,6 @@ namespace Salon.Firebase
         public Transform spawnParent;
         private string currentChannel;
 
-        void Start()
-        {
-            _ = Initialize();
-        }
-
         public async Task Initialize()
         {
             try

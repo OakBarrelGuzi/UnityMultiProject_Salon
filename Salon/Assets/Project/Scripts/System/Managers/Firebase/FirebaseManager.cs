@@ -29,13 +29,31 @@ namespace Salon.Firebase
         public bool IsInitialized { get; private set; }
         private TaskCompletionSource<bool> initializationComplete;
 
+        private bool isChannelManagerInitialized;
+        private bool isChatManagerInitialized;
+        private bool isRoomManagerInitialized;
+        private bool isFriendManagerInitialized;
+
+        private bool isInitializing = false;
+
         void Start()
         {
-            Initialize();
+            if (!IsInitialized && !isInitializing)
+            {
+                Initialize();
+            }
         }
 
         public async void Initialize()
         {
+            if (IsInitialized || isInitializing)
+            {
+                Debug.Log("[FirebaseManager] 이미 초기화되었거나 초기화 중입니다.");
+                return;
+            }
+
+            isInitializing = true;
+
             try
             {
                 initializationComplete = new TaskCompletionSource<bool>();
@@ -43,20 +61,91 @@ namespace Salon.Firebase
                 if (dependencyStatus == DependencyStatus.Available)
                 {
                     InitializeFirebase();
+
+                    // 사용자 정보 먼저 설정
+                    if (auth != null)
+                    {
+                        currentUser = auth.CurrentUser;
+                        if (currentUser != null)
+                        {
+                            currentUserName = currentUser.DisplayName;
+                            Debug.Log("[FirebaseManager] 사용자 이름: " + currentUserName + "/ 이메일 : " + currentUser.Email);
+                        }
+                        else
+                        {
+                            Debug.Log("[FirebaseManager] 로그인된 사용자가 없습니다.");
+                        }
+                    }
+
                     IsInitialized = true;
                     initializationComplete.SetResult(true);
-                    Debug.Log("[Firebase] 초기화 성공");
+
+                    if (currentUser != null)
+                    {
+                        await UpdateUserStatus(UserStatus.Online);
+                    }
+
+                    var currentUserRef = dbReference.Child("Users").Child(currentUserName);
+                    await currentUserRef.OnDisconnect().UpdateChildren(new Dictionary<string, object> { { "IsOnline", false } });
+
+                    await InitializeManagers();
+                    Debug.Log("[FirebaseManager] Firebase 초기화 성공");
                 }
                 else
                 {
-                    Debug.LogError($"[Firebase] 초기화 실패: {dependencyStatus}");
+                    Debug.LogError($"[FirebaseManager] Firebase 초기화 실패: {dependencyStatus}");
                     initializationComplete.SetResult(false);
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 초기화 실패: {ex.Message}");
+                Debug.LogError($"[FirebaseManager] 초기화 실패: {ex.Message}");
                 initializationComplete.SetResult(false);
+            }
+            finally
+            {
+                isInitializing = false;
+            }
+        }
+
+        private async Task InitializeManagers()
+        {
+            try
+            {
+                if (!isChannelManagerInitialized)
+                {
+                    await ChannelManager.Instance.Initialize();
+                    isChannelManagerInitialized = true;
+                    Debug.Log("[FirebaseManager] ChannelManager 초기화 완료");
+                }
+
+                if (!isChatManagerInitialized)
+                {
+                    await ChatManager.Instance.Initialize();
+                    isChatManagerInitialized = true;
+                    Debug.Log("[FirebaseManager] ChatManager 초기화 완료");
+                }
+
+                if (!isRoomManagerInitialized)
+                {
+                    await RoomManager.Instance.Initialize();
+                    isRoomManagerInitialized = true;
+                    Debug.Log("[FirebaseManager] RoomManager 초기화 완료");
+                }
+
+                if (!isFriendManagerInitialized)
+                {
+                    await FriendManager.Instance.Initialize();
+                    isFriendManagerInitialized = true;
+                    Debug.Log("[FirebaseManager] FriendManager 초기화 완료");
+                }
+
+                Debug.Log("[FirebaseManager] 모든 매니저 초기화 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FirebaseManager] 매니저 초기화 실패: {ex.Message}");
+                throw;
             }
         }
 
@@ -83,33 +172,54 @@ namespace Salon.Firebase
             auth.StateChanged += AuthStateChanged;
         }
 
-        private void AuthStateChanged(object sender, EventArgs e)
+        private async void AuthStateChanged(object sender, EventArgs e)
         {
             if (auth.CurrentUser != currentUser)
             {
                 bool signedIn = (auth.CurrentUser != null);
                 if (signedIn)
                 {
-                    Debug.Log($"[Firebase] 사용자 로그인: {auth.CurrentUser.Email}");
+                    Debug.Log($"[FirebaseManager] 사용자 로그인: {auth.CurrentUser.Email}");
                     currentUser = auth.CurrentUser;
                     currentUserName = currentUser.DisplayName;
-                    Debug.Log($"[Firebase] 현재 사용자 이름: {currentUserName}");
+                    Debug.Log($"[FirebaseManager] 현재 사용자 이름: {currentUserName}");
 
                     if (ChannelManager.Instance != null)
                     {
-                        ChannelManager.Instance.SetCurrentUserName(currentUserName);
+                        await ChannelManager.Instance.Initialize();
+                        Debug.Log("[FirebaseManager] ChannelManager 레퍼런스 업데이트 완료");
+
+                    }
+
+                    if (ChatManager.Instance != null)
+                    {
+                        await ChatManager.Instance.Initialize();
+                        Debug.Log("[FirebaseManager] ChatManager 레퍼런스 업데이트 완료");
+                    }
+
+                    if (RoomManager.Instance != null)
+                    {
+                        await RoomManager.Instance.Initialize();
+                        Debug.Log("[FirebaseManager] RoomManager 레퍼런스 업데이트 완료");
+                    }
+
+                    if (FriendManager.Instance != null)
+                    {
+                        await FriendManager.Instance.Initialize();
+                        Debug.Log("[FirebaseManager] FriendManager 레퍼런스 업데이트 완료");
                     }
                 }
                 else
                 {
-                    Debug.Log("[Firebase] 사용자 로그아웃");
+                    Debug.Log("[FirebaseManager] 사용자 로그아웃");
                     currentUser = null;
                     currentUserName = null;
 
-                    if (ChannelManager.Instance != null)
-                    {
-                        ChannelManager.Instance.SetCurrentUserName(null);
-                    }
+                    // 각 매니저의 초기화 상태 리셋
+                    isChannelManagerInitialized = false;
+                    isChatManagerInitialized = false;
+                    isRoomManagerInitialized = false;
+                    isFriendManagerInitialized = false;
                 }
             }
         }
@@ -118,18 +228,18 @@ namespace Salon.Firebase
         {
             if (args.DatabaseError != null)
             {
-                Debug.LogError($"[Firebase] 연결 상태 확인 오류: {args.DatabaseError.Message}");
+                Debug.LogError($"[FirebaseManager] 연결 상태 확인 오류: {args.DatabaseError.Message}");
                 return;
             }
 
             isConnected = (bool)args.Snapshot.Value;
             if (isConnected)
             {
-                Debug.Log("[Firebase] 연결됨");
+                Debug.Log("[FirebaseManager] 연결됨");
             }
             else
             {
-                Debug.LogWarning("[Firebase] 연결 끊김, 재연결 시도...");
+                Debug.LogWarning("[FirebaseManager] 연결 끊김, 재연결 시도...");
                 ReconnectFirebase();
             }
         }
@@ -143,13 +253,13 @@ namespace Salon.Firebase
 
                 if (!isConnected)
                 {
-                    Debug.Log("[Firebase] 재초기화 시도");
+                    Debug.Log("[FirebaseManager] 재초기화 시도");
                     Initialize();
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 재연결 실패: {ex.Message}");
+                Debug.LogError($"[FirebaseManager] 재연결 실패: {ex.Message}");
             }
         }
 
@@ -157,43 +267,47 @@ namespace Salon.Firebase
         {
             if (pause)
             {
-                Debug.Log("[Firebase] 앱 일시정지, 연결 해제");
+                Debug.Log("[FirebaseManager] 앱 일시정지, 연결 해제");
                 _ = UpdateUserStatus(UserStatus.Away);
                 FirebaseDatabase.DefaultInstance.GoOffline();
             }
             else
             {
-                Debug.Log("[Firebase] 앱 재개, 연결 복구");
+                Debug.Log("[FirebaseManager] 앱 재개, 연결 복구");
                 FirebaseDatabase.DefaultInstance.GoOnline();
                 _ = UpdateUserStatus(UserStatus.Online);
             }
         }
 
+        bool isQuitting = false;
+
         private async void OnApplicationQuit()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || isQuitting) return;
 
             try
             {
-                Debug.Log("[Firebase Manager] OnApplicationQuit 시작");
+                isQuitting = true;
+                Debug.Log("[FirebaseManager] OnApplicationQuit 시작");
                 await UpdateUserStatus(UserStatus.Offline);
                 auth.StateChanged -= AuthStateChanged;
                 SceneManager.sceneLoaded -= OnSceneLoaded;
-                Debug.Log("[Firebase Manager] OnApplicationQuit 완료");
+                Debug.Log("[FirebaseManager] OnApplicationQuit 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase Manager] OnApplicationQuit 처리 실패: {ex.Message}");
+                Debug.LogError($"[FirebaseManager] OnApplicationQuit 처리 실패: {ex.Message}");
             }
         }
 
         private void OnDestroy()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || isQuitting) return;
 
             try
             {
-                Debug.Log("[Firebase Manager] OnDestroy 시작");
+                Debug.Log("[FirebaseManager] OnDestroy 시작");
+                isQuitting = true;
 
                 // 이벤트 핸들러 제거
                 if (connectionRef != null)
@@ -207,11 +321,11 @@ namespace Salon.Firebase
 
                 SceneManager.sceneLoaded -= OnSceneLoaded;
 
-                Debug.Log("[Firebase Manager] 핸들러 제거 완료");
+                Debug.Log("[FirebaseManager] 핸들러 제거 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase Manager] OnDestroy 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[FirebaseManager] OnDestroy 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
             }
         }
 
@@ -219,29 +333,28 @@ namespace Salon.Firebase
         {
             try
             {
-                Debug.Log($"[Firebase] 고유 태그 생성 시작 - 기본 이름: {baseName}");
+                Debug.Log($"[FirebaseManager] 고유 태그 생성 시작 - 기본 이름: {baseName}");
                 await EnsureInitialized();
                 if (!IsInitialized)
                 {
-                    Debug.LogError("[Firebase] Firebase가 초기화되지 않았습니다.");
-                    throw new InvalidOperationException("Firebase가 초기화되지 않았습니다.");
+                    Debug.LogError("[FirebaseManager] Firebase가 초기화되지 않았습니다.");
+                    throw new InvalidOperationException("[FirebaseManager] Firebase가 초기화되지 않았습니다.");
                 }
 
                 if (string.IsNullOrEmpty(baseName))
                 {
-                    Debug.LogError("[Firebase] 기본 이름이 비어있습니다.");
-                    throw new ArgumentException("기본 이름이 비어있습니다.");
+                    Debug.LogError("[FirebaseManager] 기본 이름이 비어있습니다.");
+                    throw new ArgumentException("[FirebaseManager] 기본 이름이 비어있습니다.");
                 }
 
                 const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
                 const int tagLength = 4;
 
-                int maxAttempts = 100; // 무한 루프 방지를 위한 최대 시도 횟수
+                int maxAttempts = 100;
                 int attempts = 0;
 
                 while (attempts < maxAttempts)
                 {
-                    // 4글자 랜덤 태그 생성
                     char[] tagArray = new char[tagLength];
                     for (int i = 0; i < tagLength; i++)
                     {
@@ -250,25 +363,24 @@ namespace Salon.Firebase
                     string randomTag = new string(tagArray);
                     string uniqueTag = $"{baseName}_{randomTag}";
 
-                    Debug.Log($"[Firebase] 태그 생성 시도 {attempts + 1}: {uniqueTag}");
+                    Debug.Log($"[FirebaseManager] 태그 생성 시도 {attempts + 1}: {uniqueTag}");
 
-                    // 태그 중복 확인
                     var snapshot = await dbReference.Child("Users").Child(uniqueTag).GetValueAsync();
                     if (!snapshot.Exists)
                     {
-                        Debug.Log($"[Firebase] 고유한 태그 생성 성공: {uniqueTag} (시도 횟수: {attempts + 1})");
+                        Debug.Log($"[FirebaseManager] 고유한 태그 생성 성공: {uniqueTag} (시도 횟수: {attempts + 1})");
                         return uniqueTag;
                     }
 
-                    Debug.Log($"[Firebase] 태그 {uniqueTag}가 이미 존재함, 재시도...");
+                    Debug.Log($"[FirebaseManager] 태그 {uniqueTag}가 이미 존재함, 재시도...");
                     attempts++;
                 }
 
-                throw new Exception($"[Firebase] {maxAttempts}번의 시도 후에도 고유한 태그를 생성하지 못했습니다.");
+                throw new Exception($"[FirebaseManager] {maxAttempts}번의 시도 후에도 고유한 태그를 생성하지 못했습니다.");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 태그 생성 실패: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[FirebaseManager] 태그 생성 실패: {ex.Message}\n{ex.StackTrace}");
                 throw;
             }
         }
@@ -280,45 +392,45 @@ namespace Salon.Firebase
                 await EnsureInitialized();
                 if (!IsInitialized)
                 {
-                    Debug.LogError("[Firebase] Firebase가 초기화되지 않았습니다.");
+                    Debug.LogError("[FirebaseManager] Firebase가 초기화되지 않았습니다.");
                     return false;
                 }
 
-                Debug.Log($"[Firebase] 회원가입 시도: {email}");
+                Debug.Log($"[FirebaseManager] 회원가입 시도: {email}");
 
                 if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
                 {
-                    Debug.LogError("[Firebase] 이메일 또는 비밀번호가 비어있습니다.");
+                    Debug.LogError("[FirebaseManager] 이메일 또는 비밀번호가 비어있습니다.");
                     return false;
                 }
 
                 if (password.Length < 6)
                 {
-                    Debug.LogError("[Firebase] 비밀번호는 최소 6자 이상이어야 합니다.");
+                    Debug.LogError("[FirebaseManager] 비밀번호는 최소 6자 이상이어야 합니다.");
                     return false;
                 }
 
-                Debug.Log("[Firebase] 사용자 생성 시도...");
+                Debug.Log("[FirebaseManager] 사용자 생성 시도...");
                 var result = await auth.CreateUserWithEmailAndPasswordAsync(email, password);
 
                 if (result == null || result.User == null)
                 {
-                    Debug.LogError("[Firebase] 사용자 생성 결과가 null입니다.");
+                    Debug.LogError("[FirebaseManager] 사용자 생성 결과가 null입니다.");
                     return false;
                 }
 
-                Debug.Log("[Firebase] 고유 태그 생성 시도...");
+                Debug.Log("[FirebaseManager] 고유 태그 생성 시도...");
                 string uniqueDisplayName = await GenerateUniqueTagAsync("user");
-                Debug.Log($"[Firebase] 생성된 태그: {uniqueDisplayName}");
+                Debug.Log($"[FirebaseManager] 생성된 태그: {uniqueDisplayName}");
 
-                Debug.Log("[Firebase] 프로필 업데이트 시도...");
+                Debug.Log("[FirebaseManager] 프로필 업데이트 시도...");
                 var profile = new UserProfile { DisplayName = uniqueDisplayName };
                 await result.User.UpdateUserProfileAsync(profile);
-                Debug.Log("[Firebase] 프로필 업데이트 완료");
+                Debug.Log("[FirebaseManager] 프로필 업데이트 완료");
 
                 try
                 {
-                    Debug.Log("[Firebase] 사용자 데이터 생성 시도...");
+                    Debug.Log("[FirebaseManager] 사용자 데이터 생성 시도...");
 
                     var userData = new Database.UserData
                     {
@@ -330,36 +442,35 @@ namespace Salon.Firebase
                         Invites = new Dictionary<string, InviteData>()
                     };
 
-                    // 데이터베이스에 저장 (DisplayName을 키로 사용)
-                    Debug.Log("[Firebase] 데이터베이스에 사용자 데이터 저장 시도...");
+                    Debug.Log("[FirebaseManager] 데이터베이스에 사용자 데이터 저장 시도...");
                     string jsonData = JsonConvert.SerializeObject(userData);
                     await dbReference.Child("Users").Child(uniqueDisplayName).SetRawJsonValueAsync(jsonData);
-                    Debug.Log("[Firebase] 사용자 데이터 저장 완료");
+                    Debug.Log("[FirebaseManager] 사용자 데이터 저장 완료");
 
-                    Debug.Log("[Firebase] 모든 데이터베이스 작업 완료");
-                    Debug.Log($"[Firebase] 회원가입 성공: {result.User.Email} ({uniqueDisplayName})");
+                    Debug.Log("[FirebaseManager] 모든 데이터베이스 작업 완료");
+                    Debug.Log($"[FirebaseManager] 회원가입 성공: {result.User.Email} ({uniqueDisplayName})");
                     return true;
                 }
                 catch (Exception dbEx)
                 {
-                    Debug.LogError($"[Firebase] 데이터베이스 작업 실패 상세: {dbEx.GetType().Name} - {dbEx.Message}");
+                    Debug.LogError($"[FirebaseManager] 데이터베이스 작업 실패 상세: {dbEx.GetType().Name} - {dbEx.Message}");
                     if (dbEx.InnerException != null)
                     {
-                        Debug.LogError($"[Firebase] 내부 예외: {dbEx.InnerException.Message}");
-                        Debug.LogError($"[Firebase] 내부 예외 스택 트레이스: {dbEx.InnerException.StackTrace}");
+                        Debug.LogError($"[FirebaseManager] 내부 예외: {dbEx.InnerException.Message}");
+                        Debug.LogError($"[FirebaseManager] 내부 예외 스택 트레이스: {dbEx.InnerException.StackTrace}");
                     }
-                    Debug.LogError($"[Firebase] 스택 트레이스: {dbEx.StackTrace}");
+                    Debug.LogError($"[FirebaseManager] 스택 트레이스: {dbEx.StackTrace}");
                     return true;
                 }
             }
             catch (FirebaseException ex)
             {
-                Debug.LogError($"[Firebase] Firebase 예외: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[FirebaseManager] Firebase 예외: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
                 return false;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 일반 예외: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[FirebaseManager] 일반 예외: {ex.GetType().Name} - {ex.Message}\n{ex.StackTrace}");
                 return false;
             }
         }
@@ -371,7 +482,7 @@ namespace Salon.Firebase
                 var result = await auth.SignInWithEmailAndPasswordAsync(email, password);
                 currentUserName = result.User.DisplayName;
                 await UpdateUserLastOnline(currentUserName);
-                Debug.Log($"[Firebase] 로그인 성공: {result.User.Email} (DisplayName: {currentUserName})");
+                Debug.Log($"[FirebaseManager] 로그인 성공: {result.User.Email} (DisplayName: {currentUserName})");
 
                 // ChannelManager에 현재 사용자 이름 설정
                 if (ChannelManager.Instance != null)
@@ -380,17 +491,15 @@ namespace Salon.Firebase
                 }
                 else
                 {
-                    Debug.LogError("[Firebase] ChannelManager가 null입니다");
+                    Debug.LogError("[FirebaseManager] ChannelManager가 null입니다");
                 }
 
-                LogManager.Instance.ShowLog("로그인 성공!");
                 await ChannelManager.Instance.ExistRooms();
                 return true;
             }
             catch (FirebaseException ex)
             {
-                Debug.LogError($"[Firebase] 로그인 실패: {ex.Message}");
-                Debug.Log($"[Firebase] 오류 코드: {ex.ErrorCode}");
+                Debug.Log($"[FirebaseManager] 오류 코드: {ex.ErrorCode}");
                 switch (ex.ErrorCode)
                 {
                     case 17011:
@@ -402,19 +511,13 @@ namespace Salon.Firebase
                     case 17020:
                         LogManager.Instance.ShowLog("네트워크 연결을 확인해주세요.");
                         break;
-                    case -2:  // 내부 오류 코드
+                    case -2:
                         LogManager.Instance.ShowLog("서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
                         break;
                     default:
                         LogManager.Instance.ShowLog("로그인에 실패했습니다. 다시 시도해주세요.");
                         break;
                 }
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[Firebase] 로그인 실패: {ex.Message}");
-                LogManager.Instance.ShowLog("로그인 중 오류가 발생했습니다.");
                 return false;
             }
         }
@@ -433,7 +536,7 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 마지막 접속 시간 업데이트 실패: {ex.Message}");
+                Debug.LogError($"[FirebaseManager] 마지막 접속 시간 업데이트 실패: {ex.Message}");
             }
         }
 
@@ -441,7 +544,7 @@ namespace Salon.Firebase
         {
             if (string.IsNullOrEmpty(displayName))
             {
-                Debug.LogWarning("[Firebase] displayName이 null이거나 비어있습니다.");
+                Debug.LogWarning("[FirebaseManager] displayName이 null이거나 비어있습니다.");
                 return null;
             }
 
@@ -450,14 +553,14 @@ namespace Salon.Firebase
                 var snapshot = await dbReference.Child("Users").Child(displayName).GetValueAsync();
                 if (!snapshot.Exists)
                 {
-                    Debug.LogWarning($"[Firebase] 사용자 {displayName}의 데이터가 없습니다.");
+                    Debug.LogWarning($"[FirebaseManager] 사용자 {displayName}의 데이터가 없습니다.");
                     return null;
                 }
 
                 var rawJson = snapshot.GetRawJsonValue();
                 if (string.IsNullOrEmpty(rawJson))
                 {
-                    Debug.LogWarning($"[Firebase] 사용자 {displayName}의 JSON 데이터가 비어있습니다.");
+                    Debug.LogWarning($"[FirebaseManager] 사용자 {displayName}의 JSON 데이터가 비어있습니다.");
                     return null;
                 }
 
@@ -465,33 +568,7 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 사용자 정보 조회 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
-                return null;
-            }
-        }
-
-        public async Task<Dictionary<string, Database.UserData>> SearchUsersAsync(string searchTerm)
-        {
-            try
-            {
-                var result = new Dictionary<string, Database.UserData>();
-                var snapshot = await dbReference.Child("Users")
-                    .OrderByChild("DisplayName")
-                    .StartAt(searchTerm)
-                    .EndAt(searchTerm + "\uf8ff")
-                    .GetValueAsync();
-
-                foreach (var child in snapshot.Children)
-                {
-                    var userData = JsonConvert.DeserializeObject<Database.UserData>(child.GetRawJsonValue());
-                    result[child.Key] = userData;
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[Firebase] 사용자 검색 실패: {ex.Message}");
+                Debug.LogError($"[FirebaseManager] 사용자 정보 조회 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 return null;
             }
         }
@@ -652,11 +729,11 @@ namespace Salon.Firebase
                 string jsonData = JsonConvert.SerializeObject(userData);
                 await dbReference.Child("Users").Child(currentUserName).SetRawJsonValueAsync(jsonData);
 
-                Debug.Log($"[Firebase] 사용자 상태 업데이트: {status}");
+                Debug.Log($"[FirebaseManager] 사용자 상태 업데이트: {status}");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Firebase] 사용자 상태 업데이트 실패: {ex.Message}");
+                Debug.LogError($"[FirebaseManager] 사용자 상태 업데이트 실패: {ex.Message}");
             }
         }
     }
