@@ -10,9 +10,6 @@ public class AnimController : MonoBehaviour
 {
     public List<AnimationClip> clipList = new List<AnimationClip>();
     
-    public AnimationClip TestClip;
-    public AnimationClip TestClip2;
-
     public Animator animator;
 
     private AnimatorOverrideController currentController;
@@ -25,9 +22,6 @@ public class AnimController : MonoBehaviour
     private void Start()
     {
        GetOriginalClipName();
-       ClipChange(TestClip);
-       ClipChange(TestClip2);
-       animator.SetTrigger("ASTrigger");
     }
  
     public void Initialize()
