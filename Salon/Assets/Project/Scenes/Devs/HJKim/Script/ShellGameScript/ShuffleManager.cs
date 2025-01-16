@@ -10,10 +10,12 @@ public class ShuffleManager : MonoBehaviour
     //public GameObject spinner_Prefab;
     [SerializeField]
     private List<Cup> cups = new List<Cup>();
+    [Header("Controller")]
     [SerializeField]
     private float spinSpeed =5f;//회전 속도 
     [SerializeField]
     private float shuffleDuration = 5;
+    [Header("Anime")]
     //초반 애니메이션용 컵과 구슬
     public GameObject anime_Cup;
     public GameObject anime_Ball;
@@ -143,7 +145,7 @@ public class ShuffleManager : MonoBehaviour
     }
 
     public void StartAnime()
-    {
+    {//연출을 위해서 일단은 가운데꺼 꺼놓기
         cups[1].gameObject.SetActive(false);
 
     }

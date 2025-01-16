@@ -18,6 +18,8 @@ public class ShellGameUIManager : MonoBehaviour
     public GameObject gameOver_Panel;
 
     [Header("Button Setting")]
+    [Header("Difficult_UI")]
+    public Button diffi_Close_Button;
     [Header("Betting_UI")]
     public Button start_Button;
     public Button close_Button;
