@@ -29,11 +29,12 @@ public class ChannelPanel : Panel
 
     private void ClearChannelButtons()
     {
-        channelButtons.Clear();
-        foreach (Transform child in channelParent)
+        foreach (ChannelButton button in channelButtons)
         {
-            Destroy(child.gameObject);
+            button.button.onClick.RemoveAllListeners();
+            Destroy(button.gameObject);
         }
+        channelButtons.Clear();
     }
 
     private void SetupButtons()
@@ -57,15 +58,15 @@ public class ChannelPanel : Panel
             return;
         }
 
-        CreateChannelButtons(channelData);
+        await CreateChannelButtons(channelData);
     }
 
-    private void CreateChannelButtons(Dictionary<string, ChannelData> channelData)
+    private async Task CreateChannelButtons(Dictionary<string, ChannelData> channelData)
     {
         foreach (var channel in channelData)
         {
             var button = Instantiate(channelButtonPrefab, channelParent);
-            button.Initialize(channel.Key, channel.Value.CommonChannelData.UserCount);
+            button.Initialize(channel.Key, await ChannelManager.Instance.GetChannelUserCount(channel.Key));
             button.button.onClick.AddListener(() => OnChannelButtonClick(channel.Key));
             channelButtons.Add(button);
         }
@@ -88,7 +89,7 @@ public class ChannelPanel : Panel
         {
             isProcessing = true;
             SetButtonsInteractable(false);
-            SceneManager.LoadScene("LobbyScene");
+            UnityEngine.SceneManagement.SceneManager.LoadScene("LobbyScene");
             UIManager.Instance.OpenPanel(PanelType.Lobby);
             await ChannelManager.Instance.JoinChannel(channelName);
             Close();
@@ -98,7 +99,7 @@ public class ChannelPanel : Panel
             Debug.LogError($"채널 입장 실패: {ex.Message}");
             if (ex.Message.Contains("이미 방에 존재"))
             {
-                SceneManager.LoadScene("LobbyScene");
+                UnityEngine.SceneManagement.SceneManager.LoadScene("LobbyScene");
             }
         }
         finally
@@ -119,6 +120,10 @@ public class ChannelPanel : Panel
         if (closeButton != null) closeButton.interactable = interactable;
     }
 
-    public void OnRefreshButtonClick() => Initialize();
+    public void OnRefreshButtonClick()
+    {
+        ClearChannelButtons();
+        GetChannels();
+    }
     public void OnCloseButtonClick() => Close();
 }
