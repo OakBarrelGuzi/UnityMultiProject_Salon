@@ -90,11 +90,8 @@ public class FriendsPanel : Panel
                 return;
             }
 
-            bool success = await FriendManager.Instance.SendFriendRequest(friendId);
-            if (success)
-            {
-                addFriendInputField.text = "";
-            }
+            await FriendManager.Instance.SendFriendRequest(friendId);
+            addFriendInputField.text = "";
         }
         finally
         {
@@ -125,7 +122,7 @@ public class FriendsPanel : Panel
     {
         try
         {
-            await FriendManager.Instance.SendInvite(friendId, ChannelManager.Instance.CurrentChannel);
+            //await FriendManager.Instance.SendInvite(friendId, ChannelManager.Instance.CurrentChannel);
             inviteFriendInputField.text = "";
         }
         catch (System.Exception ex)

@@ -88,12 +88,16 @@ namespace Salon.UI
                         popUpData.OnAccept?.Invoke();
                         OnPopUpClosed();
                     },
+                    () =>
+                    {
+                        popUpData.OnDecline?.Invoke();
+                        OnPopUpClosed();
+                    },
                     popUpData.Message
                 );
 
                 currentPopUp.OnClose.AddListener(() =>
                 {
-                    popUpData.OnDecline?.Invoke();
                     OnPopUpClosed();
                 });
             }

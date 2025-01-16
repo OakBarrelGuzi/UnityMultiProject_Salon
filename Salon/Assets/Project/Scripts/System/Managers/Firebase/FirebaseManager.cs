@@ -85,6 +85,9 @@ namespace Salon.Firebase
                         await UpdateUserStatus(UserStatus.Online);
                     }
 
+                    var currentUserRef = dbReference.Child("Users").Child(currentUserName);
+                    await currentUserRef.OnDisconnect().UpdateChildren(new Dictionary<string, object> { { "IsOnline", false } });
+
                     await InitializeManagers();
                     Debug.Log("[FirebaseManager] Firebase 초기화 성공");
                 }
@@ -276,12 +279,15 @@ namespace Salon.Firebase
             }
         }
 
+        bool isQuitting = false;
+
         private async void OnApplicationQuit()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || isQuitting) return;
 
             try
             {
+                isQuitting = true;
                 Debug.Log("[FirebaseManager] OnApplicationQuit 시작");
                 await UpdateUserStatus(UserStatus.Offline);
                 auth.StateChanged -= AuthStateChanged;
@@ -296,11 +302,12 @@ namespace Salon.Firebase
 
         private void OnDestroy()
         {
-            if (!Application.isPlaying) return;
+            if (!Application.isPlaying || isQuitting) return;
 
             try
             {
                 Debug.Log("[FirebaseManager] OnDestroy 시작");
+                isQuitting = true;
 
                 // 이벤트 핸들러 제거
                 if (connectionRef != null)

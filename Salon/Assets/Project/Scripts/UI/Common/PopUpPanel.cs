@@ -16,6 +16,8 @@ namespace Salon.UI
 
         public UnityEvent OnClose = new UnityEvent();
         private Action onAcceptAction;
+        private Action onDeclineAction;
+        private bool isAccepted = false;
 
         private void Awake()
         {
@@ -25,9 +27,10 @@ namespace Salon.UI
             }
         }
 
-        public void Initialize(Action acceptAction = null, string message = "")
+        public void Initialize(Action acceptAction = null, Action declineAction = null, string message = "")
         {
             onAcceptAction = acceptAction;
+            onDeclineAction = declineAction;
             SetMessage(message);
             SetupButtons();
             Show();
@@ -47,17 +50,20 @@ namespace Salon.UI
             closeButton.onClick.RemoveAllListeners();
 
             yesButton.onClick.AddListener(OnAcceptButtonClicked);
-            closeButton.onClick.AddListener(OnCloseButtonClicked);
+            closeButton.onClick.AddListener(OnDeclineButtonClicked);
         }
 
         private void OnAcceptButtonClicked()
         {
+            isAccepted = true;
             onAcceptAction?.Invoke();
             Close();
         }
 
-        private void OnCloseButtonClicked()
+        private void OnDeclineButtonClicked()
         {
+            isAccepted = false;
+            onDeclineAction?.Invoke();
             Close();
         }
 

@@ -87,7 +87,7 @@ public class FriendsInfoUI : MonoBehaviour
             }
 
             string serverFriendName = DisplayNameUtils.ToServerFormat(friendDisplayName);
-            await FriendManager.Instance.SendInvite(serverFriendName, ChannelManager.Instance.CurrentChannel);
+            //await FriendManager.Instance.SendInvite(serverFriendName, ChannelManager.Instance.CurrentChannel);
         }
         catch (System.Exception ex)
         {

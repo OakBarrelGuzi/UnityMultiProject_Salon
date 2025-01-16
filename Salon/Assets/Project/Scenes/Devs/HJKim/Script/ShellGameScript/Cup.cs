@@ -7,21 +7,23 @@ public class Cup : MonoBehaviour
     public bool hasBall = false;
     public bool isMoving = false;
     public bool isSelectable = false;
+
+    private ShuffleManager manager;
     //컵의 이동
     private float moveSpeed;
     private Vector3 targetPosition;
     private Vector3 startPosition;
-
-    private void Start()
+    public void OnMouseDown()
     {
-
+        if (manager != null)
+        {
+            manager.OnCupSelected(this);
+        }
     }
-    private void Update()
-    {
 
+    public void Initialize(ShuffleManager shuffleManager)
+    {
+        manager = shuffleManager;
     }
     
-
-
-
 }

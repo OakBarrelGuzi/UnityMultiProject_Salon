@@ -19,14 +19,15 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public IEnumerator InitializeRoutine()
     {
         yield return new WaitUntil(() => FirebaseManager.Instance.IsInitialized);
-        if (FirebaseManager.Instance.CurrentUserName != null)
-        {
-            OpenPanel(PanelType.Channel);
-        }
-        else
-        {
-            OpenPanel(PanelType.SignIn);
-        }
+        //if (FirebaseManager.Instance.CurrentUserName != null)
+        //{
+        //     OpenPanel(PanelType.Channel);
+        // }
+        // else
+        // {
+        //     OpenPanel(PanelType.SignIn);
+        // }
+        OpenPanel(PanelType.SignIn);
     }
     private void Start()
     {
