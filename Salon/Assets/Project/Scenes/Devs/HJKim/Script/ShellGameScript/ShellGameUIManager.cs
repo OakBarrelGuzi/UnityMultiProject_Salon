@@ -18,14 +18,22 @@ public class ShellGameUIManager : MonoBehaviour
     public GameObject gameOver_Panel;
 
     [Header("Button Setting")]
-    public Button start_button;
-
-
+    [Header("Betting_UI")]
+    public Button start_Button;
+    public Button close_Button;
+    [Header("Clesr_UI")]
+    public Button clear_GoButton;
+    public Button clear_Lobby_Button;
+    public Button betting_Button;
+    public Button go_Button;
+    public GameObject toggleOn;
+    [Header("Game Over_UI")]
+    public Button lobby_Button;
     private void Start()
     {
         difficult_Panel.SetActive(true);
         betting_Panel.SetActive(false);
-
+        toggleOn.SetActive(false);
         shuffleManager = FindObjectOfType<ShuffleManager>();
 
         // 난이도 버튼 설정
@@ -45,7 +53,7 @@ public class ShellGameUIManager : MonoBehaviour
         });
 
         // 시작 버튼 설정
-        start_button.onClick.AddListener(() => {
+        start_Button.onClick.AddListener(() => {
             betting_Panel.SetActive(false);  // 배팅 UI 숨기기
             gameInfo_Panel.SetActive(true);//라운드가 적혀있음
             shuffleManager.StartGame();      // 게임 시작

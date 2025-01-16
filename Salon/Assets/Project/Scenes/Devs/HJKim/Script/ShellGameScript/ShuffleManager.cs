@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -13,7 +14,9 @@ public class ShuffleManager : MonoBehaviour
     private float spinSpeed =5f;//회전 속도 
     [SerializeField]
     private float shuffleDuration = 5;
-     
+    //초반 애니메이션용 컵과 구슬
+    public GameObject anime_Cup;
+    public GameObject anime_Ball;
     private GameObject spinner;//빈껍데기 스피너
     [SerializeField]
     private Transform table_pos;
@@ -21,7 +24,7 @@ public class ShuffleManager : MonoBehaviour
     private int cupCount;
     private bool isStart = false;
     private bool isCanSelect = false;
-
+    private float cupDis;
 
     private SHELLDIFFICULTY shellDifficulty;
 
@@ -53,7 +56,8 @@ public class ShuffleManager : MonoBehaviour
 
         //컵 움직이기
         Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
-
+        cupDis = Vector3.Distance(cups[firstCup].transform.position , cups[secondCup].transform.position);
+        cupDis = Mathf.Min(cupDis, 5f);
         //스피너 가운데에 생성
         spinner = new GameObject("Spinner");
         spinner.transform.position = spinnerPos;
@@ -73,9 +77,9 @@ public class ShuffleManager : MonoBehaviour
         spinner.transform.rotation = Quaternion.Lerp
             (spinner.transform.rotation,
             Quaternion.Euler(0f, 180f, 0f),
-            Time.deltaTime * spinSpeed);
+            Time.deltaTime * spinSpeed/cupDis);
         if (Quaternion.Angle(spinner.transform.rotation,
-            Quaternion.Euler(0f, -180f, 0f))<0.05f){
+            Quaternion.Euler(0f, -180f, 0f)) < 0.05f){
             while (spinner.transform.childCount > 0)
             {
                 spinner.transform.GetChild(0).SetParent(table_pos);
@@ -87,7 +91,7 @@ public class ShuffleManager : MonoBehaviour
 
     private IEnumerator ShuffleStart()
     {
-        yield return new WaitForSeconds(10);
+        yield return new WaitForSeconds(shuffleDuration);
 
         isStart=false;
         isCanSelect = true;
@@ -111,10 +115,11 @@ public class ShuffleManager : MonoBehaviour
     } 
 
 
-    public void StartGame()
+    public void StartGame()//여기가 게임 시작하는 초입 애니 들어가야함
+
     {
         isStart = true;
-        cups[1].hasBall = true;
+        cups[1].hasBall = true;//구슬이 있는컵은 3번째컵(중앙)
 
 
         foreach (Cup cup in cups)
@@ -135,6 +140,12 @@ public class ShuffleManager : MonoBehaviour
     {
         shellDifficulty = difficulty;
         cupCount = (int)shellDifficulty;
+    }
+
+    public void StartAnime()
+    {
+        cups[1].gameObject.SetActive(false);
+
     }
 }
 
