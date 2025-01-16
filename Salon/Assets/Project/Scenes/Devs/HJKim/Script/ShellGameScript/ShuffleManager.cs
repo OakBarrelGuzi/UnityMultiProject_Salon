@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+using static ShellGameDiffi.Difficult;
 public class ShuffleManager : MonoBehaviour
 {
     //[SerializeField]
@@ -12,8 +12,10 @@ public class ShuffleManager : MonoBehaviour
     private List<Cup> cups = new List<Cup>();
     [Header("Controller")]
     [SerializeField]
-    private float spinSpeed =5f;//회전 속도 
+    private float spinSpeed =5;//회전 속도 
     [SerializeField]
+
+
     private float shuffleDuration = 5;
     [Header("Anime")]
     //초반 애니메이션용 컵과 구슬
@@ -27,6 +29,12 @@ public class ShuffleManager : MonoBehaviour
     private bool isStart = false;
     private bool isCanSelect = false;
     private float cupDis;
+    private float animaMoveSpeed = 5f;
+    public Transform animeMovePoint;
+
+
+
+
 
     private SHELLDIFFICULTY shellDifficulty;
 
@@ -37,7 +45,7 @@ public class ShuffleManager : MonoBehaviour
         {
             CupShuffle();
         }
-      else if (spinner ==null&& isStart==true)
+        else if (spinner == null && isStart == true)
         {
             SpawnSpinner();
         }
@@ -58,7 +66,7 @@ public class ShuffleManager : MonoBehaviour
 
         //컵 움직이기
         Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
-        cupDis = Vector3.Distance(cups[firstCup].transform.position , cups[secondCup].transform.position);
+        cupDis = Vector3.Distance(cups[firstCup].transform.position, cups[secondCup].transform.position);
         cupDis = Mathf.Min(cupDis, 5f);
         //스피너 가운데에 생성
         spinner = new GameObject("Spinner");
@@ -79,9 +87,10 @@ public class ShuffleManager : MonoBehaviour
         spinner.transform.rotation = Quaternion.Lerp
             (spinner.transform.rotation,
             Quaternion.Euler(0f, 180f, 0f),
-            Time.deltaTime * spinSpeed/cupDis);
+            Time.deltaTime * spinSpeed / cupDis);
         if (Quaternion.Angle(spinner.transform.rotation,
-            Quaternion.Euler(0f, -180f, 0f)) < 0.05f){
+            Quaternion.Euler(0f, -180f, 0f)) < 0.05f)
+        {
             while (spinner.transform.childCount > 0)
             {
                 spinner.transform.GetChild(0).SetParent(table_pos);
@@ -95,7 +104,7 @@ public class ShuffleManager : MonoBehaviour
     {
         yield return new WaitForSeconds(shuffleDuration);
 
-        isStart=false;
+        isStart = false;
         isCanSelect = true;
     }
 
@@ -106,7 +115,7 @@ public class ShuffleManager : MonoBehaviour
             return;
         }
         if (cup.hasBall == true)
-        { 
+        {
             print("승리");
         }
         else if (cup.hasBall == false)
@@ -114,12 +123,15 @@ public class ShuffleManager : MonoBehaviour
             print("패배");
         }
         isCanSelect = false;
-    } 
+    }
 
-
-    public void StartGame()//여기가 게임 시작하는 초입 애니 들어가야함
-
+    private IEnumerator SetAnime()
     {
+        print("멈춰! 컵내려오는중~~~~");
+        yield return new WaitForSeconds(1.5f);
+        print("움직여! 컵 다내려옴~~");
+        yield return new WaitForSeconds(3f);
+        print("이제 컵 다내려왔으니까 게임 시작할게~~~~");
         isStart = true;
         cups[1].hasBall = true;//구슬이 있는컵은 3번째컵(중앙)
 
@@ -135,8 +147,27 @@ public class ShuffleManager : MonoBehaviour
         {
             cups[i].gameObject.SetActive(true);
         }
+        anime_Ball.gameObject.SetActive(false);
+        anime_Cup.gameObject.SetActive(false);
         StartCoroutine(ShuffleStart());
     }
+
+    public void StartGame()//여기가 게임 시작하는 초입 애니 들어가야함
+    {
+        anime_Cup.gameObject.SetActive(true);
+        anime_Ball.gameObject.SetActive(true);
+        cups[1].gameObject.SetActive(false);
+
+        //여기 코루틴'
+        // 1.5초 멈추고 그동안 구슬이랑 컵이 내려오고
+        //yield return new WaitForSeconds(1.5f);
+        StartCoroutine(SetAnime());
+
+       StartCoroutine(StartAnime());
+
+    }
+
+
 
     public void SetDifficulty(SHELLDIFFICULTY difficulty)
     {
@@ -144,17 +175,28 @@ public class ShuffleManager : MonoBehaviour
         cupCount = (int)shellDifficulty;
     }
 
-    public void StartAnime()
+    private IEnumerator StartAnime() // 구슬이랑 컵 스슝~
+
     {//연출을 위해서 일단은 가운데꺼 꺼놓기
         cups[1].gameObject.SetActive(false);
-
+        anime_Cup.gameObject.SetActive(true);
+        anime_Ball.gameObject.SetActive(true);
+        while (Vector3.Distance(anime_Ball.transform.position, animeMovePoint.position)>0.01f)
+        {
+            anime_Ball.transform.position = Vector3.Lerp(
+                anime_Ball.transform.position,
+                animeMovePoint.position,
+                animaMoveSpeed * Time.deltaTime);
+              yield return null;
+        }
+        while (Vector3.Distance(anime_Cup.transform.position, animeMovePoint.position + new Vector3(0, 0.3f, 0)) > 0.01f)
+        {
+            anime_Cup.transform.position = Vector3.Lerp(
+                anime_Cup.transform.position,
+                animeMovePoint.position + new Vector3(0, 0.3f, 0),
+                animaMoveSpeed * Time.deltaTime);
+            yield return null;
+        }
     }
-}
-
-
-public enum SHELLDIFFICULTY
-{
-    Easy = 3,
-    Nomal,
-    Hard,
+  
 }

@@ -2,11 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+using ShellGameDiffi;
+using static ShellGameDiffi.Difficult;
 public class ShellGameUIManager : MonoBehaviour
 {
     private ShuffleManager shuffleManager;
-
+   
     [SerializeField]
     private Button[] difficulty_Button;
 
