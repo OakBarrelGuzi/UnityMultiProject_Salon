@@ -1,23 +1,41 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Salon.UI;
 
-public class DartGameUI : MonoBehaviour
+namespace Salon.DartGame
 {
-    public Slider turnTimeSlider;
-    public TextMeshProUGUI turnTimeText;
+    public class DartGameUI : Panel
+    {
+        public Slider turnTimeSlider;
+        public TextMeshProUGUI turnTimeText;
 
-    public Button settingButton;
-    public Button shootButton;
+        public Button settingButton;
+        public Button shootButton;
 
-    public Transform scoreTextField;
-    public TextMeshProUGUI totalScoreText;
-    public TextMeshProUGUI recentScoreText;
+        public Transform scoreTextField;
+        public TextMeshProUGUI totalScoreText;
+        public TextMeshProUGUI recentScoreText;
 
-    public Transform chatTextField;
-    public TMP_InputField chatInputField;
-    public Button chatSendButton;
+        public Transform chatTextField;
+        public TMP_InputField chatInputField;
+        public Button chatSendButton;
 
-    public Slider breathTimeSlider;
-    public TextMeshProUGUI scoreTextPrefab;
+        public Slider breathTimeSlider;
+        public TextMeshProUGUI scoreTextPrefab;
+
+        public DartRoundPanel gameStartReady;
+
+        public OptionPanel optionPanel;
+        public ReCheckPanel reCheckPanel;
+
+
+        public JoyStick joyStick;
+
+        private void Start()
+        {
+            optionPanel.Initialize(this);
+            settingButton.onClick.AddListener(()=> optionPanel.gameObject.SetActive(true));            
+        }
+    }
 }
