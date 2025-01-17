@@ -95,6 +95,7 @@ namespace Salon.Firebase.Database
     [Serializable]
     public class UserData
     {
+        public string DisplayName { get; set; }
         public long LastOnline { get; set; }
         public UserStatus Status { get; set; }
         public Dictionary<string, bool> Friends { get; set; }
@@ -104,6 +105,7 @@ namespace Salon.Firebase.Database
 
         public UserData()
         {
+            DisplayName = "";
             LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             Status = UserStatus.Offline;
             Friends = new Dictionary<string, bool>();

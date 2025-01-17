@@ -18,20 +18,20 @@ namespace Salon.Firebase
 
         public Action<string> OnPlayerAdded;
         public Action<string> OnPlayerRemoved;
-        public Action<string, string> OnCardFlipped; // ÇÃ·¹ÀÌ¾î ID¿Í Ä«µå ID
-        public Action<string> OnTurnChanged; // ÅÏÀÌ º¯°æµÇ¾úÀ» ¶§ È£Ãâ
+        public Action<string, string> OnCardFlipped; // ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ IDï¿½ï¿½ Ä«ï¿½ï¿½ ID
+        public Action<string> OnTurnChanged; // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½
 
-        private const int TURN_TIME_LIMIT = 30; // Á¦ÇÑ ½Ã°£ 30ÃÊ
+        private const int TURN_TIME_LIMIT = 30; // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ 30ï¿½ï¿½
         private long lastCheckTime = 0;
 
         private async void Start()
         {
-            _ = Initialize();
+            await Initialize();
         }
         private void Update()
         {
             long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-            if (currentTime - lastCheckTime >= 1) // ¸Å 1ÃÊ¸¶´Ù Ã¼Å©
+            if (currentTime - lastCheckTime >= 1) // ï¿½ï¿½ 1ï¿½Ê¸ï¿½ï¿½ï¿½ Ã¼Å©
             {
                 lastCheckTime = currentTime;
                 CheckTurnTimeout();
@@ -41,7 +41,7 @@ namespace Salon.Firebase
         {
             dbReference = await GetDbReference();
             roomsRef = dbReference.Child("GameRooms");
-            Debug.Log("[GameRoomManager] ÃÊ±âÈ­ ¿Ï·á");
+            Debug.Log("[GameRoomManager] ï¿½Ê±ï¿½È­ ï¿½Ï·ï¿½");
         }
 
         private async Task<DatabaseReference> GetDbReference()
@@ -57,37 +57,37 @@ namespace Salon.Firebase
                     return FirebaseManager.Instance.DbReference;
                 }
 
-                Debug.Log($"[GameRoomManager] Firebase µ¥ÀÌÅÍº£ÀÌ½º ÂüÁ¶ ´ë±â Áß... (½Ãµµ {currentRetry + 1}/{maxRetries})");
+                Debug.Log($"[GameRoomManager] Firebase ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ ï¿½ï¿½... (ï¿½Ãµï¿½ {currentRetry + 1}/{maxRetries})");
                 await Task.Delay(delayMs);
                 currentRetry++;
                 delayMs *= 2;
             }
 
-            throw new Exception("[GameRoomManager] Firebase µ¥ÀÌÅÍº£ÀÌ½º ÂüÁ¶¸¦ °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù.");
+            throw new Exception("[GameRoomManager] Firebase ï¿½ï¿½ï¿½ï¿½ï¿½Íºï¿½ï¿½Ì½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
         }
 
         public async Task<string> CreateRoom(string hostPlayer, string displayName)
         {
             try
             {
-                string newRoomName = Guid.NewGuid().ToString(); // °íÀ¯ Room ID »ý¼º
+                string newRoomName = Guid.NewGuid().ToString(); // ï¿½ï¿½ï¿½ï¿½ Room ID ï¿½ï¿½ï¿½ï¿½
                 GameRoomData newRoom = new GameRoomData(newRoomName, hostPlayer);
 
                 var hostPlayerData = new GamePlayerData(displayName);
                 newRoom.Players.Add(hostPlayer, hostPlayerData);
 
-                // Ã¹ ¹øÂ° ÅÏÀ» ¹æ È£½ºÆ®·Î ¼³Á¤
+                // Ã¹ ï¿½ï¿½Â° ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ È£ï¿½ï¿½Æ®ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 newRoom.GameState.CurrentTurnPlayerId = hostPlayer;
 
                 string roomJson = JsonConvert.SerializeObject(newRoom);
                 await roomsRef.Child(newRoomName).SetRawJsonValueAsync(roomJson);
 
-                Debug.Log($"[GameRoomManager] »õ·Î¿î ¹æ »ý¼ºµÊ: {newRoomName}");
+                Debug.Log($"[GameRoomManager] ï¿½ï¿½ï¿½Î¿ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½: {newRoomName}");
                 return newRoomName;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GameRoomManager] ¹æ »ý¼º ½ÇÆÐ: {ex.Message}");
+                Debug.LogError($"[GameRoomManager] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {ex.Message}");
                 return null;
             }
         }
@@ -99,14 +99,14 @@ namespace Salon.Firebase
                 var snapshot = await roomsRef.Child(roomName).GetValueAsync();
                 if (!snapshot.Exists)
                 {
-                    Debug.LogError($"[GameRoomManager] ¹æ {roomName}ÀÌ Á¸ÀçÇÏÁö ¾Ê½À´Ï´Ù.");
+                    Debug.LogError($"[GameRoomManager] ï¿½ï¿½ {roomName}ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê½ï¿½ï¿½Ï´ï¿½.");
                     return;
                 }
 
                 var roomData = JsonConvert.DeserializeObject<GameRoomData>(snapshot.GetRawJsonValue());
                 if (roomData.Players.ContainsKey(playerId))
                 {
-                    Debug.Log($"[GameRoomManager] ÇÃ·¹ÀÌ¾î {playerId}´Â ÀÌ¹Ì ¹æ¿¡ Á¸ÀçÇÕ´Ï´Ù.");
+                    Debug.Log($"[GameRoomManager] ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ {playerId}ï¿½ï¿½ ï¿½Ì¹ï¿½ ï¿½æ¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½Õ´Ï´ï¿½.");
                     return;
                 }
 
@@ -117,13 +117,13 @@ namespace Salon.Firebase
                 await roomsRef.Child(roomName).SetRawJsonValueAsync(updatedRoomJson);
 
                 currentRoom = roomName;
-                Debug.Log($"[GameRoomManager] ÇÃ·¹ÀÌ¾î {playerId}°¡ ¹æ {roomName}¿¡ ÀÔÀåÇß½À´Ï´Ù.");
+                Debug.Log($"[GameRoomManager] ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ {playerId}ï¿½ï¿½ ï¿½ï¿½ {roomName}ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
 
                 await SubscribeToRoom(roomName);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GameRoomManager] ¹æ Âü¿© ½ÇÆÐ: {ex.Message}");
+                Debug.LogError($"[GameRoomManager] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {ex.Message}");
             }
         }
 
@@ -187,7 +187,7 @@ namespace Salon.Firebase
                 var roomSnapshot = await currentRoomRef.GetValueAsync();
                 if (!roomSnapshot.Exists)
                 {
-                    Debug.LogError("[GameRoomManager] ¹æ µ¥ÀÌÅÍ°¡ Á¸ÀçÇÏÁö ¾Ê½À´Ï´Ù.");
+                    Debug.LogError("[GameRoomManager] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê½ï¿½ï¿½Ï´ï¿½.");
                     return;
                 }
 
@@ -195,7 +195,7 @@ namespace Salon.Firebase
 
                 if (roomData.GameState.CurrentTurnPlayerId != playerId)
                 {
-                    Debug.LogWarning("[GameRoomManager] ÇöÀç ÇÃ·¹ÀÌ¾îÀÇ ÅÏÀÌ ¾Æ´Õ´Ï´Ù.");
+                    Debug.LogWarning("[GameRoomManager] ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Æ´Õ´Ï´ï¿½.");
                     return;
                 }
 
@@ -209,7 +209,7 @@ namespace Salon.Firebase
                     cardData.Owner = playerId;
 
                     await cardRef.SetRawJsonValueAsync(JsonConvert.SerializeObject(cardData));
-                    Debug.Log($"[GameRoomManager] Ä«µå {cardId}°¡ {playerId}¿¡ ÀÇÇØ µÚÁý¾îÁ³½À´Ï´Ù.");
+                    Debug.Log($"[GameRoomManager] Ä«ï¿½ï¿½ {cardId}ï¿½ï¿½ {playerId}ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
 
                     roomData.GameState.LastActionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     await UpdateTurnToNextPlayer(roomData);
@@ -217,7 +217,7 @@ namespace Salon.Firebase
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GameRoomManager] Ä«µå µÚÁý±â ½ÇÆÐ: {ex.Message}");
+                Debug.LogError($"[GameRoomManager] Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {ex.Message}");
             }
         }
 
@@ -234,7 +234,7 @@ namespace Salon.Firebase
             await currentRoomRef.Child("GameState")
                 .SetRawJsonValueAsync(JsonConvert.SerializeObject(roomData.GameState));
 
-            Debug.Log($"[GameRoomManager] ÅÏÀÌ {playerIds[nextPlayerIndex]}¿¡°Ô ³Ñ¾î°¬½À´Ï´Ù.");
+            Debug.Log($"[GameRoomManager] ï¿½ï¿½ï¿½ï¿½ {playerIds[nextPlayerIndex]}ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ¾î°¬ï¿½ï¿½ï¿½Ï´ï¿½.");
         }
         private async void CheckTurnTimeout()
         {
@@ -245,23 +245,23 @@ namespace Salon.Firebase
                 var roomSnapshot = await currentRoomRef.GetValueAsync();
                 if (!roomSnapshot.Exists)
                 {
-                    Debug.LogError("[GameRoomManager] ¹æ µ¥ÀÌÅÍ°¡ Á¸ÀçÇÏÁö ¾Ê½À´Ï´Ù.");
+                    Debug.LogError("[GameRoomManager] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê½ï¿½ï¿½Ï´ï¿½.");
                     return;
                 }
 
                 var roomData = JsonConvert.DeserializeObject<GameRoomData>(roomSnapshot.GetRawJsonValue());
                 long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-                // Á¦ÇÑ ½Ã°£ ÃÊ°ú È®ÀÎ
+                // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½Ê°ï¿½ È®ï¿½ï¿½
                 if (roomData.GameState.LastActionTimestamp + TURN_TIME_LIMIT < currentTime)
                 {
-                    Debug.LogWarning("[GameRoomManager] ÅÏ Á¦ÇÑ ½Ã°£ÀÌ ÃÊ°úµÇ¾ú½À´Ï´Ù.");
+                    Debug.LogWarning("[GameRoomManager] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ã°ï¿½ï¿½ï¿½ ï¿½Ê°ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
                     await UpdateTurnToNextPlayer(roomData);
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GameRoomManager] ÅÏ ½Ã°£ ÃÊ°ú È®ÀÎ Áß ¿À·ù ¹ß»ý: {ex.Message}");
+                Debug.LogError($"[GameRoomManager] ï¿½ï¿½ ï¿½Ã°ï¿½ ï¿½Ê°ï¿½ È®ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½: {ex.Message}");
             }
         }
 

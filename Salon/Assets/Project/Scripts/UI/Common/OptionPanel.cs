@@ -12,7 +12,7 @@ public class OptionPanel : Panel
     public override void Initialize()
     {
         closeButton.onClick.AddListener(() => UIManager.Instance.ClosePanel(PanelType.Option));
-        if (FirebaseManager.Instance.CurrentUserName != null)
+        if (FirebaseManager.Instance.CurrentUserUID != null)
         {
             signOutButton.gameObject.SetActive(true);
             signOutButton.onClick.AddListener(OnSignOut);
