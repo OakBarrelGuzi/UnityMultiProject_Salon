@@ -9,7 +9,10 @@ public enum PanelType
     Friends,
     Chat,
     Customize,
-    MainDisplay
+    MainDisplay,
+    Dart,
+    DartGame,
+    PartyRoom
 }
 public enum InviteStatus
 {
