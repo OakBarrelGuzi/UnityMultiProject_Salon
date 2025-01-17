@@ -82,11 +82,11 @@ namespace Salon.Firebase
 
                     if (currentUser != null)
                     {
-                        await UpdateUserStatus(UserStatus.Online);
+                        await UpdateIsOnline(true);
                     }
 
                     var currentUserRef = dbReference.Child("Users").Child(currentUserName);
-                    await currentUserRef.OnDisconnect().UpdateChildren(new Dictionary<string, object> { { "IsOnline", false } });
+                    await currentUserRef.OnDisconnect().UpdateChildren(new Dictionary<string, object> { { "Status", 0 } });
 
                     await InitializeManagers();
                     Debug.Log("[FirebaseManager] Firebase 초기화 성공");
@@ -184,11 +184,16 @@ namespace Salon.Firebase
                     currentUserName = currentUser.DisplayName;
                     Debug.Log($"[FirebaseManager] 현재 사용자 이름: {currentUserName}");
 
+                    await UpdateIsOnline(true);
+
                     if (ChannelManager.Instance != null)
                     {
                         await ChannelManager.Instance.Initialize();
                         Debug.Log("[FirebaseManager] ChannelManager 레퍼런스 업데이트 완료");
-
+                    }
+                    else
+                    {
+                        Debug.LogError("[FirebaseManager] ChannelManager가 null입니다");
                     }
 
                     if (ChatManager.Instance != null)
@@ -212,6 +217,10 @@ namespace Salon.Firebase
                 else
                 {
                     Debug.Log("[FirebaseManager] 사용자 로그아웃");
+                    if (!string.IsNullOrEmpty(currentUserName))
+                    {
+                        await UpdateIsOnline(false);
+                    }
                     currentUser = null;
                     currentUserName = null;
 
@@ -279,6 +288,25 @@ namespace Salon.Firebase
             }
         }
 
+        private async Task UpdateIsOnline(bool isOnline)
+        {
+            if (currentUser == null || string.IsNullOrEmpty(currentUserName)) return;
+
+            try
+            {
+                var userRef = dbReference?.Child("Users")?.Child(currentUserName);
+                if (userRef != null)
+                {
+                    await userRef.Child("Status").SetValueAsync((int)(isOnline ? UserStatus.Online : UserStatus.Offline));
+                    Debug.Log($"[FirebaseManager] Status 상태 업데이트: {(isOnline ? UserStatus.Online : UserStatus.Offline)}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FirebaseManager] Status 상태 업데이트 실패: {ex.Message}");
+            }
+        }
+
         bool isQuitting = false;
 
         private async void OnApplicationQuit()
@@ -289,9 +317,10 @@ namespace Salon.Firebase
             {
                 isQuitting = true;
                 Debug.Log("[FirebaseManager] OnApplicationQuit 시작");
+
                 await UpdateUserStatus(UserStatus.Offline);
-                auth.StateChanged -= AuthStateChanged;
-                SceneManager.sceneLoaded -= OnSceneLoaded;
+
+                CleanupResources();
                 Debug.Log("[FirebaseManager] OnApplicationQuit 완료");
             }
             catch (Exception ex)
@@ -308,11 +337,23 @@ namespace Salon.Firebase
             {
                 Debug.Log("[FirebaseManager] OnDestroy 시작");
                 isQuitting = true;
+                CleanupResources();
+                Debug.Log("[FirebaseManager] OnDestroy 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FirebaseManager] OnDestroy 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
 
-                // 이벤트 핸들러 제거
+        private void CleanupResources()
+        {
+            try
+            {
                 if (connectionRef != null)
                 {
                     connectionRef.ValueChanged -= HandleConnectionChanged;
+                    connectionRef = null;
                 }
                 if (auth != null)
                 {
@@ -321,11 +362,21 @@ namespace Salon.Firebase
 
                 SceneManager.sceneLoaded -= OnSceneLoaded;
 
+                isChannelManagerInitialized = false;
+                isChatManagerInitialized = false;
+                isRoomManagerInitialized = false;
+                isFriendManagerInitialized = false;
+
+                dbReference = null;
+                auth = null;
+                currentUser = null;
+                IsInitialized = false;
+
                 Debug.Log("[FirebaseManager] 핸들러 제거 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[FirebaseManager] OnDestroy 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"[FirebaseManager] 리소스 정리 중 오류 발생: {ex.Message}");
             }
         }
 
@@ -435,8 +486,7 @@ namespace Salon.Firebase
                     var userData = new Database.UserData
                     {
                         LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-                        IsOnline = true,
-                        Status = UserStatus.Online,
+                        Status = UserStatus.Offline,
                         Friends = new Dictionary<string, bool>(),
                         GameStats = new Dictionary<GameType, UserStats>(),
                         Invites = new Dictionary<string, InviteData>()
@@ -481,13 +531,14 @@ namespace Salon.Firebase
             {
                 var result = await auth.SignInWithEmailAndPasswordAsync(email, password);
                 currentUserName = result.User.DisplayName;
-                await UpdateUserLastOnline(currentUserName);
+                await UpdateIsOnline(true);
                 Debug.Log($"[FirebaseManager] 로그인 성공: {result.User.Email} (DisplayName: {currentUserName})");
 
                 // ChannelManager에 현재 사용자 이름 설정
                 if (ChannelManager.Instance != null)
                 {
                     ChannelManager.Instance.SetCurrentUserName(currentUserName);
+                    await FriendManager.Instance.Initialize();
                 }
                 else
                 {
@@ -528,7 +579,6 @@ namespace Salon.Firebase
             {
                 var userData = await GetUserDataAsync(displayName) ?? new Database.UserData();
                 userData.LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                userData.IsOnline = true;
                 userData.Status = UserStatus.Online;
 
                 string jsonData = JsonConvert.SerializeObject(userData);
@@ -721,19 +771,21 @@ namespace Salon.Firebase
 
             try
             {
-                var userData = await GetUserDataAsync(currentUserName) ?? new Database.UserData();
-                userData.LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                userData.Status = status;
-                userData.IsOnline = status != UserStatus.Offline;
-
-                string jsonData = JsonConvert.SerializeObject(userData);
-                await dbReference.Child("Users").Child(currentUserName).SetRawJsonValueAsync(jsonData);
-
-                Debug.Log($"[FirebaseManager] 사용자 상태 업데이트: {status}");
+                var userRef = dbReference?.Child("Users")?.Child(currentUserName);
+                if (userRef != null)
+                {
+                    var userData = new Dictionary<string, object>
+                    {
+                        ["Status"] = (int)status,
+                        ["LastOnline"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    };
+                    await userRef.UpdateChildrenAsync(userData);
+                    Debug.Log($"[FirebaseManager] Status 상태 업데이트: {status}");
+                }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[FirebaseManager] 사용자 상태 업데이트 실패: {ex.Message}");
+                Debug.LogError($"[FirebaseManager] Status 상태 업데이트 실패: {ex.Message}");
             }
         }
     }

@@ -204,5 +204,15 @@ namespace Salon.Firebase
         {
             StopListeningToMessages();
         }
+
+        private void OnApplicationQuit()
+        {
+            StopListeningToMessages();
+        }
+
+        private void OnDestroy()
+        {
+            StopListeningToMessages();
+        }
     }
 }
