@@ -1,14 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.UI.GridLayoutGroup;
 
 //TODO: 애니클립교체 개발개발중
 public class AnimController : MonoBehaviour
 {
     public List<AnimationClip> clipList = new List<AnimationClip>();
-
-    public AnimationClip TestClip;
-    public AnimationClip TestClip2;
 
     public Animator animator;
 
@@ -22,17 +20,12 @@ public class AnimController : MonoBehaviour
     private void Start()
     {
         GetOriginalClipName();
-        ClipChange(TestClip);
-        ClipChange(TestClip2);
-        animator.SetTrigger("ASTrigger");
     }
 
     public void Initialize()
     {
         animator = GetComponent<Animator>();
-
         currentController = SetupOverrideController();
-
         GetOriginalClipName();
     }
 
@@ -46,17 +39,15 @@ public class AnimController : MonoBehaviour
 
     private void GetOriginalClipName()
     {
-        var controller = animator.runtimeAnimatorController;
-        if (controller != null)
+        var clips = animator.runtimeAnimatorController.animationClips;
+        foreach (var clip in clips)
         {
-            foreach (var clip in controller.animationClips)
+            // AnimationState의 이름이 targetClipName과 일치하는 클립을 찾습니다
+            if (clip.name.Contains(targetClipName))
             {
-                if (clip.name == targetClipName)
-                {
-                    originalClipName = clip.name;
-                    print(originalClipName);
-                    break;
-                }
+                originalClipName = clip.name;
+                Debug.Log($"Original clip name: {originalClipName}");
+                break;
             }
         }
     }

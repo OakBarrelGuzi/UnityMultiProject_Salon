@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Salon.Controller;
 using UnityEngine.UI;
+using System.Threading.Tasks;
 
 namespace Salon.Character
 {
@@ -20,22 +21,48 @@ namespace Salon.Character
         public Vector3 CurrentVelocity => cachedInput * moveSpeed;
 
         private Rigidbody rb;
+        private bool isInitialized = false;
 
         void Start()
         {
             Initialize();
         }
 
-        public void Initialize()
+        public async void Initialize()
         {
-            if (inputMove == null)
-                inputMove = UIManager.Instance.gameObject.GetComponentInChildren<MobileController>();
+            if (isInitialized) return;
 
-            if(popupButton == null)
+            // UIManager가 초기화될 때까지 대기
+            int retryCount = 0;
+            while (UIManager.Instance == null && retryCount < 10)
             {
-                popupButton = UIManager.Instance.gameObject.GetComponentInChildren<PopupButton>();
+                await Task.Delay(100);
+                retryCount++;
+            }
 
-                popupButton.gameObject.SetActive(false);
+            if (UIManager.Instance == null)
+            {
+                Debug.LogError("[InputController] UIManager.Instance가 null입니다.");
+                return;
+            }
+
+            if (inputMove == null)
+            {
+                inputMove = UIManager.Instance.gameObject.GetComponentInChildren<MobileController>(true);
+                if (inputMove == null)
+                {
+                    Debug.LogError("[InputController] MobileController를 찾을 수 없습니다.");
+                    return;
+                }
+            }
+
+            if (popupButton == null)
+            {
+                popupButton = UIManager.Instance.gameObject.GetComponentInChildren<PopupButton>(true);
+                if (popupButton != null)
+                {
+                    popupButton.gameObject?.SetActive(false);
+                }
             }
 
             if (mainCamera == null)
@@ -45,6 +72,9 @@ namespace Salon.Character
                 animator = GetComponent<Animator>();
 
             rb = GetComponent<Rigidbody>();
+
+            isInitialized = true;
+            Debug.Log("[InputController] 초기화 완료");
         }
 
         private void Update()

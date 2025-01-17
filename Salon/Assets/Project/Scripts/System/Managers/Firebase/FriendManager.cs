@@ -8,6 +8,8 @@ using Salon.Firebase.Database;
 using Salon.System;
 using UnityEngine.Events;
 using Salon.UI;
+using System.Drawing.Text;
+using UnityEngine.SceneManagement;
 
 namespace Salon.Firebase
 {
@@ -214,14 +216,8 @@ namespace Salon.Firebase
                 string currentUserName = FirebaseManager.Instance.CurrentUserName;
 
                 // 1. 거절 알림 전송
-                var notification = new Dictionary<string, object>
-                {
-                    ["type"] = "friend_request_declined",
-                    ["decliner"] = currentUserName,
-                    ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
-                };
-                await dbReference.Child("Users").Child(senderServerName).Child("Notifications").Push()
-                    .UpdateChildrenAsync(notification);
+
+                ;
 
                 // 2. 요청 삭제
                 await friendRequestsRef.Child(senderServerName).RemoveValueAsync();
@@ -317,7 +313,6 @@ namespace Salon.Firebase
             {
                 Debug.Log($"[FriendManager] 초대 검증 시작: {targetUserName}");
 
-                // 1. 채널 데이터 확인
                 var targetChannelRef = dbReference.Child("Channels").Child(ChannelManager.Instance.CurrentChannel);
                 var playersRef = targetChannelRef.Child("Players");
 
@@ -347,14 +342,48 @@ namespace Salon.Firebase
 
         private async Task AcceptInvite(string senderServerName, string targetServer)
         {
-            var targetInviteRef = dbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserName).Child("Invites").Child(senderServerName);
-            await targetInviteRef.RemoveValueAsync();
-            await ChannelManager.Instance.JoinChannel(targetServer);
+            try
+            {
+                var targetInviteRef = dbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserName).Child("Invites").Child(senderServerName);
+                var notificaiton = new Dictionary<string, object>
+                {
+                    ["type"] = "invite_request_accepted",
+                    ["accepter"] = currentUserName,
+                    ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                };
+                await dbReference.Child("Users").Child(senderServerName).Child("Notifications").Push()
+                    .UpdateChildrenAsync(notificaiton);
+                await targetInviteRef.RemoveValueAsync();
+
+                string currentSceneName = SceneManager.GetActiveScene().name;
+                if (currentSceneName != "LobbyScene")
+                {
+                    SceneManager.LoadScene("LobbyScene");
+                    await Task.Delay(100); // 씬 로드 완료를 위한 짧은 대기
+                }
+
+                UIManager.Instance.CloseAllPanels();
+                UIManager.Instance.OpenPanel(PanelType.Lobby);
+                await ChannelManager.Instance.JoinChannel(targetServer);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FriendManager] 초대 수락 실패: {ex.Message}\n{ex.StackTrace}");
+                LogManager.Instance.ShowLog("채널 입장에 실패했습니다.");
+            }
         }
 
         private async Task DeclineInvite(string senderServerName)
         {
             await invitesRef.Child(senderServerName).RemoveValueAsync();
+            var notification = new Dictionary<string, object>
+            {
+                ["type"] = "invite_request_declined",
+                ["decliner"] = currentUserName,
+                ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            };
+            await dbReference.Child("Users").Child(senderServerName).Child("Notifications").Push()
+                .UpdateChildrenAsync(notification);
         }
 
         #endregion
