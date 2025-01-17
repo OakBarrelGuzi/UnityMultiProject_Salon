@@ -226,6 +226,8 @@ namespace Salon.Firebase
 
                 await SetupPlayerData();
 
+                UIManager.Instance.OpenPanel(PanelType.Lobby);
+
                 await Task.WhenAll(
                     ChatManager.Instance.StartListeningToMessages(channelName),
                     RoomManager.Instance.JoinChannel(channelName)
