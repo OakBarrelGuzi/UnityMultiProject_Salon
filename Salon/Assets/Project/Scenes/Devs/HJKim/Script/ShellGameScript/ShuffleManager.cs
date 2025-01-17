@@ -4,19 +4,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using static ShellGameDiffi.Difficult;
+using SellUIManager;
 public class ShuffleManager : MonoBehaviour
 {
-    //[SerializeField]
-    //public GameObject spinner_Prefab;
+
     [SerializeField]
     private List<Cup> cups = new List<Cup>();
     [Header("Controller")]
     [SerializeField]
-    private float spinSpeed =5;//회전 속도 
+    private float spinSpeed = 5;//회전 속도 
     [SerializeField]
-
-
     private float shuffleDuration = 5;
+
+    [SerializeField]
+    private SellUIManager.ShellGameUIManager uiManager;
+
     [Header("Anime")]
     //초반 애니메이션용 컵과 구슬
     public GameObject anime_Cup;
@@ -58,12 +60,6 @@ public class ShuffleManager : MonoBehaviour
         {
             firstCup = Random.Range(0, cupCount);
         }
-
-        //if (cups[firstCup].hasBall == true)
-        //{
-        //    print("구슬컵이 포함되어있습니다.");
-        //}
-
         //컵 움직이기
         Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
         cupDis = Vector3.Distance(cups[firstCup].transform.position, cups[secondCup].transform.position);
@@ -71,16 +67,9 @@ public class ShuffleManager : MonoBehaviour
         //스피너 가운데에 생성
         spinner = new GameObject("Spinner");
         spinner.transform.position = spinnerPos;
-
         //자식으로 설정
         cups[firstCup].transform.SetParent(spinner.transform);
         cups[secondCup].transform.SetParent(spinner.transform);
-
-        //회전 설정
-
-        //spinner.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
-
-
     }
     private void CupShuffle()
     {
@@ -127,14 +116,6 @@ public class ShuffleManager : MonoBehaviour
 
     private IEnumerator SetAnime()
     {
-        print("멈춰! 컵내려오는중~~~~");
-        yield return new WaitForSeconds(1.5f);
-        print("움직여! 컵 다내려옴~~");
-        yield return new WaitForSeconds(3f);
-        print("이제 컵 다내려왔으니까 게임 시작할게~~~~");
-        isStart = true;
-        cups[1].hasBall = true;//구슬이 있는컵은 3번째컵(중앙)
-
 
         foreach (Cup cup in cups)
         {
@@ -147,24 +128,29 @@ public class ShuffleManager : MonoBehaviour
         {
             cups[i].gameObject.SetActive(true);
         }
+        cups[1].hasBall = true;//구슬이 있는컵은 3번째컵(중앙)
+
+        print("멈춰! 컵내려오는중~~~~");
+        yield return new WaitForSeconds(1.5f);
+        print("움직여! 컵 다내려옴~~");
+        StartCoroutine(uiManager.PlayCount());
+        yield return new WaitForSeconds(4.5f);
+        print("이제 컵 다내려왔으니까 게임 시작할게~~~~");
+        cups[1].gameObject.SetActive(true);
+        isStart = true;
         anime_Ball.gameObject.SetActive(false);
         anime_Cup.gameObject.SetActive(false);
         StartCoroutine(ShuffleStart());
+        yield return new WaitForSeconds(5f);
     }
 
     public void StartGame()//여기가 게임 시작하는 초입 애니 들어가야함
     {
         anime_Cup.gameObject.SetActive(true);
         anime_Ball.gameObject.SetActive(true);
-        cups[1].gameObject.SetActive(false);
 
-        //여기 코루틴'
-        // 1.5초 멈추고 그동안 구슬이랑 컵이 내려오고
-        //yield return new WaitForSeconds(1.5f);
         StartCoroutine(SetAnime());
-
-       StartCoroutine(StartAnime());
-
+        StartCoroutine(StartAnime());
     }
 
 
@@ -175,28 +161,30 @@ public class ShuffleManager : MonoBehaviour
         cupCount = (int)shellDifficulty;
     }
 
-    private IEnumerator StartAnime() // 구슬이랑 컵 스슝~
+    private IEnumerator StartAnime() // 구슬이랑 컵이 내려가는 초반 애니메이션 
+
 
     {//연출을 위해서 일단은 가운데꺼 꺼놓기
         cups[1].gameObject.SetActive(false);
         anime_Cup.gameObject.SetActive(true);
         anime_Ball.gameObject.SetActive(true);
-        while (Vector3.Distance(anime_Ball.transform.position, animeMovePoint.position)>0.01f)
+        while (Vector3.Distance(anime_Ball.transform.position, animeMovePoint.position) > 0.01f)
         {
             anime_Ball.transform.position = Vector3.Lerp(
                 anime_Ball.transform.position,
                 animeMovePoint.position,
                 animaMoveSpeed * Time.deltaTime);
-              yield return null;
+            yield return null;
         }
-        while (Vector3.Distance(anime_Cup.transform.position, animeMovePoint.position + new Vector3(0, 0.3f, 0)) > 0.01f)
+        while (Vector3.Distance(anime_Cup.transform.position,
+            animeMovePoint.position + new Vector3(0, 0.3f, 0)) > 0.01f)
         {
             anime_Cup.transform.position = Vector3.Lerp(
                 anime_Cup.transform.position,
-                animeMovePoint.position + new Vector3(0, 0.3f, 0),
+                animeMovePoint.position + new Vector3(0, 0.3f, 0),//너무 아래로 내려가니까 y축으로 좀 덜내려가도록 조정
                 animaMoveSpeed * Time.deltaTime);
             yield return null;
         }
     }
-  
+
 }

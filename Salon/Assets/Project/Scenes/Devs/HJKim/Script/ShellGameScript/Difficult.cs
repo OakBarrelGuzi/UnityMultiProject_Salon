@@ -9,7 +9,7 @@ namespace ShellGameDiffi
         public enum SHELLDIFFICULTY
         {
             Easy = 3,
-            Nomal,
+            Normal,
             Hard
         }
     }
