@@ -4,18 +4,15 @@ using UnityEngine.UI;
 
 namespace Salon.Inven
 {
-    public class Socket : MonoBehaviour, IDropHandler
+    public class Socket : MonoBehaviour, IDropHandler ,IPointerClickHandler
     {
         private Inventory inventory;
 
-        private ItemData itemData;
+        public ItemData itemData{get; private set;}
 
-        [SerializeField]
-        private itemType socketType;
+        public itemType socketType;
 
-        [SerializeField]
         private Image image;
-
         private void Start()
         {
             inventory = GetComponentInParent<Inventory>();
@@ -26,7 +23,6 @@ namespace Salon.Inven
         {
             if (eventData.pointerDrag.TryGetComponent<Item>(out Item item))
             {
-                this.image.sprite = item.image.sprite;
 
                 AddSocketItem(item);
 
@@ -40,7 +36,7 @@ namespace Salon.Inven
         public void AddSocketItem(Item item)
         {
             if (socketType != item.itemData.itemType) return;
-
+            this.image.sprite = item.image.sprite;
             if (itemData != null)
             {
                 inventory.AddItemData(itemData);
@@ -54,5 +50,29 @@ namespace Salon.Inven
             itemData = data;
             Destroy(item.gameObject);
         }
+
+        public void AddSocketItem(ItemData data)
+        {
+            ItemData item = new ItemData()
+            {
+                itemName = data.itemName,
+                itemCost = data.itemCost,
+                itemType = data.itemType,
+            };
+            itemData = item;
+        }
+
+        //사용하는 클릭
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (itemData != null)
+            {
+                print(itemData.itemCost);
+                print(itemData.itemName);
+                print(itemData.itemType);
+            }
+        }
+
+
     }
 }

@@ -6,12 +6,15 @@ namespace Salon.Inven
 {
     public class Inventory : MonoBehaviour
     {
+        public List<Socket> socketList = new List<Socket>();
+
         public Item itemPrefab;
 
         [SerializeField]
         private Transform emojiInven;
         [SerializeField]
         private Transform anumeInven;
+
 
         public void AddInventoryItem(ItemData itemData)
         {
@@ -41,5 +44,20 @@ namespace Salon.Inven
             AddInventoryItem(data);
         }
 
+        public void SocketItemDataAdd(ItemData itemData)
+        {
+            List<Socket> sockets = socketList.FindAll(socket => socket.socketType == itemData.itemType);
+
+            if (sockets == null) return;
+            Socket target = sockets.Find(socket => socket.itemData == null);
+            if (target != null)
+            {
+                target.AddSocketItem(itemData);
+            }
+            else
+            {
+                AddItemData(itemData);
+            }
+        }
     }
 }
