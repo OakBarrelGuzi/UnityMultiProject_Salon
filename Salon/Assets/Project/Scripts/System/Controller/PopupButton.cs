@@ -48,11 +48,6 @@ public class PopupButton : MonoBehaviour
                 OpenShop();
                 break;
 
-            case InteractionType.DartGame:
-                Debug.Log("다트 게임 시작");
-                StartDartGame();
-                break;
-
             case InteractionType.ShellGame:
                 Debug.Log("쉘 게임 시작");
                 StartShellGame();
@@ -75,18 +70,11 @@ public class PopupButton : MonoBehaviour
         Debug.Log("[PopupButton] 상점을 열었습니다!");
         // 상점 열기 로직 구현
     }
-
-    private void StartDartGame()
-    {
-        ScenesManager.Instance.ChanageScene("Jindarts");
-    }
-
     private void StartShellGame()
     {
         Debug.Log("[PopupButton] 쉘 게임을 시작했습니다!");
         // 쉘 게임 시작 로직 구현
     }
-
     private void StartCardGame()
     {
         Debug.Log("[PopupButton] 카드 게임을 시작했습니다!");
