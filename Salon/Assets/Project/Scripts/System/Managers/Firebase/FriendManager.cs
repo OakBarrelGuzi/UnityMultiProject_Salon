@@ -8,7 +8,6 @@ using Salon.Firebase.Database;
 using Salon.System;
 using UnityEngine.Events;
 using Salon.UI;
-using System.Drawing.Text;
 
 namespace Salon.Firebase
 {
