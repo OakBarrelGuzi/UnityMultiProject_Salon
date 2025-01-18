@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Threading.Tasks;
 using Salon.Firebase;
 using TMPro;
+using System;
 
 public class RoomCreationUI : Panel
 {
@@ -10,98 +11,121 @@ public class RoomCreationUI : Panel
     public TMP_InputField roomNameInput;
     public Button createRoomButton;
     public Button closeButton;
-    public Text errorMessage;
 
     [Header("Scroll View")]
     public Transform roomListContent;
     public GameObject roomItemPrefab;
 
-    private string currentChannelId;
+    private string playerInfo = "PlayerID";
+    private string curChanel;
     public override void Open()
     {
         base.Open();
         Initialize();
+        LoadRoomList(curChanel); // 현재 채널 ID로 방 목록 로드
     }
 
     private void Initialize()
     {
-        
+        createRoomButton.onClick.RemoveAllListeners();
+        createRoomButton.onClick.AddListener(OnCreateRoomClick);
+
+        closeButton.onClick.RemoveAllListeners();
+        closeButton.onClick.AddListener(OnCloseClick);
+
+        playerInfo = FirebaseManager.Instance.CurrentUserName;
+        curChanel = ChannelManager.Instance.CurrentChannel;
     }
 
-    public void SetCurrentChannel(string channelId)
+    public async void LoadRoomList(string channelId)
     {
-        currentChannelId = channelId;
-        LoadRoomList(); // 채널에 따라 방 목록 로드
-    }
-    public async void LoadRoomList()
-    {
-        // 기존 리스트 초기화
-        foreach (Transform child in roomListContent)
+        try
         {
-            Destroy(child.gameObject);
-        }
-
-        // GameRoomManager에서 방 목록 가져오기
-        var roomIds = await GameRoomManager.Instance.GetRoomList(currentChannelId);
-
-        // 방 아이템 생성
-        foreach (var roomId in roomIds)
-        {
-            GameObject roomItem = Instantiate(roomItemPrefab, roomListContent);
-            var roomItemUI = roomItem.GetComponent<RoomItemUI>();
-
-            if (roomItemUI != null)
+            // 방 목록 초기화
+            if (roomListContent != null)
             {
-                roomItemUI.SetRoomInfo(roomId, OnJoinRoomClick);
+                foreach (Transform child in roomListContent)
+                {
+                    if (child != null && child.gameObject.scene.IsValid()) // Scene에 로드된 오브젝트만 삭제
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+            }
+
+            // 방 목록 가져오기
+            var roomIds = await GameRoomManager.Instance.GetRoomList(channelId);
+
+            // 방 목록이 비어 있는 경우 처리
+            if (roomIds == null || roomIds.Count == 0)
+            {
+                Debug.Log($"[LoadRoomList] 채널 {channelId}에 방이 없습니다.");
+                return;
+            }
+
+            // 방 목록 생성
+            foreach (var roomId in roomIds)
+            {
+                GameObject roomItem = Instantiate(roomItemPrefab, roomListContent.transform, false);
+                var roomItemUI = roomItem.GetComponent<RoomItemUI>();
+
+                if (roomItemUI != null)
+                {
+                    roomItemUI.SetRoomInfo(roomId, async (id) => await OnJoinRoomClick(channelId, id));
+                }
             }
         }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[LoadRoomList] 방 목록 로드 중 오류 발생: {ex.Message}");
+        }
     }
-    private void OnJoinRoomClick(string roomId)
-    {
-        Debug.Log($"Joining room: {roomId}");
 
-        GameRoomManager.Instance.JoinRoom(currentChannelId, roomId, "PlayerID", "PlayerName");
+    private async Task OnJoinRoomClick(string channelId, string roomId)
+    {
+        try
+        {
+            await GameRoomManager.Instance.JoinRoom(channelId, roomId, playerInfo);
+            Debug.Log("Successfully joined the room!");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Failed to join the room: {ex.Message}");
+        }
     }
+
     public async void OnCreateRoomClick()
     {
         string roomName = roomNameInput.text.Trim();
 
         if (string.IsNullOrEmpty(roomName))
         {
-            ShowError("방 이름을 입력하세요.");
+            Debug.LogError("방 이름을 입력하세요.");
             return;
         }
 
-        if (string.IsNullOrEmpty(currentChannelId))
+        if (string.IsNullOrEmpty(curChanel))
         {
-            ShowError("채널 ID를 찾을 수 없습니다.");
+            Debug.LogError("채널 ID를 설정하지 않았습니다.");
             return;
         }
 
-        string roomId = await GameRoomManager.Instance.CreateRoomInChannel(currentChannelId, roomName);
+        string roomId = await GameRoomManager.Instance.CreateRoom(curChanel, playerInfo);
         if (!string.IsNullOrEmpty(roomId))
         {
             Debug.Log($"[RoomCreationUI] 방 생성 성공: {roomName} (Room ID: {roomId})");
             roomNameInput.text = "";
-            LoadRoomList();
+            LoadRoomList(curChanel);
         }
         else
         {
-            ShowError("방 생성에 실패했습니다. 다시 시도하세요.");
+            Debug.LogError("방 생성에 실패했습니다. 다시 시도하세요.");
         }
     }
-
-    public void OnCancelClicked()
+    public void OnCloseClick()
     {
         createRoomButton.onClick.RemoveAllListeners();
-        //rankingButton.onClick.RemoveAllListeners();
         closeButton.onClick.RemoveAllListeners();
         base.Close();
-    }
-
-    private void ShowError(string message)
-    {
-        errorMessage.text = message;
-        errorMessage.gameObject.SetActive(true);
     }
 }
