@@ -17,8 +17,8 @@ public class RoomItemUI : MonoBehaviour
         this.roomId = roomId;
         this.onJoinCallback = onJoinCallback;
 
-        roomNameText.text = roomId; // 방 이름 설정
+        roomNameText.text = roomId;
         joinButton.onClick.RemoveAllListeners();
-        joinButton.onClick.AddListener(() => onJoinCallback(roomId));
+        joinButton.onClick.AddListener(() => onJoinCallback?.Invoke(roomId));
     }
 }

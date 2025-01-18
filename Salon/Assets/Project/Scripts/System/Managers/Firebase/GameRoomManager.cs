@@ -12,9 +12,9 @@ namespace Salon.Firebase
     public class GameRoomManager : Singleton<GameRoomManager>
     {
         private DatabaseReference dbReference;
-        private DatabaseReference roomsRef;
         private DatabaseReference currentRoomRef;
-        private string currentRoom;
+        private string currentRoomId;
+        private string currentChannelId;
 
         public Action<string> OnPlayerAdded;
         public Action<string> OnPlayerRemoved;
@@ -23,6 +23,7 @@ namespace Salon.Firebase
 
         private const int TURN_TIME_LIMIT = 30; // 제한 시간 30초
         private long lastCheckTime = 0;
+        private bool isGameStarted = false;
 
         private async void Start()
         {
@@ -30,6 +31,8 @@ namespace Salon.Firebase
         }
         private void Update()
         {
+            if (!isGameStarted) return;
+
             long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             if (currentTime - lastCheckTime >= 1) // 매 1초마다 체크
             {
@@ -40,7 +43,6 @@ namespace Salon.Firebase
         public async Task Initialize()
         {
             dbReference = await GetDbReference();
-            roomsRef = dbReference.Child("GameRooms");
             Debug.Log("[GameRoomManager] 초기화 완료");
         }
 
@@ -66,21 +68,21 @@ namespace Salon.Firebase
             throw new Exception("[GameRoomManager] Firebase 데이터베이스 참조를 가져올 수 없습니다.");
         }
 
-        public async Task<string> CreateRoom(string channelId, string hostPlayer, string displayName)
+        public async Task<string> CreateRoom(string channelId, string playerInfo)
         {
             try
             {
                 string newRoomName = Guid.NewGuid().ToString();
-                GameRoomData newRoom = new GameRoomData(newRoomName, hostPlayer);
+                GameRoomData newRoom = new GameRoomData(newRoomName, playerInfo);
 
-                var hostPlayerData = new GamePlayerData(displayName);
-                newRoom.Players.Add(hostPlayer, hostPlayerData);
+                var hostPlayerData = new GamePlayerData(playerInfo);
+                newRoom.Players.Add(playerInfo, hostPlayerData);
 
-                //첫 번째 턴은 방 호스트
-                newRoom.GameState.CurrentTurnPlayerId = hostPlayer;
+                // 첫 번째 턴은 방 호스트
+                newRoom.GameState.CurrentTurnPlayerId = playerInfo;
 
                 string roomJson = JsonConvert.SerializeObject(newRoom);
-                await dbReference.Child("Channels").Child(channelId).Child("Rooms").Child(newRoomName)
+                await dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(newRoomName)
                     .SetRawJsonValueAsync(roomJson);
 
                 Debug.Log($"[GameRoomManager] 채널 {channelId}에 새로운 방 생성됨: {newRoomName}");
@@ -93,11 +95,11 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task JoinRoom(string channelId, string roomName, string playerId, string displayName)
+        public async Task JoinRoom(string channelId, string roomName, string playerInfo)
         {
             try
             {
-                var roomRef = dbReference.Child("Channels").Child(channelId).Child("Rooms").Child(roomName);
+                var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomName);
                 var snapshot = await roomRef.GetValueAsync();
 
                 if (!snapshot.Exists)
@@ -107,20 +109,23 @@ namespace Salon.Firebase
                 }
 
                 var roomData = JsonConvert.DeserializeObject<GameRoomData>(snapshot.GetRawJsonValue());
-                if (roomData.Players.ContainsKey(playerId))
+                if (roomData.Players.ContainsKey(playerInfo))
                 {
-                    Debug.Log($"[GameRoomManager] 플레이어 {playerId}는 이미 방에 존재합니다.");
+                    Debug.Log($"[GameRoomManager] 플레이어 {playerInfo}는 이미 방에 존재합니다.");
                     return;
                 }
 
-                var playerData = new GamePlayerData(displayName);
-                roomData.Players.Add(playerId, playerData);
+                var playerData = new GamePlayerData(playerInfo);
+                roomData.Players.Add(playerInfo, playerData);
 
                 string updatedRoomJson = JsonConvert.SerializeObject(roomData);
                 await roomRef.SetRawJsonValueAsync(updatedRoomJson);
 
-                currentRoom = roomName;
-                Debug.Log($"[GameRoomManager] 플레이어 {playerId}가 채널 {channelId}의 방 {roomName}에 입장했습니다.");
+                currentRoomRef = roomRef;
+                currentRoomId = roomName;
+                currentChannelId = channelId;
+
+                Debug.Log($"[GameRoomManager] 플레이어 {playerInfo}가 채널 {channelId}의 방 {roomName}에 입장했습니다.");
 
                 await SubscribeToRoom(channelId, roomName);
             }
@@ -130,9 +135,9 @@ namespace Salon.Firebase
             }
         }
 
-        private async Task SubscribeToRoom(string channelId, string roomId)
+        private async Task SubscribeToRoom(string channelId, string roomName)
         {
-            currentRoomRef = dbReference.Child("Channels").Child(channelId).Child("Rooms").Child(roomId);
+            currentRoomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomName);
 
             var snapshot = await currentRoomRef.GetValueAsync();
             if (snapshot.Exists)
@@ -155,7 +160,7 @@ namespace Salon.Firebase
         }
         public async Task<List<string>> GetRoomList(string channelId)
         {
-            var roomsSnapshot = await dbReference.Child("Channels").Child(channelId).Child("Rooms").GetValueAsync();
+            var roomsSnapshot = await dbReference.Child("Channels").Child(channelId).Child("GameRooms").GetValueAsync();
 
             if (!roomsSnapshot.Exists)
             {
@@ -169,28 +174,6 @@ namespace Salon.Firebase
                 roomIds.Add(room.Key);
             }
             return roomIds;
-        }
-        public async Task<string> CreateRoomInChannel(string channelId, string roomName)
-        {
-            try
-            {
-                string roomId = Guid.NewGuid().ToString(); // 고유 Room ID 생성
-                GameRoomData newRoom = new GameRoomData(roomId, roomName);
-
-                // Firebase의 특정 채널 아래에 방 생성
-                var roomRef = dbReference.Child("Channels").Child(channelId).Child("Rooms").Child(roomId);
-
-                string roomJson = JsonUtility.ToJson(newRoom);
-                await roomRef.SetRawJsonValueAsync(roomJson);
-
-                Debug.Log($"[GameRoomManager] 방 생성 성공: {roomName} (Room ID: {roomId})");
-                return roomId;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[GameRoomManager] 방 생성 실패: {ex.Message}");
-                return null;
-            }
         }
         private void HandlePlayerAdded(object sender, ChildChangedEventArgs e)
         {
@@ -221,8 +204,6 @@ namespace Salon.Firebase
 
         public async Task FlipCard(string cardId, string playerId)
         {
-            if (string.IsNullOrEmpty(currentRoom)) return;
-
             try
             {
                 var roomSnapshot = await currentRoomRef.GetValueAsync();
@@ -261,7 +242,6 @@ namespace Salon.Firebase
                 Debug.LogError($"[GameRoomManager] 카드 뒤집기 실패: {ex.Message}");
             }
         }
-
         private async Task UpdateTurnToNextPlayer(GameRoomData roomData)
         {
             var playerIds = new List<string>(roomData.Players.Keys);
@@ -279,8 +259,6 @@ namespace Salon.Firebase
         }
         private async void CheckTurnTimeout()
         {
-            if (string.IsNullOrEmpty(currentRoom)) return;
-
             try
             {
                 var roomSnapshot = await currentRoomRef.GetValueAsync();
