@@ -30,13 +30,13 @@ public class PopupButton : MonoBehaviour
     public void SetInteraction(InteractionType interactionType)
     {
         currentInteraction = interactionType;
-        Debug.Log($"[PopupButton] ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½Û¿ï¿½ Å¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {currentInteraction}");
+        Debug.Log($"[PopupButton] ÇöÀç »óÈ£ÀÛ¿ë Å¸ÀÔ ¼³Á¤: {currentInteraction}");
     }
 
     private void HandleButtonClick()
     {
-        Debug.Log($"[PopupButton] ï¿½ï¿½Æ° Å¬ï¿½ï¿½ï¿½ï¿½ - ï¿½ï¿½È£ï¿½Û¿ï¿½ Å¸ï¿½ï¿½: {currentInteraction}");
-        HandleInteraction(currentInteraction); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ InteractionType Ã³ï¿½ï¿½
+        Debug.Log($"[PopupButton] ¹öÆ° Å¬¸¯µÊ - »óÈ£ÀÛ¿ë Å¸ÀÔ: {currentInteraction}");
+        HandleInteraction(currentInteraction); // ÇöÀç ¼³Á¤µÈ InteractionType Ã³¸®
     }
 
     private void HandleInteraction(InteractionType interactionType)
@@ -44,52 +44,40 @@ public class PopupButton : MonoBehaviour
         switch (interactionType)
         {
             case InteractionType.Shop:
-                Debug.Log("ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
+                Debug.Log("»óÁ¡ ¿­±â");
                 OpenShop();
                 break;
 
-            case InteractionType.DartGame:
-                Debug.Log("ï¿½ï¿½Æ® ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
-                StartDartGame();
-                break;
-
             case InteractionType.ShellGame:
-                Debug.Log("ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
+                Debug.Log("½© °ÔÀÓ ½ÃÀÛ");
                 StartShellGame();
                 break;
 
             case InteractionType.CardGame:
-                Debug.Log("Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
+                Debug.Log("Ä«µå °ÔÀÓ ½ÃÀÛ");
                 StartCardGame();
                 break;
 
             default:
-                Debug.LogWarning("ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½È£ï¿½Û¿ï¿½ Å¸ï¿½ï¿½");
+                Debug.LogWarning("¾Ë ¼ö ¾ø´Â »óÈ£ÀÛ¿ë Å¸ÀÔ");
                 break;
         }
     }
 
-    // ï¿½ï¿½ InteractionTypeï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½Þ¼ï¿½ï¿½ï¿½
+    // °¢ InteractionTypeº° ·ÎÁ÷ Ã³¸® ¸Þ¼­µå
     private void OpenShop()
     {
-        Debug.Log("[PopupButton] ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½!");
-        // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        Debug.Log("[PopupButton] »óÁ¡À» ¿­¾ú½À´Ï´Ù!");
+        // »óÁ¡ ¿­±â ·ÎÁ÷ ±¸Çö
     }
-
-    private void StartDartGame()
-    {
-        ScenesManager.Instance.ChanageScene("Jindarts");
-    }
-
     private void StartShellGame()
     {
-        Debug.Log("[PopupButton] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½!");
-        // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        Debug.Log("[PopupButton] ½© °ÔÀÓÀ» ½ÃÀÛÇß½À´Ï´Ù!");
+        // ½© °ÔÀÓ ½ÃÀÛ ·ÎÁ÷ ±¸Çö
     }
-
     private void StartCardGame()
     {
-        Debug.Log("[PopupButton] Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½!");
-        // Ä«ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
+        Debug.Log("[PopupButton] Ä«µå °ÔÀÓÀ» ½ÃÀÛÇß½À´Ï´Ù!");
+        // Ä«µå °ÔÀÓ ½ÃÀÛ ·ÎÁ÷ ±¸Çö
     }
 }

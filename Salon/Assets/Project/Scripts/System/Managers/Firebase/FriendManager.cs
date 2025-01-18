@@ -18,7 +18,6 @@ namespace Salon.Firebase
         private DatabaseReference dbReference;
         private DatabaseReference friendRequestsRef;
         private DatabaseReference invitesRef;
-        private string currentUserName;
 
         public UnityEvent<string> OnFriendRequestReceived = new UnityEvent<string>();
 
@@ -28,7 +27,6 @@ namespace Salon.Firebase
         {
             try
             {
-                currentUserName = FirebaseManager.Instance.CurrentUserName;
                 Debug.Log($"[FriendManager] 초기화 시작");
                 await ResetAndSetupReferences();
                 isInitialized = true;
@@ -53,14 +51,14 @@ namespace Salon.Firebase
                 // 2. 새로운 참조 설정
                 dbReference = FirebaseManager.Instance.DbReference;
 
-                if (string.IsNullOrEmpty(currentUserName))
+                if (string.IsNullOrEmpty(FirebaseManager.Instance.CurrentUserUID))
                 {
                     Debug.LogWarning("[FriendManager] 현재 로그인된 사용자가 없습니다.");
                     return;
                 }
 
                 // 3. 새로운 FriendRequests 참조 설정
-                string currentUserPath = $"Users/{currentUserName}";
+                string currentUserPath = $"Users/{FirebaseManager.Instance.CurrentUserUID}";
                 friendRequestsRef = dbReference.Child(currentUserPath).Child("FriendRequests");
 
                 invitesRef = dbReference.Child(currentUserPath).Child("Invites");
@@ -86,6 +84,8 @@ namespace Salon.Firebase
                 invitesRef.ChildAdded += OnInvitesAdded;
                 Debug.Log("[FriendManager] 초대 리스닝 시작");
             }
+
+            GetPendingFriendsRequest();
         }
 
         private void StopListening()
@@ -102,7 +102,7 @@ namespace Salon.Firebase
             }
         }
 
-        private void OnFriendRequestAdded(object sender, ChildChangedEventArgs args)
+        private async void OnFriendRequestAdded(object sender, ChildChangedEventArgs args)
         {
             try
             {
@@ -121,18 +121,25 @@ namespace Salon.Firebase
                     return;
                 }
 
-                if (requestData.sender == FirebaseManager.Instance.CurrentUserName)
+                if (requestData.sender == FirebaseManager.Instance.CurrentUserUID)
                 {
                     Debug.Log("[FriendManager] 자신이 보낸 요청이므로 무시");
                     return;
                 }
 
-                string senderServerName = args.Snapshot.Key;
+                string senderUID = args.Snapshot.Key;
+                var senderDisplayNameRef = dbReference.Child("Users").Child(senderUID).Child("DisplayName");
+
+                var displayNameSnapshot = await senderDisplayNameRef.GetValueAsync();
+
+                string senderServerName = displayNameSnapshot.Value.ToString();
+                string currentUserName = FirebaseManager.Instance.CurrentUserUID;
+
                 string senderDisplayName = DisplayNameUtils.ToDisplayFormat(senderServerName);
 
                 Debug.Log($"[FriendManager] 친구 요청 표시 - 발신자: {senderDisplayName}");
                 OnFriendRequestReceived?.Invoke(senderDisplayName);
-                ShowFriendRequestPopUp(senderDisplayName, senderServerName);
+                ShowFriendRequestPopUp(senderDisplayName, senderUID);
             }
             catch (Exception ex)
             {
@@ -144,10 +151,14 @@ namespace Salon.Firebase
         {
             try
             {
+                print($"[FriendManager] 친구요청 보내기 시작");
                 string targetServerName = DisplayNameUtils.ToServerFormat(targetDisplayName);
-                string currentUserName = FirebaseManager.Instance.CurrentUserName;
+                var targetUID = await FirebaseManager.Instance.GetUIDByDisplayName(targetServerName);
+                print($"[FriendManager] targetUID : {targetUID}");
+                string currentUserUID = FirebaseManager.Instance.CurrentUserUID;
+                print($"[FriendManager] currentUserUID : {currentUserUID}");
 
-                if (targetServerName == currentUserName)
+                if (targetUID == currentUserUID)
                 {
                     LogManager.Instance.ShowLog("자신에게 친구 요청을 보낼 수 없습니다.");
                     return;
@@ -155,12 +166,12 @@ namespace Salon.Firebase
 
                 var requestData = new Dictionary<string, object>
                 {
-                    ["sender"] = currentUserName,
+                    ["sender"] = currentUserUID,
                     ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                     ["status"] = "pending"
                 };
 
-                await dbReference.Child("Users").Child(targetServerName).Child("FriendRequests").Child(currentUserName)
+                await dbReference.Child("Users").Child(targetUID).Child("FriendRequests").Child(currentUserUID)
                     .UpdateChildrenAsync(requestData);
 
                 LogManager.Instance.ShowLog($"{targetDisplayName}님에게 친구 요청을 보냈습니다.");
@@ -172,17 +183,17 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task AcceptFriendRequest(string senderServerName)
+        public async Task AcceptFriendRequest(string senderUID)
         {
             try
             {
-                string currentUserName = FirebaseManager.Instance.CurrentUserName;
+                string currentUserUID = FirebaseManager.Instance.CurrentUserUID;
 
                 // 1. 친구 목록에 추가
                 var updates = new Dictionary<string, object>
                 {
-                    [$"Users/{currentUserName}/Friends/{senderServerName}"] = true,
-                    [$"Users/{senderServerName}/Friends/{currentUserName}"] = true
+                    [$"Users/{currentUserUID}/Friends/{senderUID}"] = true,
+                    [$"Users/{senderUID}/Friends/{currentUserUID}"] = true
                 };
                 await dbReference.UpdateChildrenAsync(updates);
 
@@ -190,16 +201,23 @@ namespace Salon.Firebase
                 var notification = new Dictionary<string, object>
                 {
                     ["type"] = "friend_request_accepted",
-                    ["accepter"] = currentUserName,
+                    ["accepter"] = currentUserUID,
                     ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
                 };
-                await dbReference.Child("Users").Child(senderServerName).Child("Notifications").Push()
+                await dbReference.Child("Users").Child(senderUID).Child("Notifications").Push()
                     .UpdateChildrenAsync(notification);
 
                 // 3. 요청 삭제
-                await friendRequestsRef.Child(senderServerName).RemoveValueAsync();
+                await friendRequestsRef.Child(senderUID).RemoveValueAsync();
+
+                var senderDisplayNameRef = dbReference.Child("Users").Child(senderUID).Child("DisplayName");
+
+                var displayNameSnapshot = await senderDisplayNameRef.GetValueAsync();
+
+                string senderServerName = displayNameSnapshot.Value.ToString();
 
                 string senderDisplayName = DisplayNameUtils.ToDisplayFormat(senderServerName);
+
                 LogManager.Instance.ShowLog($"{senderDisplayName}님의 친구 요청을 수락했습니다.");
             }
             catch (Exception ex)
@@ -209,20 +227,19 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task DeclineFriendRequest(string senderServerName)
+        public async Task DeclineFriendRequest(string senderUID)
         {
             try
             {
-                string currentUserName = FirebaseManager.Instance.CurrentUserName;
+                string currentUserName = FirebaseManager.Instance.CurrentUserUID;
+
+                string senderDisplayName = await FirebaseManager.Instance.GetDisplayNameByUID(senderUID);
 
                 // 1. 거절 알림 전송
 
-                ;
-
                 // 2. 요청 삭제
-                await friendRequestsRef.Child(senderServerName).RemoveValueAsync();
+                await friendRequestsRef.Child(senderUID).RemoveValueAsync();
 
-                string senderDisplayName = DisplayNameUtils.ToDisplayFormat(senderServerName);
                 LogManager.Instance.ShowLog($"{senderDisplayName}님의 친구 요청을 거절했습니다.");
             }
             catch (Exception ex)
@@ -232,12 +249,38 @@ namespace Salon.Firebase
             }
         }
 
-        private void ShowFriendRequestPopUp(string senderDisplayName, string senderServerName)
+        private async void GetPendingFriendsRequest()
+        {
+            var snapshot = await friendRequestsRef.GetValueAsync();
+
+            if (!snapshot.Exists)
+            {
+                Debug.Log("[FriendManager] 친구 요청 없음");
+                return;
+            }
+            else
+            {
+
+                foreach (var child in snapshot.Children)
+                {
+                    string senderUID = child.Key;
+                    var requestData = JsonConvert.DeserializeObject<FriendRequestData>(child.GetRawJsonValue());
+                    if (requestData.status == "pending")
+                    {
+                        Debug.Log($"[FriendManager] 친구 요청 발신자: {senderUID}");
+                        OnFriendRequestReceived?.Invoke(senderUID);
+                    }
+
+                }
+            }
+        }
+
+        private void ShowFriendRequestPopUp(string senderDisplayName, string senderUID)
         {
             PopUpManager.Instance.ShowPopUp(
                 $"{senderDisplayName}님이 친구 요청을 보냈습니다.",
-                async () => await AcceptFriendRequest(senderServerName),
-                async () => await DeclineFriendRequest(senderServerName)
+                async () => await AcceptFriendRequest(senderUID),
+                async () => await DeclineFriendRequest(senderUID)
             );
         }
 
@@ -245,7 +288,8 @@ namespace Salon.Firebase
         {
             try
             {
-                var snapshot = await dbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserName)
+                Debug.Log("[FriendManager] 친구 목록 조회 시작");
+                var snapshot = await dbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID)
                     .Child("Friends").GetValueAsync();
 
                 var friendsList = new Dictionary<string, UserData>();
@@ -253,14 +297,20 @@ namespace Salon.Firebase
                 {
                     foreach (var child in snapshot.Children)
                     {
-                        var friendData = await FirebaseManager.Instance.GetUserDataAsync(child.Key);
+                        string friendUID = child.Key;
+                        var friendData = await FirebaseManager.Instance.GetUserDataAsync(friendUID);
                         if (friendData != null)
                         {
-                            string displayName = DisplayNameUtils.ToDisplayFormat(child.Key);
-                            friendsList[displayName] = friendData;
+                            string displayName = await FirebaseManager.Instance.GetDisplayNameByUID(friendUID);
+                            if (!string.IsNullOrEmpty(displayName))
+                            {
+                                Debug.Log($"[FriendManager] 친구 정보 로드 - UID: {friendUID}, DisplayName: {displayName}");
+                                friendsList[displayName] = friendData;
+                            }
                         }
                     }
                 }
+                Debug.Log($"[FriendManager] 친구 목록 조회 완료 - 총 {friendsList.Count}명");
                 return friendsList;
             }
             catch (Exception ex)
@@ -274,13 +324,13 @@ namespace Salon.Firebase
 
         public async Task SendInvite(string targetDisplayName)
         {
+            string targetUID = await FirebaseManager.Instance.GetUIDByDisplayName(targetDisplayName);
             if (!await ValdiateInivite(targetDisplayName))
             {
                 return;
             }
-            string targetServerName = DisplayNameUtils.ToServerFormat(targetDisplayName);
-            string currentUserName = FirebaseManager.Instance.CurrentUserName;
-            var targetRef = dbReference.Child("Users").Child(targetServerName).Child("Invites").Child(currentUserName);
+            string currentUserUID = FirebaseManager.Instance.CurrentUserUID;
+            var targetRef = dbReference.Child("Users").Child(targetUID).Child("Invites").Child(currentUserUID);
 
             InviteData inviteData = new InviteData();
             inviteData.ChannelName = ChannelManager.Instance.CurrentChannel;
@@ -291,14 +341,15 @@ namespace Salon.Firebase
             await targetRef.SetRawJsonValueAsync(jsonData);
         }
 
-        public void OnInvitesAdded(object sender, ChildChangedEventArgs args)
+        public async void OnInvitesAdded(object sender, ChildChangedEventArgs args)
         {
             Debug.Log($"[FriendManager] 초대 감지: {args.Snapshot.Key}");
             string inviteData = args.Snapshot.GetRawJsonValue();
             InviteData invite = JsonConvert.DeserializeObject<InviteData>(inviteData);
             if (invite.Status == InviteStatus.Pending)
             {
-                string senderDisplayName = DisplayNameUtils.ToDisplayFormat(args.Snapshot.Key);
+                string senderDisplayName = await FirebaseManager.Instance.GetDisplayNameByUID(args.Snapshot.Key);
+
                 PopUpManager.Instance.ShowPopUp(
                     $"{senderDisplayName}님이 채널 초대를 보냈습니다.",
                     async () => await AcceptInvite(args.Snapshot.Key, invite.ChannelName),
@@ -307,11 +358,11 @@ namespace Salon.Firebase
             }
         }
 
-        private async Task<bool> ValdiateInivite(string targetUserName)
+        private async Task<bool> ValdiateInivite(string targetDisplayName)
         {
             try
             {
-                Debug.Log($"[FriendManager] 초대 검증 시작: {targetUserName}");
+                Debug.Log($"[FriendManager] 초대 검증 시작: {targetDisplayName}");
 
                 var targetChannelRef = dbReference.Child("Channels").Child(ChannelManager.Instance.CurrentChannel);
                 var playersRef = targetChannelRef.Child("Players");
@@ -324,9 +375,9 @@ namespace Salon.Firebase
                 }
 
                 var players = JsonConvert.DeserializeObject<Dictionary<string, GamePlayerData>>(playersSnapshot.GetRawJsonValue());
-                if (players != null && players.ContainsKey(targetUserName))
+                if (players != null && players.ContainsKey(targetDisplayName))
                 {
-                    LogManager.Instance.ShowLog($"{targetUserName}님이 이미 채널에 존재합니다.");
+                    LogManager.Instance.ShowLog($"{targetDisplayName}님이 이미 채널에 존재합니다.");
                     return false;
                 }
 
@@ -340,18 +391,18 @@ namespace Salon.Firebase
             }
         }
 
-        private async Task AcceptInvite(string senderServerName, string targetServer)
+        private async Task AcceptInvite(string senderUID, string targetServer)
         {
             try
             {
-                var targetInviteRef = dbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserName).Child("Invites").Child(senderServerName);
+                var targetInviteRef = dbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Invites").Child(senderUID);
                 var notificaiton = new Dictionary<string, object>
                 {
                     ["type"] = "invite_request_accepted",
-                    ["accepter"] = currentUserName,
+                    ["accepter"] = FirebaseManager.Instance.GetCurrentDisplayName(),
                     ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
                 };
-                await dbReference.Child("Users").Child(senderServerName).Child("Notifications").Push()
+                await dbReference.Child("Users").Child(senderUID).Child("Notifications").Push()
                     .UpdateChildrenAsync(notificaiton);
                 await targetInviteRef.RemoveValueAsync();
 
@@ -373,16 +424,16 @@ namespace Salon.Firebase
             }
         }
 
-        private async Task DeclineInvite(string senderServerName)
+        private async Task DeclineInvite(string senderUID)
         {
-            await invitesRef.Child(senderServerName).RemoveValueAsync();
+            await invitesRef.Child(senderUID).RemoveValueAsync();
             var notification = new Dictionary<string, object>
             {
                 ["type"] = "invite_request_declined",
-                ["decliner"] = currentUserName,
+                ["decliner"] = FirebaseManager.Instance.CurrentUserUID,
                 ["timestamp"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
             };
-            await dbReference.Child("Users").Child(senderServerName).Child("Notifications").Push()
+            await dbReference.Child("Users").Child(senderUID).Child("Notifications").Push()
                 .UpdateChildrenAsync(notification);
         }
 
