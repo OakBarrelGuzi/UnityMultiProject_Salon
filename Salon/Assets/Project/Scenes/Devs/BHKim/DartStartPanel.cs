@@ -18,10 +18,17 @@ public class DartStartPanel : Panel
 
     private void Initialize()
     {
-        startButton.onClick.AddListener(() => ScenesManager.Instance.ChanageScene("Jindarts"));
+        startButton.onClick.AddListener(StartButtonClick);
         //rankingButton.onClick.AddListener();
         closeButton.onClick.AddListener(Close);
     }
+
+    private void StartButtonClick()
+    {
+        UIManager.Instance.ClosePanel(PanelType.DartGame);
+        ScenesManager.Instance.ChanageScene("Jindarts");
+    }
+
     public override void Close()
     {
         startButton.onClick.RemoveAllListeners();
