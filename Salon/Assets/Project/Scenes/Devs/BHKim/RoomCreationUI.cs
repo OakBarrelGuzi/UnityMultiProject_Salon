@@ -17,15 +17,15 @@ public class RoomCreationUI : Panel
     public GameObject roomItemPrefab;
 
     private string playerInfo = "PlayerID";
-    private string curChanel;
+    private string currentChannel;
     public override void Open()
     {
         base.Open();
         Initialize();
-        LoadRoomList(curChanel); // ÇöÀç Ã¤³Î ID·Î ¹æ ¸ñ·Ï ·Îµå
+        LoadRoomList(currentChannel); // í˜„ì¬ ì±„ë„ IDë¡œ ë°© ëª©ë¡ ë¡œë“œ
     }
 
-    private void Initialize()
+    public override void Initialize()
     {
         createRoomButton.onClick.RemoveAllListeners();
         createRoomButton.onClick.AddListener(OnCreateRoomClick);
@@ -33,37 +33,37 @@ public class RoomCreationUI : Panel
         closeButton.onClick.RemoveAllListeners();
         closeButton.onClick.AddListener(OnCloseClick);
 
-        playerInfo = FirebaseManager.Instance.CurrentUserName;
-        curChanel = ChannelManager.Instance.CurrentChannel;
+        playerInfo = FirebaseManager.Instance.GetCurrentDisplayName();
+        currentChannel = ChannelManager.Instance.CurrentChannel;
     }
 
     public async void LoadRoomList(string channelId)
     {
         try
         {
-            // ¹æ ¸ñ·Ï ÃÊ±âÈ­
+            // ë°© ëª©ë¡ ì´ˆê¸°í™”
             if (roomListContent != null)
             {
                 foreach (Transform child in roomListContent)
                 {
-                    if (child != null && child.gameObject.scene.IsValid()) // Scene¿¡ ·ÎµåµÈ ¿ÀºêÁ§Æ®¸¸ »èÁ¦
+                    if (child != null && child.gameObject.scene.IsValid()) // Sceneì— ë¡œë“œëœ ì˜¤ë¸Œì íŠ¸ë§Œ ì‚­ì œ
                     {
                         Destroy(child.gameObject);
                     }
                 }
             }
 
-            // ¹æ ¸ñ·Ï °¡Á®¿À±â
+            // ë°© ëª©ë¡ ê°€ì ¸ì˜¤ê¸°
             var roomIds = await GameRoomManager.Instance.GetRoomList(channelId);
 
-            // ¹æ ¸ñ·ÏÀÌ ºñ¾î ÀÖ´Â °æ¿ì Ã³¸®
+            // ë°© ëª©ë¡ì´ ë¹„ì–´ ìˆëŠ” ê²½ìš° ì²˜ë¦¬
             if (roomIds == null || roomIds.Count == 0)
             {
-                Debug.Log($"[LoadRoomList] Ã¤³Î {channelId}¿¡ ¹æÀÌ ¾ø½À´Ï´Ù.");
+                Debug.Log($"[LoadRoomList] ì±„ë„ {channelId}ì— ë°©ì´ ì—†ìŠµë‹ˆë‹¤.");
                 return;
             }
 
-            // ¹æ ¸ñ·Ï »ı¼º
+            // ë°© ëª©ë¡ ìƒì„±
             foreach (var roomId in roomIds)
             {
                 GameObject roomItem = Instantiate(roomItemPrefab, roomListContent.transform, false);
@@ -77,7 +77,7 @@ public class RoomCreationUI : Panel
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LoadRoomList] ¹æ ¸ñ·Ï ·Îµå Áß ¿À·ù ¹ß»ı: {ex.Message}");
+            Debug.LogError($"[LoadRoomList] ë°© ëª©ë¡ ë¡œë“œ ì¤‘ ì˜¤ë¥˜ ë°œìƒ: {ex.Message}");
         }
     }
 
@@ -100,26 +100,26 @@ public class RoomCreationUI : Panel
 
         if (string.IsNullOrEmpty(roomName))
         {
-            Debug.LogError("¹æ ÀÌ¸§À» ÀÔ·ÂÇÏ¼¼¿ä.");
+            Debug.LogError("ë°© ì´ë¦„ì„ ì…ë ¥í•˜ì„¸ìš”.");
             return;
         }
 
-        if (string.IsNullOrEmpty(curChanel))
+        if (string.IsNullOrEmpty(currentChannel))
         {
-            Debug.LogError("Ã¤³Î ID¸¦ ¼³Á¤ÇÏÁö ¾Ê¾Ò½À´Ï´Ù.");
+            Debug.LogError("ì±„ë„ IDë¥¼ ì„¤ì •í•˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        string roomId = await GameRoomManager.Instance.CreateRoom(curChanel, playerInfo);
+        string roomId = await GameRoomManager.Instance.CreateRoom(currentChannel, playerInfo);
         if (!string.IsNullOrEmpty(roomId))
         {
-            Debug.Log($"[RoomCreationUI] ¹æ »ı¼º ¼º°ø: {roomName} (Room ID: {roomId})");
+            Debug.Log($"[RoomCreationUI] ë°© ìƒì„± ì„±ê³µ: {roomName} (Room ID: {roomId})");
             roomNameInput.text = "";
-            LoadRoomList(curChanel);
+            LoadRoomList(currentChannel);
         }
         else
         {
-            Debug.LogError("¹æ »ı¼º¿¡ ½ÇÆĞÇß½À´Ï´Ù. ´Ù½Ã ½ÃµµÇÏ¼¼¿ä.");
+            Debug.LogError("ë°© ìƒì„±ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤. ë‹¤ì‹œ ì‹œë„í•˜ì„¸ìš”.");
         }
     }
     public void OnCloseClick()
