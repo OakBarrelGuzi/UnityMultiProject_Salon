@@ -1,3 +1,4 @@
+using Salon.Firebase;
 using Salon.Firebase.Database;
 using System;
 using System.Collections;
@@ -54,7 +55,6 @@ public class PopupButton : MonoBehaviour
                 break;
 
             case InteractionType.CardGame:
-                Debug.Log("카드 게임 시작");
                 StartCardGame();
                 break;
 
@@ -75,9 +75,9 @@ public class PopupButton : MonoBehaviour
         Debug.Log("[PopupButton] 쉘 게임을 시작했습니다!");
         // 쉘 게임 시작 로직 구현
     }
-    private void StartCardGame()
+    private async void StartCardGame()
     {
-        Debug.Log("[PopupButton] 카드 게임을 시작했습니다!");
-        // 카드 게임 시작 로직 구현
+        await GameRoomManager.Instance.JoinOrCreateRandomRoom(ChannelManager.Instance.CurrentChannel, 
+            ChannelManager.Instance.currentUserDisplayName);
     }
 }

@@ -303,7 +303,7 @@ namespace Salon.Firebase.Database
             LastActionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
     }
-
+        
     [Serializable]
     public class PlayerData
     {
