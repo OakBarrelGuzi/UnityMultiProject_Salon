@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using System.Threading.Tasks;
 using Salon.Firebase;
 using TMPro;
+using System;
 
 public class RoomCreationUI : Panel
 {
@@ -10,98 +11,121 @@ public class RoomCreationUI : Panel
     public TMP_InputField roomNameInput;
     public Button createRoomButton;
     public Button closeButton;
-    public Text errorMessage;
 
     [Header("Scroll View")]
     public Transform roomListContent;
     public GameObject roomItemPrefab;
 
-    private string currentChannelId;
+    private string playerInfo = "PlayerID";
+    private string currentChannel;
     public override void Open()
     {
         base.Open();
         Initialize();
+        LoadRoomList(currentChannel); // í˜„ì¬ ì±„ë„ IDë¡œ ë°© ëª©ë¡ ë¡œë“œ
     }
 
-    private void Initialize()
+    public override void Initialize()
     {
-        
+        createRoomButton.onClick.RemoveAllListeners();
+        createRoomButton.onClick.AddListener(OnCreateRoomClick);
+
+        closeButton.onClick.RemoveAllListeners();
+        closeButton.onClick.AddListener(OnCloseClick);
+
+        playerInfo = FirebaseManager.Instance.GetCurrentDisplayName();
+        currentChannel = ChannelManager.Instance.CurrentChannel;
     }
 
-    public void SetCurrentChannel(string channelId)
+    public async void LoadRoomList(string channelId)
     {
-        currentChannelId = channelId;
-        LoadRoomList(); // Ã¤³Î¿¡ µû¶ó ¹æ ¸ñ·Ï ·Îµå
-    }
-    public async void LoadRoomList()
-    {
-        // ±âÁ¸ ¸®½ºÆ® ÃÊ±âÈ­
-        foreach (Transform child in roomListContent)
+        try
         {
-            Destroy(child.gameObject);
-        }
-
-        // GameRoomManager¿¡¼­ ¹æ ¸ñ·Ï °¡Á®¿À±â
-        var roomIds = await GameRoomManager.Instance.GetRoomList(currentChannelId);
-
-        // ¹æ ¾ÆÀÌÅÛ »ı¼º
-        foreach (var roomId in roomIds)
-        {
-            GameObject roomItem = Instantiate(roomItemPrefab, roomListContent);
-            var roomItemUI = roomItem.GetComponent<RoomItemUI>();
-
-            if (roomItemUI != null)
+            // ë°© ëª©ë¡ ì´ˆê¸°í™”
+            if (roomListContent != null)
             {
-                roomItemUI.SetRoomInfo(roomId, OnJoinRoomClick);
+                foreach (Transform child in roomListContent)
+                {
+                    if (child != null && child.gameObject.scene.IsValid()) // Sceneì— ë¡œë“œëœ ì˜¤ë¸Œì íŠ¸ë§Œ ì‚­ì œ
+                    {
+                        Destroy(child.gameObject);
+                    }
+                }
+            }
+
+            // ë°© ëª©ë¡ ê°€ì ¸ì˜¤ê¸°
+            var roomIds = await GameRoomManager.Instance.GetRoomList(channelId);
+
+            // ë°© ëª©ë¡ì´ ë¹„ì–´ ìˆëŠ” ê²½ìš° ì²˜ë¦¬
+            if (roomIds == null || roomIds.Count == 0)
+            {
+                Debug.Log($"[LoadRoomList] ì±„ë„ {channelId}ì— ë°©ì´ ì—†ìŠµë‹ˆë‹¤.");
+                return;
+            }
+
+            // ë°© ëª©ë¡ ìƒì„±
+            foreach (var roomId in roomIds)
+            {
+                GameObject roomItem = Instantiate(roomItemPrefab, roomListContent.transform, false);
+                var roomItemUI = roomItem.GetComponent<RoomItemUI>();
+
+                if (roomItemUI != null)
+                {
+                    roomItemUI.SetRoomInfo(roomId, async (id) => await OnJoinRoomClick(channelId, id));
+                }
             }
         }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[LoadRoomList] ë°© ëª©ë¡ ë¡œë“œ ì¤‘ ì˜¤ë¥˜ ë°œìƒ: {ex.Message}");
+        }
     }
-    private void OnJoinRoomClick(string roomId)
-    {
-        Debug.Log($"Joining room: {roomId}");
 
-        GameRoomManager.Instance.JoinRoom(currentChannelId, roomId, "PlayerID", "PlayerName");
+    private async Task OnJoinRoomClick(string channelId, string roomId)
+    {
+        try
+        {
+            await GameRoomManager.Instance.JoinRoom(channelId, roomId, playerInfo);
+            Debug.Log("Successfully joined the room!");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"Failed to join the room: {ex.Message}");
+        }
     }
+
     public async void OnCreateRoomClick()
     {
         string roomName = roomNameInput.text.Trim();
 
         if (string.IsNullOrEmpty(roomName))
         {
-            ShowError("¹æ ÀÌ¸§À» ÀÔ·ÂÇÏ¼¼¿ä.");
+            Debug.LogError("ë°© ì´ë¦„ì„ ì…ë ¥í•˜ì„¸ìš”.");
             return;
         }
 
-        if (string.IsNullOrEmpty(currentChannelId))
+        if (string.IsNullOrEmpty(currentChannel))
         {
-            ShowError("Ã¤³Î ID¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.");
+            Debug.LogError("ì±„ë„ IDë¥¼ ì„¤ì •í•˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
             return;
         }
 
-        string roomId = await GameRoomManager.Instance.CreateRoomInChannel(currentChannelId, roomName);
+        string roomId = await GameRoomManager.Instance.CreateRoom(currentChannel, playerInfo);
         if (!string.IsNullOrEmpty(roomId))
         {
-            Debug.Log($"[RoomCreationUI] ¹æ »ı¼º ¼º°ø: {roomName} (Room ID: {roomId})");
+            Debug.Log($"[RoomCreationUI] ë°© ìƒì„± ì„±ê³µ: {roomName} (Room ID: {roomId})");
             roomNameInput.text = "";
-            LoadRoomList();
+            LoadRoomList(currentChannel);
         }
         else
         {
-            ShowError("¹æ »ı¼º¿¡ ½ÇÆĞÇß½À´Ï´Ù. ´Ù½Ã ½ÃµµÇÏ¼¼¿ä.");
+            Debug.LogError("ë°© ìƒì„±ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤. ë‹¤ì‹œ ì‹œë„í•˜ì„¸ìš”.");
         }
     }
-
-    public void OnCancelClicked()
+    public void OnCloseClick()
     {
         createRoomButton.onClick.RemoveAllListeners();
-        //rankingButton.onClick.RemoveAllListeners();
         closeButton.onClick.RemoveAllListeners();
         base.Close();
-    }
-
-    private void ShowError(string message)
-    {
-        errorMessage.text = message;
-        errorMessage.gameObject.SetActive(true);
     }
 }
