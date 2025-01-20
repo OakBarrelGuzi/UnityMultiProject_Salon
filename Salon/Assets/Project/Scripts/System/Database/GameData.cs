@@ -102,7 +102,7 @@ namespace Salon.Firebase.Database
         public Dictionary<GameType, UserStats> GameStats { get; set; }
         public Dictionary<string, InviteData> Invites { get; set; }
         public Dictionary<string, FriendRequestData> FriendRequests { get; set; }
-
+        public int bestDartScore { get; set; }
         public UserData()
         {
             DisplayName = "";
@@ -112,6 +112,7 @@ namespace Salon.Firebase.Database
             GameStats = new Dictionary<GameType, UserStats>();
             Invites = new Dictionary<string, InviteData>();
             FriendRequests = new Dictionary<string, FriendRequestData>();
+            bestDartScore = 0;
         }
     }
     [Serializable]
@@ -242,6 +243,8 @@ namespace Salon.Firebase.Database
         public GamePlayerState State { get; set; }
         public Dictionary<string, object> GameSpecificData { get; set; }
         public string Position { get; set; }
+
+        public AnimType Animation { get; set; }
 
         public GamePlayerData(string displayName, bool isHost = false)
         {

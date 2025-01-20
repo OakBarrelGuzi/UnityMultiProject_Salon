@@ -22,12 +22,34 @@ namespace Salon.Inven
         private int siblingIndex;
 
         public Vector2 originalPosition { get; private set; }
+        
+        //테스트용
+        //private void Start()
+        //{
+        //    rectTransform = GetComponent<RectTransform>();
+        //    canvas = GetComponentInParent<Canvas>();
+        //    if (this.ItemData == null)
+        //    {
+        //        ItemData data = new ItemData()
+        //        {
+        //            itemCost = Random.Range(0, 100),
+        //            itemName = "안녕",
+        //            itemType = itemType.Emoji,
+        //        };
+        //        this.ItemData = data;
+        //    }
+        //    if (itemImage != null)
+        //    {
+        //        image.sprite = itemImage;
+        //    }
+        //}
 
 
         public virtual void Initialize(ItemData itemData)
         {
             rectTransform = GetComponent<RectTransform>();
             canvas = GetComponentInParent<Canvas>();
+
             ItemData data = new ItemData()
             {
                 itemCost = itemData.itemCost,
@@ -35,6 +57,7 @@ namespace Salon.Inven
                 itemType = itemData.itemType,
             };
             this.ItemData = data;
+
             if (itemImage != null)
             {
                 image.sprite = itemImage;

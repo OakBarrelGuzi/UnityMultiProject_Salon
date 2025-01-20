@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Firebase;
+using Firebase.Database;
 
 
 public class MemoryGameManager : MonoBehaviour
@@ -54,6 +56,7 @@ public class MemoryGameManager : MonoBehaviour
 
     public void CardOpen(Card card)
     {
+        // ³ª´©¸§
         openCardList.Add(card);
         StartCoroutine(TurnRoutine(card));
         if (openCardList.Count >= 2)

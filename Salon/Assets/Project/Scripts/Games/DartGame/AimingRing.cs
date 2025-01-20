@@ -2,18 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AimingRing : MonoBehaviour
+namespace Salon.DartGame
 {
-    [HideInInspector]
-    public Vector3 startScale;
-
-    public Transform innerLine;
-
-    public Transform outerLine;
-
-    private void Awake()
+    public class AimingRing : MonoBehaviour
     {
-        startScale = transform.localScale;
-    }
+        [HideInInspector]
+        public Vector3 startScale;
 
+        public Transform innerLine;
+
+        public Transform outerLine;
+
+        private void Awake()
+        {
+            startScale = transform.localScale;
+        }
+
+    }
 }

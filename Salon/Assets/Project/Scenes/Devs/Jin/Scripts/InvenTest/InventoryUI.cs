@@ -12,36 +12,38 @@ namespace Salon.Inven
         [SerializeField]
         private Button animeInvenButton;
         [SerializeField]
+        private Button invenExitButton;
+        [SerializeField]
         private GameObject emojiInven;
         [SerializeField]
         private GameObject animeInven;
 
+        [SerializeField]
+        private GameObject emojiPopupPanel;
+        [SerializeField]
+        private GameObject animePopupPanel;
         private void Awake()
         {
-            emojiInvenButton.onClick.AddListener(OnEmojinButtonClick);
-            animeInvenButton.onClick.AddListener(OnAnimeButtonClick);
-
-            emojiInven.SetActive(false);
-            animeInven.SetActive(false);
-        }
-
-
-
-        private void OnEmojinButtonClick()
-        {
-            if (emojiInven.gameObject.activeSelf == false)
+            invenExitButton.onClick.AddListener(()=>gameObject.SetActive(false));
+            emojiInvenButton.onClick.AddListener(() => 
             {
                 emojiInven.SetActive(true);
+                emojiPopupPanel.SetActive(true);
                 animeInven.SetActive(false);
-            }
-        }
-        private void OnAnimeButtonClick()
-        {
-            if (animeInven.gameObject.activeSelf == false)
+                animePopupPanel.SetActive(false);
+            });
+            animeInvenButton.onClick.AddListener(() =>
             {
                 animeInven.SetActive(true);
+                animePopupPanel.SetActive(true);
                 emojiInven.SetActive(false);
-            }
+                emojiPopupPanel.SetActive(false);
+            } );
+
+            emojiInven.SetActive(true);
+            emojiPopupPanel.SetActive(true );
+            animeInven.SetActive(false);
+            animePopupPanel.SetActive(false);
         }
     }
 }

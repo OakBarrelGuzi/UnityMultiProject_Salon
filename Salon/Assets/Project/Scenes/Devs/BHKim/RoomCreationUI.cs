@@ -17,16 +17,16 @@ public class RoomCreationUI : Panel
     public GameObject roomItemPrefab;
 
     private string playerInfo = "PlayerID";
-    private string currentChannel;
+    private string curChanel;
     public override void Open()
     {
         base.Open();
         Initialize();
-        LoadRoomList(currentChannel); // í˜„ì¬ ì±„ë„ IDë¡œ ë°© ëª©ë¡ ë¡œë“œ
+        LoadRoomList(curChanel); // ÇöÀç Ã¤³Î ID·Î ¹æ ¸ñ·Ï ·Îµå
     }
 
     public override void Initialize()
-    {
+    {    
         createRoomButton.onClick.RemoveAllListeners();
         createRoomButton.onClick.AddListener(OnCreateRoomClick);
 
@@ -34,36 +34,36 @@ public class RoomCreationUI : Panel
         closeButton.onClick.AddListener(OnCloseClick);
 
         playerInfo = FirebaseManager.Instance.GetCurrentDisplayName();
-        currentChannel = ChannelManager.Instance.CurrentChannel;
+        curChanel = ChannelManager.Instance.CurrentChannel;
     }
 
     public async void LoadRoomList(string channelId)
     {
         try
         {
-            // ë°© ëª©ë¡ ì´ˆê¸°í™”
+            // ¹æ ¸ñ·Ï ÃÊ±âÈ­
             if (roomListContent != null)
             {
                 foreach (Transform child in roomListContent)
                 {
-                    if (child != null && child.gameObject.scene.IsValid()) // Sceneì— ë¡œë“œëœ ì˜¤ë¸Œì íŠ¸ë§Œ ì‚­ì œ
+                    if (child != null && child.gameObject.scene.IsValid()) // Scene¿¡ ·ÎµåµÈ ¿ÀºêÁ§Æ®¸¸ »èÁ¦
                     {
                         Destroy(child.gameObject);
                     }
                 }
             }
 
-            // ë°© ëª©ë¡ ê°€ì ¸ì˜¤ê¸°
+            // ¹æ ¸ñ·Ï °¡Á®¿À±â
             var roomIds = await GameRoomManager.Instance.GetRoomList(channelId);
 
-            // ë°© ëª©ë¡ì´ ë¹„ì–´ ìˆëŠ” ê²½ìš° ì²˜ë¦¬
+            // ¹æ ¸ñ·ÏÀÌ ºñ¾î ÀÖ´Â °æ¿ì Ã³¸®
             if (roomIds == null || roomIds.Count == 0)
             {
-                Debug.Log($"[LoadRoomList] ì±„ë„ {channelId}ì— ë°©ì´ ì—†ìŠµë‹ˆë‹¤.");
+                Debug.Log($"[LoadRoomList] Ã¤³Î {channelId}¿¡ ¹æÀÌ ¾ø½À´Ï´Ù.");
                 return;
             }
 
-            // ë°© ëª©ë¡ ìƒì„±
+            // ¹æ ¸ñ·Ï »ı¼º
             foreach (var roomId in roomIds)
             {
                 GameObject roomItem = Instantiate(roomItemPrefab, roomListContent.transform, false);
@@ -77,7 +77,7 @@ public class RoomCreationUI : Panel
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LoadRoomList] ë°© ëª©ë¡ ë¡œë“œ ì¤‘ ì˜¤ë¥˜ ë°œìƒ: {ex.Message}");
+            Debug.LogError($"[LoadRoomList] ¹æ ¸ñ·Ï ·Îµå Áß ¿À·ù ¹ß»ı: {ex.Message}");
         }
     }
 
@@ -100,26 +100,26 @@ public class RoomCreationUI : Panel
 
         if (string.IsNullOrEmpty(roomName))
         {
-            Debug.LogError("ë°© ì´ë¦„ì„ ì…ë ¥í•˜ì„¸ìš”.");
+            Debug.LogError("¹æ ÀÌ¸§À» ÀÔ·ÂÇÏ¼¼¿ä.");
             return;
         }
 
-        if (string.IsNullOrEmpty(currentChannel))
+        if (string.IsNullOrEmpty(curChanel))
         {
-            Debug.LogError("ì±„ë„ IDë¥¼ ì„¤ì •í•˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
+            Debug.LogError("Ã¤³Î ID¸¦ ¼³Á¤ÇÏÁö ¾Ê¾Ò½À´Ï´Ù.");
             return;
         }
 
-        string roomId = await GameRoomManager.Instance.CreateRoom(currentChannel, playerInfo);
+        string roomId = await GameRoomManager.Instance.CreateRoom(curChanel, playerInfo);
         if (!string.IsNullOrEmpty(roomId))
         {
-            Debug.Log($"[RoomCreationUI] ë°© ìƒì„± ì„±ê³µ: {roomName} (Room ID: {roomId})");
+            Debug.Log($"[RoomCreationUI] ¹æ »ı¼º ¼º°ø: {roomName} (Room ID: {roomId})");
             roomNameInput.text = "";
-            LoadRoomList(currentChannel);
+            LoadRoomList(curChanel);
         }
         else
         {
-            Debug.LogError("ë°© ìƒì„±ì— ì‹¤íŒ¨í–ˆìŠµë‹ˆë‹¤. ë‹¤ì‹œ ì‹œë„í•˜ì„¸ìš”.");
+            Debug.LogError("¹æ »ı¼º¿¡ ½ÇÆĞÇß½À´Ï´Ù. ´Ù½Ã ½ÃµµÇÏ¼¼¿ä.");
         }
     }
     public void OnCloseClick()
