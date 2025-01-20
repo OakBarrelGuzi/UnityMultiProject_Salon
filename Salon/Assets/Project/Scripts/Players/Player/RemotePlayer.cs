@@ -69,5 +69,10 @@ namespace Salon.Character
 
             Debug.Log($"[RemotePlayer] {displayName} 업데이트 - Pos: {targetPosition}, Dir: {targetDirection}, Moving: {isMoving}");
         }
+
+        public void PlayAnimation()
+        {
+            animator.SetTrigger("Test");
+        }
     }
 }

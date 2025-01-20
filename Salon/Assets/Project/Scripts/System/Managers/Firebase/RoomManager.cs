@@ -20,6 +20,8 @@ namespace Salon.Firebase
         public DatabaseReference CurrentChannelPlayersRef { get; private set; }
         private Dictionary<string, GameObject> instantiatedPlayers = new Dictionary<string, GameObject>();
         private Dictionary<string, Query> playerPositionQueries = new Dictionary<string, Query>();
+        private Dictionary<string, Query> playerAnimationQueries = new Dictionary<string, Query>();
+
         public LocalPlayer localPlayerPrefab;
         public RemotePlayer remotePlayerPrefab;
         public Transform spawnParent;
@@ -160,17 +162,20 @@ namespace Salon.Firebase
         {
             try
             {
-                print("[RoomManager] 플레이어 위치 변경 구독 시작: " + displayName);
+                print("[RoomManager] 플레이어 위치/애니메이션션 변경 구독 시작: " + displayName);
                 if (playerPositionQueries.ContainsKey(displayName))
                 {
                     print($"[RoomManager] 플레이어 위치 변경 구독 중복: {displayName}");
                     playerPositionQueries[displayName].ValueChanged -= OnPositionChanged;
                 }
-                print("[RoomManager] 플레이어 위치 변경 구독 중복 해제 완료: " + displayName);
+                print("[RoomManager] 플레이어 위치/애니메이션 변경 구독 중복 해제 완료: " + displayName);
                 var positionQuery = CurrentChannelPlayersRef.Child(displayName).Child("Position");
                 positionQuery.ValueChanged += OnPositionChanged;
-                print("[RoomManager] 플레이어 위치 변경 구독 완료: " + displayName);
+                var animationQuery = CurrentChannelPlayersRef.Child(displayName).Child("Animation");
+                animationQuery.ValueChanged += OnAnimationChanged;
+                print("[RoomManager] 플레이어 위치/애니메이션 변경 구독 완료: " + displayName);
                 playerPositionQueries[displayName] = positionQuery;
+                playerAnimationQueries[displayName] = animationQuery;
                 Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 완료");
             }
             catch (Exception ex)
@@ -186,6 +191,30 @@ namespace Salon.Firebase
                 query.ValueChanged -= OnPositionChanged;
                 playerPositionQueries.Remove(displayName);
                 Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 해제 완료");
+            }
+        }
+
+        private void OnAnimationChanged(object sender, ValueChangedEventArgs args)
+        {
+            if (!args.Snapshot.Exists)
+            {
+                Debug.Log("[RoomManager] OnAnimationChanged : 스냅샷이 존재하지 않음");
+                return;
+            }
+            var displayName = args.Snapshot.Reference.Parent.Key;
+
+            if (displayName == FirebaseManager.Instance.GetCurrentDisplayName())
+            {
+                Debug.Log("나 본인 OnAnimationChanged가 바뀜");
+                return;
+            }
+
+            if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
+            {
+                //string type = args.Snapshot.Value as string;
+                //AnimType animtype = (AnimType)int.Parse(type);
+                var Player = playerObject.GetComponent<RemotePlayer>();
+                Player.PlayAnimation();
             }
         }
 

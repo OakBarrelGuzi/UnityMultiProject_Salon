@@ -38,3 +38,9 @@ public enum GameType
     HoldBeerGame
 
 }
+
+public enum AnimType
+{
+    None,
+    Beer
+}

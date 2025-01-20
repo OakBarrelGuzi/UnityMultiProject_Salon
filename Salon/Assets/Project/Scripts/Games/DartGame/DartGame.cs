@@ -1,9 +1,12 @@
+using Salon.Firebase;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 namespace Salon.DartGame
 {
@@ -40,19 +43,18 @@ namespace Salon.DartGame
 
         private int[] roundScore = new int[MAXROUND];
 
-        [SerializeField, Header("Á¶ÀÌ½ºÆ½ ¹«ºê ½ºÇÇµå")]
-        private float joystickMoveSpeed = 0.3f;
-        [SerializeField, Header("·£´ı ¹æÇâ ¹«ºê ½ºÇÇµå")]
-        private float randomMoveSpeed = 0.15f;
-        [SerializeField, Header("ÅÏ°ú ÅÏ»çÀÌ µô·¹ÀÌ½Ã°£")]
-        private float turnWait = 1f;
-        [SerializeField, Header("Á¶ÁØ¿øÀÌ ÀÛ¾ÆÁö´Â ÃÑ½Ã°£")]
+        [SerializeField, Header("ì¡°ì´ìŠ¤í‹± ì¡°ì¤€ì› ìŠ¤í”¼ë“œ")]
+        private float joystickMoveSpeed = 1f;
+        [SerializeField, Header("ëœë¤ ì¡°ì¤€ì› ìŠ¤í”¼ë“œ")]
+        private float randomMoveSpeed = 0.9f;
+        [SerializeField, Header("ê° í„´ì‚¬ì´ ë”œë ˆì´ì‹œê°„")]
+        private float turnWait = 2f;
+        [SerializeField, Header("ì—ì„ì´ ì¤„ì–´ë“œëŠ” ì‹œê°„")]
         private float aimingDelay = 0.8f;
-        [SerializeField, Header("Á¶ÁØ¿øÀÌ ÀÛ¾ÆÁö´Â µô·¹ÀÌ½Ã°£")]
-        private float aimingRoutineDelay = 0.01f;
-        [SerializeField, Header("µô·¹ÀÌ¸¶´Ù Á¶ÁØ¿øÀÌ ÀÛ¾ÆÁö´Â ¹èÀ²")]
-        private float aimingShrinkScale = 0.98f;
-
+        [SerializeField, Header("ì—ì„ì´ ì¤„ì–´ë“œëŠ” í‹± ë”œë ˆì´")]
+        private float aimingRoutineDelay = 0.03f;
+        [SerializeField, Header("ì—ì„ì´ í‹±ë‹¹ ì¤„ì–´ë“œëŠ” ë¹„ìœ¨")]
+        private float aimingShrinkScale = 0.96f;
 
         private DartGameUI gameUi;
 
@@ -138,7 +140,6 @@ namespace Salon.DartGame
             ranPosArrival = false;
 
         }
-
 
         private void Update()
         {
@@ -299,7 +300,7 @@ namespace Salon.DartGame
 
         public void ShootButtonClick()
         {
-            print("ShootButtonÈ£Ãâ");
+            print("ShootButtonÈ£ï¿½ï¿½");
             isRandomMoving = false;
             isMove = false;
             isWaitInput = true;
@@ -315,7 +316,7 @@ namespace Salon.DartGame
 
         public void ShootDartArrow()
         {
-            print("ShootDartArrowÈ£Ãâ");
+            print("ShootDartArrowÈ£ï¿½ï¿½");
             isWaitShootButton = true;
             gameUi.shootButton.onClick?.RemoveListener(ShootDartArrow);
             SpawnArrow();
@@ -338,7 +339,7 @@ namespace Salon.DartGame
             RoundManagement();
         }
 
-        //ÅÏÁõ°¡ ¹× ¶ó¿îµå Áõ°¡ Ã³¸® ¹× ´ÙÀ½ »çÀÌÅ¬ ÁøÇàÀ» À§ÇÑ ÃÊ±âÈ­ 
+        //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ Ã³ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Å¬ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½È­ 
         public void RoundManagement()
         {
             turn++;
@@ -356,7 +357,8 @@ namespace Salon.DartGame
                 darts.Clear();
                 if (round > MAXROUND)
                 {
-                    print(totalScore);
+
+                    GameEnd();
                     return;
                 }
                 StartCoroutine(RoundSet());
@@ -381,7 +383,7 @@ namespace Salon.DartGame
             StartCoroutine(GameRoutine());
         }
 
-        //TODO: Áß°£Áß°£ ÀÌº¥Æ®³ª ¸ğ¼Çµé ³Ö±â
+        //TODO: ï¿½ß°ï¿½ï¿½ß°ï¿½ ï¿½Ìºï¿½Æ®ï¿½ï¿½ ï¿½ï¿½Çµï¿½ ï¿½Ö±ï¿½
         private IEnumerator GameRoutine()
         {
             SpawnAimingRing();
@@ -418,7 +420,7 @@ namespace Salon.DartGame
             }
         }
 
-        //TODO: µµÂøÇÏ¸é À§Ä¡ ¹Ù²î°Ô ¼öÁ¤
+        //TODO: ï¿½ï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ ï¿½ï¿½Ä¡ ï¿½Ù²ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
         private IEnumerator RingRandomMoveRoutine()
         {
             while (!isWaitBreath)
@@ -434,6 +436,44 @@ namespace Salon.DartGame
                 yield return null;
             }
             isRandomMoving = false;
+        }
+
+        private async void GameEnd()
+        {
+            int myTopSocre = 0;
+
+            var UserUID = FirebaseManager.Instance.CurrentUserUID;
+
+            var currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("bestDartScore");
+
+            try
+            {
+                var snapshot = await currentUserRef.GetValueAsync();
+                if (snapshot.Exists)
+                {
+                    myTopSocre = int.Parse(snapshot.Value.ToString());
+                }
+                else
+                {
+                    Debug.Log("ì ìˆ˜ ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"ì ìˆ˜ ê°€ì ¸ì˜¤ê¸° ì‹¤íŒ¨: {e.Message}");
+            }
+
+            if (myTopSocre < totalScore)
+            {
+                await currentUserRef.SetValueAsync(totalScore);
+                gameUi.dartResultPanel.gameObject.SetActive(true);
+                gameUi.dartResultPanel.Textset(totalScore);
+            }
+            else
+            {
+                ScenesManager.Instance.ChanageScene("LobbyScene");
+            }
+
         }
     }
 }

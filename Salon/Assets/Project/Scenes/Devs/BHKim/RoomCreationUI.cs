@@ -25,15 +25,15 @@ public class RoomCreationUI : Panel
         LoadRoomList(curChanel); // 현재 채널 ID로 방 목록 로드
     }
 
-    private void Initialize()
-    {
+    public override void Initialize()
+    {    
         createRoomButton.onClick.RemoveAllListeners();
         createRoomButton.onClick.AddListener(OnCreateRoomClick);
 
         closeButton.onClick.RemoveAllListeners();
         closeButton.onClick.AddListener(OnCloseClick);
 
-        playerInfo = FirebaseManager.Instance.CurrentUserName;
+        playerInfo = FirebaseManager.Instance.GetCurrentDisplayName();
         curChanel = ChannelManager.Instance.CurrentChannel;
     }
 
