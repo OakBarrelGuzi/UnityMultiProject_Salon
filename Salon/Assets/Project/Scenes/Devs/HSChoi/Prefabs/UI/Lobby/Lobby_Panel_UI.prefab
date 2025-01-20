@@ -1796,8 +1796,9 @@ MonoBehaviour:
       m_Calls: []
   m_text: 50,000
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 62aa4d7a82df3454bb87bf08165483b1, type: 2}
+  m_sharedMaterial: {fileID: 2074185014867903490, guid: 62aa4d7a82df3454bb87bf08165483b1,
+    type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1821,7 +1822,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 72
+  m_fontSize: 60.75
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2069,7 +2070,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 17.65
+  m_fontSize: 19.95
   m_fontSizeBase: 28
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -2195,6 +2196,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4171303554420931315}
   - component: {fileID: 2522182119360600151}
+  - component: {fileID: 7737623466618516510}
   m_Layer: 5
   m_Name: Joystick_Button
   m_TagString: Untagged
@@ -2246,7 +2248,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 0
+  m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -2267,10 +2269,23 @@ MonoBehaviour:
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
   m_Interactable: 1
-  m_TargetGraphic: {fileID: 0}
+  m_TargetGraphic: {fileID: 7311145145698668377}
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &7737623466618516510
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4733897702529453902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aae136db9f5f8124ba4aa1c60c2aaf6a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popupButton: {fileID: 2522182119360600151}
 --- !u!1 &4839579926438079639
 GameObject:
   m_ObjectHideFlags: 0

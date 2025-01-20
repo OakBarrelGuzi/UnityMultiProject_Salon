@@ -34,16 +34,11 @@ public class FriendsPanel : Panel
 
     public override void Initialize()
     {
-        StartCoroutine(InitializeRoutine());
-    }
-
-    public IEnumerator InitializeRoutine()
-    {
-        yield return new WaitUntil(() => FriendManager.Instance.isInitialized);
         friendsInfoUIList.Clear();
         closeButton.onClick.AddListener(() => Close());
         sendFriendRequestButton.onClick.AddListener(OnSendFriendRequestButtonClick);
         inviteFriendButton.onClick.AddListener(OnInviteFriendButtonClick);
+
     }
 
     private void ClearFriendsList()
@@ -122,8 +117,9 @@ public class FriendsPanel : Panel
     {
         try
         {
-            //await FriendManager.Instance.SendInvite(friendId, ChannelManager.Instance.CurrentChannel);
+            await FriendManager.Instance.SendInvite(friendId);
             inviteFriendInputField.text = "";
+            LogManager.Instance.ShowLog($"{friendId}님에게 채널 초대를 보냈습니다.");
         }
         catch (System.Exception ex)
         {

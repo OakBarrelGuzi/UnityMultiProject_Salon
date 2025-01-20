@@ -1,8 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Salon.Firebase.Database;
+using Salon.Firebase;
 
 public class ChatBox : MonoBehaviour
 {
@@ -12,8 +12,16 @@ public class ChatBox : MonoBehaviour
 
     public void SetChatBox(string sender, string message, Sprite emoji = null)
     {
-        senderText.text = $"{sender} : ";
-        messageText.text = message;
+        if (sender == FirebaseManager.Instance.GetCurrentDisplayName())
+        {
+            senderText.text = $"<color=#7BFF75>{DisplayNameUtils.RemoveTag(sender)}</color> : ";
+            messageText.text = $"<color=#7BFF75>{message}</color>";
+        }
+        else
+        {
+            senderText.text = $"{DisplayNameUtils.RemoveTag(sender)} : ";
+        }
+
         if (emoji != null)
         {
             emojiImage.sprite = emoji;

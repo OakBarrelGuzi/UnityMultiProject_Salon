@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using UnityEngine;
+
 
 public class MemoryGameManager : MonoBehaviour
 {
@@ -39,16 +39,16 @@ public class MemoryGameManager : MonoBehaviour
         foreach (int i in randomCardSet)
         {
             Card card = Instantiate(cardPrefab, cardSpawnPos[i]);
-            
+
             card.cardData = new InGameCard
             {
-                 cardType = (CARDTYPE)cardnum,
-                 cardSprite = cardsprite[cardnum],
+                cardType = (CARDTYPE)cardnum,
+                cardSprite = cardsprite[cardnum],
             };
             card.Initialize(this);
             tableCardList.Add(card);
             cardnum++;
-            if (cardnum > 6 ) cardnum = 0;
+            if (cardnum > 6) cardnum = 0;
         }
     }
 
@@ -56,12 +56,12 @@ public class MemoryGameManager : MonoBehaviour
     {
         openCardList.Add(card);
         StartCoroutine(TurnRoutine(card));
-        if(openCardList.Count >= 2)
+        if (openCardList.Count >= 2)
         {
             isCardFull = true;
             StartCoroutine(CardCheckRoutine());
         }
- 
+
     }
     private IEnumerator CardCheckRoutine()
     {
@@ -83,7 +83,7 @@ public class MemoryGameManager : MonoBehaviour
         else
         {
             print("카드가 다름");
-            StartCoroutine(FailRoutine());            
+            StartCoroutine(FailRoutine());
         }
     }
     public IEnumerator FailRoutine()
@@ -100,7 +100,7 @@ public class MemoryGameManager : MonoBehaviour
     {
         float elapsedTime = 0f;
         card.cardOpen = !card.cardOpen;
-        
+
         card.isTurning = true;
 
         while (elapsedTime < 1f)
@@ -110,7 +110,7 @@ public class MemoryGameManager : MonoBehaviour
             card.transform.localRotation =
                 Quaternion.Slerp(card.startQuaternion,
                 card.targetQuaternion,
-                elapsedTime *card.turnSpeed);
+                elapsedTime * card.turnSpeed);
             yield return null;
         }
         Quaternion temp = card.startQuaternion;

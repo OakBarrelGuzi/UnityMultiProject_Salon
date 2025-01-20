@@ -12,6 +12,8 @@ namespace Salon.Controller
         public RectTransform directionalPointer;
         public RectTransform dpadCosmetic;
 
+        public PopupButton popupButton;
+
         public float innerRadius;
         public float pointerRadius;
 

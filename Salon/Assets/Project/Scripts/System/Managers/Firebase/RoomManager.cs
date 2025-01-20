@@ -8,6 +8,7 @@ using Salon.Firebase.Database;
 using System.Threading.Tasks;
 using Salon.Character;
 using Salon.System;
+using System.Drawing.Printing;
 
 namespace Salon.Firebase
 {
@@ -17,13 +18,11 @@ namespace Salon.Firebase
         private DatabaseReference channelsRef;
         private DatabaseReference currentChannelRef;
         public DatabaseReference CurrentChannelPlayersRef { get; private set; }
-        private Query currentPlayersQuery;
         private Dictionary<string, GameObject> instantiatedPlayers = new Dictionary<string, GameObject>();
         private Dictionary<string, Query> playerPositionQueries = new Dictionary<string, Query>();
         public LocalPlayer localPlayerPrefab;
         public RemotePlayer remotePlayerPrefab;
         public Transform spawnParent;
-        private string currentChannel;
 
         public async Task Initialize()
         {
@@ -76,7 +75,6 @@ namespace Salon.Firebase
 
             currentChannelRef = channelsRef.Child(channelName);
             CurrentChannelPlayersRef = currentChannelRef.Child("Players");
-            currentChannel = channelName;
             Debug.Log($"[RoomManager] 채널 레퍼런스 업데이트 완료: {channelName}");
         }
 
@@ -84,18 +82,16 @@ namespace Salon.Firebase
         {
             currentChannelRef = null;
             CurrentChannelPlayersRef = null;
-            currentPlayersQuery = null;
-            currentChannel = null;
             Debug.Log("[RoomManager] 채널 레퍼런스 초기화 완료");
         }
 
         public void UnsubscribeFromChannel()
         {
-            if (currentPlayersQuery != null)
+            if (CurrentChannelPlayersRef != null)
             {
-                currentPlayersQuery.ChildAdded -= OnPlayerAdded;
-                currentPlayersQuery.ChildRemoved -= OnPlayerRemoved;
-                currentPlayersQuery = null;
+                CurrentChannelPlayersRef.ChildAdded -= OnPlayerAdded;
+                CurrentChannelPlayersRef.ChildRemoved -= OnPlayerRemoved;
+                CurrentChannelPlayersRef = null;
             }
 
             foreach (var query in playerPositionQueries.Values)
@@ -136,7 +132,7 @@ namespace Salon.Firebase
                     foreach (var child in snapshot.Children)
                     {
                         var displayName = child.Key;
-                        if (displayName != FirebaseManager.Instance.CurrentUserName)
+                        if (displayName != FirebaseManager.Instance.GetCurrentDisplayName())
                         {
                             var playerData = JsonConvert.DeserializeObject<GamePlayerData>(child.GetRawJsonValue());
                             if (!instantiatedPlayers.ContainsKey(displayName))
@@ -148,9 +144,8 @@ namespace Salon.Firebase
                     }
                 }
 
-                currentPlayersQuery = CurrentChannelPlayersRef;
-                currentPlayersQuery.ChildAdded += OnPlayerAdded;
-                currentPlayersQuery.ChildRemoved += OnPlayerRemoved;
+                CurrentChannelPlayersRef.ChildAdded += OnPlayerAdded;
+                CurrentChannelPlayersRef.ChildRemoved += OnPlayerRemoved;
 
                 Debug.Log("[RoomManager] 플레이어 변경사항 구독 완료");
             }
@@ -165,13 +160,16 @@ namespace Salon.Firebase
         {
             try
             {
+                print("[RoomManager] 플레이어 위치 변경 구독 시작: " + displayName);
                 if (playerPositionQueries.ContainsKey(displayName))
                 {
+                    print($"[RoomManager] 플레이어 위치 변경 구독 중복: {displayName}");
                     playerPositionQueries[displayName].ValueChanged -= OnPositionChanged;
                 }
-
+                print("[RoomManager] 플레이어 위치 변경 구독 중복 해제 완료: " + displayName);
                 var positionQuery = CurrentChannelPlayersRef.Child(displayName).Child("Position");
                 positionQuery.ValueChanged += OnPositionChanged;
+                print("[RoomManager] 플레이어 위치 변경 구독 완료: " + displayName);
                 playerPositionQueries[displayName] = positionQuery;
                 Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 완료");
             }
@@ -202,7 +200,7 @@ namespace Salon.Firebase
             var displayName = args.Snapshot.Reference.Parent.Key;
             Debug.Log($"[RoomManager] OnPositionChanged: 플레이어 {displayName}의 위치 변경 감지");
 
-            if (displayName == FirebaseManager.Instance.CurrentUserName)
+            if (displayName == FirebaseManager.Instance.CurrnetUserDisplayName)
             {
                 Debug.Log("[RoomManager] OnPositionChanged: 로컬 플레이어의 위치 변경은 무시");
                 return;
@@ -245,7 +243,7 @@ namespace Salon.Firebase
             if (!e.Snapshot.Exists) return;
 
             var displayName = e.Snapshot.Key;
-            if (displayName == FirebaseManager.Instance.CurrentUserName) return;
+            if (displayName == FirebaseManager.Instance.CurrnetUserDisplayName) return;
 
             try
             {
@@ -326,9 +324,9 @@ namespace Salon.Firebase
             }
         }
 
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        void OnApplicationQuit()
         {
-            Debug.Log($"[RoomManager] 씬 로드됨: {scene.name}");
+            UnsubscribeFromChannel();
         }
 
         public async Task JoinChannel(string channelName)
@@ -337,14 +335,13 @@ namespace Salon.Firebase
             {
                 Debug.Log($"[RoomManager] 채널 {channelName} 입장 시작");
 
-                // 채널 참조 업데이트
+                DestroyAllPlayers();
+
                 UpdateChannelReferences(channelName);
 
-                // 로컬 플레이어 생성
-                var playerData = new GamePlayerData(FirebaseManager.Instance.CurrentUserName);
-                InstantiatePlayer(FirebaseManager.Instance.CurrentUserName, playerData, isLocalPlayer: true);
+                var playerData = new GamePlayerData(FirebaseManager.Instance.GetCurrentDisplayName());
+                InstantiatePlayer(FirebaseManager.Instance.GetCurrentDisplayName(), playerData, isLocalPlayer: true);
 
-                // 다른 플레이어들 구독
                 await SubscribeToPlayerChanges(channelName);
 
                 Debug.Log($"[RoomManager] 채널 {channelName} 입장 완료");

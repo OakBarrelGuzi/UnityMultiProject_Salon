@@ -87,5 +87,38 @@ namespace Salon.Character
 
             return hasChanged;
         }
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (other.CompareTag("Interactive"))
+            {
+                var interactionComponent = other.GetComponent<InteractionComponent>();
+                if (interactionComponent != null)
+                {
+                    inputController.popupButton.SetInteraction(interactionComponent.InteractionType);
+
+                    if (interactionComponent.InteractionType == InteractionType.DartGame)
+                        UIManager.Instance.OpenPanel(PanelType.DartGame);
+                    else if (interactionComponent.InteractionType == InteractionType.CardGame)
+                        UIManager.Instance.OpenPanel(PanelType.PartyRoom);
+                    else
+                        inputController.popupButton.gameObject.SetActive(true);
+                }
+            }
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (other.CompareTag("Interactive"))
+            {
+                inputController.popupButton.SetInteraction(InteractionType.None);
+                if (other.GetComponent<InteractionComponent>().InteractionType == InteractionType.DartGame)
+                    UIManager.Instance.ClosePanel(PanelType.DartGame);
+                if (other.GetComponent<InteractionComponent>().InteractionType == InteractionType.CardGame)
+                    UIManager.Instance.ClosePanel(PanelType.PartyRoom);
+                else
+                    inputController.popupButton.gameObject.SetActive(false);
+            }
+        }
     }
 }
