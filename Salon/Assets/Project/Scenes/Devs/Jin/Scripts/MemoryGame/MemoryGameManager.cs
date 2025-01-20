@@ -3,17 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using Firebase;
 using Firebase.Database;
+using Salon.Firebase;
+using Salon.Firebase.Database;
+using Newtonsoft.Json;
 
 
 public class MemoryGameManager : MonoBehaviour
 {
     private const int CARDCOUNT = 14;
+    private const int TURN_TIME_LIMIT = 60;
 
     public bool isCardFull { get; private set; } = false;
 
     [SerializeField]
     private Transform[] cardSpawnPos;
-
+        
     private List<Card> tableCardList = new List<Card>();
 
     public Sprite[] cardsprite;
@@ -25,11 +29,45 @@ public class MemoryGameManager : MonoBehaviour
 
     private List<Card> openCardList = new List<Card>();
 
+    private string currentPlayerId;
+    private string roomId;
+    private DatabaseReference roomRef;
+
+    private float turnStartTime;
     private void Start()
     {
         CardRandomSet();
+
+        roomId = GameRoomManager.Instance.currentRoomId;
+        roomRef = FirebaseDatabase.DefaultInstance
+            .GetReference("Channels")
+            .Child(GameRoomManager.Instance.currentChannelId)
+            .Child("GameRooms")
+            .Child(roomId);
+
+        // 턴 시작 시간 초기화
+        turnStartTime = Time.time;
+
+        // Firebase 리스너 등록
+        roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
+        roomRef.Child("Board").ValueChanged += OnBoardChanged;
+    }
+    private void OnDestroy()
+    {
+        // Firebase 리스너 해제
+        roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
+        roomRef.Child("Board").ValueChanged -= OnBoardChanged;
     }
 
+    private void Update()
+    {
+        // 턴 제한 시간 확인
+        if (currentPlayerId == GameRoomManager.Instance.currentPlayerId &&
+            Time.time - turnStartTime > TURN_TIME_LIMIT)
+        {
+            SkipTurn();
+        }
+    }
     private void CardRandomSet()
     {
         HashSet<int> randomCardSet = new HashSet<int>();
@@ -54,8 +92,22 @@ public class MemoryGameManager : MonoBehaviour
         }
     }
 
-    public void CardOpen(Card card)
+    public async void CardOpen(Card card)
     {
+        if (currentPlayerId != GameRoomManager.Instance.currentPlayerId)
+        {
+            Debug.LogWarning("현재 플레이어의 턴이 아닙니다.");
+            return;
+        }
+
+        card.cardOpen = true;
+        string cardId = card.cardData.cardType.ToString();
+        await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
+        {
+            IsFlipped = true,
+            Owner = currentPlayerId
+        }));
+
         // 나누름
         openCardList.Add(card);
         StartCoroutine(TurnRoutine(card));
@@ -122,5 +174,46 @@ public class MemoryGameManager : MonoBehaviour
 
         card.isTurning = false;
     }
+    private void SkipTurn()
+    {
+        Debug.LogWarning("턴 시간 초과. 턴을 넘깁니다.");
+        UpdateTurnToNextPlayer();
+    }
+    private async void UpdateTurnToNextPlayer()
+    {
+        var snapshot = await roomRef.GetValueAsync();
+        if (!snapshot.Exists) return;
 
+        var roomData = JsonConvert.DeserializeObject<GameRoomData>(snapshot.GetRawJsonValue());
+        var players = new List<string>(roomData.Players.Keys);
+        int currentIndex = players.IndexOf(currentPlayerId);
+
+        string nextPlayerId = players[(currentIndex + 1) % players.Count];
+        await roomRef.Child("GameState").Child("CurrentTurnPlayerId").SetValueAsync(nextPlayerId);
+    }
+    private void OnTurnChanged(object sender, ValueChangedEventArgs e)
+    {
+        if (e.Snapshot.Exists)
+        {
+            currentPlayerId = e.Snapshot.Value.ToString();
+            turnStartTime = Time.time;
+            Debug.Log($"현재 턴 플레이어: {currentPlayerId}");
+        }
+    }
+    private void OnBoardChanged(object sender, ValueChangedEventArgs e)
+    {
+        if (e.Snapshot.Exists)
+        {
+            foreach (var child in e.Snapshot.Children)
+            {
+                var cardData = JsonUtility.FromJson<CardData>(child.GetRawJsonValue());
+                var card = tableCardList.Find(c => c.cardData.cardType.ToString() == child.Key);
+
+                if (card != null && cardData.IsFlipped && !card.cardOpen)
+                {
+                    StartCoroutine(TurnRoutine(card));
+                }
+            }
+        }
+    }
 }
