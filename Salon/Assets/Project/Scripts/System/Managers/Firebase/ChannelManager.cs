@@ -296,6 +296,7 @@ namespace Salon.Firebase
             {
                 Debug.Log("[ChannelManager] OnDestroy 시작");
                 CleanupResources();
+
                 Debug.Log("[ChannelManager] OnDestroy 완료");
             }
             catch (Exception ex)
@@ -314,7 +315,7 @@ namespace Salon.Firebase
                 Debug.Log("[ChannelManager] OnApplicationQuit 시작");
                 if (CurrentChannel != null && currentChannelPlayersRef != null)
                 {
-                    await RemovePlayerFromChannel(CurrentChannel, currentUserDisplayName);
+                    await LeaveChannel(true);
                 }
                 CleanupResources();
                 Debug.Log("[ChannelManager] OnApplicationQuit 완료");
