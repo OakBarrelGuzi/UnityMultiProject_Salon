@@ -107,8 +107,6 @@ namespace Salon.Character
 
                     if (interactionComponent.InteractionType == InteractionType.DartGame)
                         UIManager.Instance.OpenPanel(PanelType.DartGame);
-                    else if (interactionComponent.InteractionType == InteractionType.CardGame)
-                        UIManager.Instance.OpenPanel(PanelType.PartyRoom);
                     else
                         inputController.popupButton.gameObject.SetActive(true);
                 }
@@ -122,8 +120,6 @@ namespace Salon.Character
                 inputController.popupButton.SetInteraction(InteractionType.None);
                 if (other.GetComponent<InteractionComponent>().InteractionType == InteractionType.DartGame)
                     UIManager.Instance.ClosePanel(PanelType.DartGame);
-                if (other.GetComponent<InteractionComponent>().InteractionType == InteractionType.CardGame)
-                    UIManager.Instance.ClosePanel(PanelType.PartyRoom);
                 else
                     inputController.popupButton.gameObject.SetActive(false);
             }
