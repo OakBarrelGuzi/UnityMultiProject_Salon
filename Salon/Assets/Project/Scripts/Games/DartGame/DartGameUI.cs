@@ -28,7 +28,7 @@ namespace Salon.DartGame
 
         public OptionPanel optionPanel;
         public ReCheckPanel reCheckPanel;
-
+        public DartResultPanel dartResultPanel;
 
         public JoyStick joyStick;
 

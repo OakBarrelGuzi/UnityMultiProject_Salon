@@ -71,6 +71,10 @@ namespace Salon.Inven
                 print(itemData.itemName);
                 print(itemData.itemType);
             }
+            else
+            {
+                print("아이템이 없어요");
+            }
         }
 
 
