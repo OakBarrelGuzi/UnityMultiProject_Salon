@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using static ShellGameDiffi.Difficult;
-using SellUIManager;
+using Salon.ShellGame;
 public class ShuffleManager : MonoBehaviour
 {
 
@@ -16,8 +16,8 @@ public class ShuffleManager : MonoBehaviour
     [SerializeField]
     private float shuffleDuration = 5;
 
-    [SerializeField]
-    private SellUIManager.ShellGameUIManager uiManager;
+
+    private ShellGameUI uiManager;
 
     [Header("Anime")]
     //초반 애니메이션용 컵과 구슬
@@ -35,7 +35,13 @@ public class ShuffleManager : MonoBehaviour
     public Transform animeMovePoint;
 
 
-
+    private void Start()
+    {
+        UIManager.Instance.CloseAllPanels();
+        UIManager.Instance.OpenPanel(PanelType.ShellGame);
+        uiManager = UIManager.Instance.GetComponentInChildren<ShellGameUI>();
+        uiManager.Initialize(this);
+    }
 
 
     private SHELLDIFFICULTY shellDifficulty;
