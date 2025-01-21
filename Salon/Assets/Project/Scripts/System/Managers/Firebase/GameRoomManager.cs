@@ -6,12 +6,14 @@ using Newtonsoft.Json;
 using System.Threading.Tasks;
 using Salon.System;
 using Salon.Firebase.Database;
+using Salon.DartGame;
 
 namespace Salon.Firebase
 {
     public class GameRoomManager : Singleton<GameRoomManager>
     {
         private DatabaseReference dbReference;
+        private RoomCreationUI roomCreationUI;
         public string currentRoomId;
         public string currentChannelId;
         public string currentPlayerId;
@@ -24,6 +26,7 @@ namespace Salon.Firebase
         {
             dbReference = await GetDbReference();
             Debug.Log("[GameRoomManager] 초기화 완료");
+            roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
         }
 
         private async Task<DatabaseReference> GetDbReference()
@@ -57,7 +60,8 @@ namespace Salon.Firebase
 
             // 1. 방 목록 가져오기
             var roomList = await GetRoomList(channelId);
-
+            roomCreationUI.gameObject.SetActive(true);
+            await Task.Delay(3000);
             // 2. 빈 방 찾기
             foreach (string roomId in roomList)
             {
@@ -141,6 +145,8 @@ namespace Salon.Firebase
         /// </summary>
         public async Task JoinRoom(string channelId, string roomId, string playerInfo)
         {
+            roomCreationUI.gameObject.GetComponent<RoomCreationUI>().OnFind();
+            await Task.Delay(3000);
             try
             {
                 var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
@@ -176,6 +182,8 @@ namespace Salon.Firebase
         }
         private async Task SetHostAsFirstTurn(string channelId, string roomId, string hostPlayerId)
         {
+            roomCreationUI.gameObject.GetComponent<RoomCreationUI>().OnFind();
+            await Task.Delay(3000);
             try
             {
                 var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
