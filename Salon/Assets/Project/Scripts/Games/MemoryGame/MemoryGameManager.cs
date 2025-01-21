@@ -12,6 +12,7 @@ public class MemoryGameManager : MonoBehaviour
     private const int CARDCOUNT = 14;
     private const int TURN_TIME_LIMIT = 60;
 
+    private MemoryGamePanelUi memoryGamePanelUi;
     public bool isCardFull { get; private set; } = false;
 
     [SerializeField]
@@ -50,6 +51,11 @@ public class MemoryGameManager : MonoBehaviour
         // Firebase 리스너 등록
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
+
+        UIManager.Instance.CloseAllPanels();
+        UIManager.Instance.OpenPanel(PanelType.MemoryGame);
+        memoryGamePanelUi = UIManager.Instance.GetComponentInChildren<MemoryGamePanelUi>();
+        memoryGamePanelUi.gameObject.SetActive(true);
     }
     private void OnDestroy()
     {
