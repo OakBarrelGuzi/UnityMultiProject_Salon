@@ -131,6 +131,7 @@ namespace Salon.Firebase
 
                 currentRoomId = newRoomId;
 
+                await SetRoomDeletionOnDisconnect(channelId, newRoomId);
                 roomCreationUI.SetRoomData(newRoomId, channelId, hostPlayerId);
                 Debug.Log($"[GameRoomManager] 방 생성 완료: {newRoomId}");
                 return newRoomId;
@@ -176,6 +177,7 @@ namespace Salon.Firebase
 
                 currentRoomId = roomId;
 
+                await SetRoomDeletionOnDisconnect(channelId, roomId);
                 roomCreationUI.SetRoomData(roomId, channelId, playerInfo);
                 Debug.Log($"[GameRoomManager] 방 참가 완료: {roomId}");
             }
@@ -248,5 +250,20 @@ namespace Salon.Firebase
                 Debug.LogError($"[GameRoomManager] 방 삭제 실패: {ex.Message}");
             }
         }
+        public async Task SetRoomDeletionOnDisconnect(string channelId, string roomId)
+        {
+            try
+            {
+                var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
+
+                await roomRef.OnDisconnect().RemoveValue();
+                Debug.Log($"[GameRoomManager] 클라이언트 연결 해제 시 방 {roomId} 자동 삭제 설정 완료.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GameRoomManager] 연결 해제 시 방 삭제 설정 실패: {ex.Message}");
+            }
+        }
+
     }
 }
