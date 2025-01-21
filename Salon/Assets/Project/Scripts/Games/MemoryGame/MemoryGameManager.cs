@@ -7,7 +7,6 @@ using Salon.Firebase;
 using Salon.Firebase.Database;
 using Newtonsoft.Json;
 
-
 public class MemoryGameManager : MonoBehaviour
 {
     private const int CARDCOUNT = 14;
@@ -17,7 +16,7 @@ public class MemoryGameManager : MonoBehaviour
 
     [SerializeField]
     private Transform[] cardSpawnPos;
-        
+
     private List<Card> tableCardList = new List<Card>();
 
     public Sprite[] cardsprite;
@@ -45,23 +44,23 @@ public class MemoryGameManager : MonoBehaviour
             .Child("GameRooms")
             .Child(roomId);
 
-        // ÅÏ ½ÃÀÛ ½Ã°£ ÃÊ±âÈ­
+        // í„´ ì‹œì‘ ì‹œê°„ ì´ˆê¸°í™”
         turnStartTime = Time.time;
 
-        // Firebase ¸®½º³Ê µî·Ï
+        // Firebase ë¦¬ìŠ¤ë„ˆ ë“±ë¡
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
     }
     private void OnDestroy()
     {
-        // Firebase ¸®½º³Ê ÇØÁ¦
+        // Firebase ë¦¬ìŠ¤ë„ˆ í•´ì œ
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
         roomRef.Child("Board").ValueChanged -= OnBoardChanged;
     }
 
     private void Update()
     {
-        // ÅÏ Á¦ÇÑ ½Ã°£ È®ÀÎ
+        // í„´ ì œí•œ ì‹œê°„ í™•ì¸
         if (currentPlayerId == GameRoomManager.Instance.currentPlayerId &&
             Time.time - turnStartTime > TURN_TIME_LIMIT)
         {
@@ -96,7 +95,7 @@ public class MemoryGameManager : MonoBehaviour
     {
         if (currentPlayerId != GameRoomManager.Instance.currentPlayerId)
         {
-            Debug.LogWarning("ÇöÀç ÇÃ·¹ÀÌ¾îÀÇ ÅÏÀÌ ¾Æ´Õ´Ï´Ù.");
+            Debug.LogWarning("í˜„ì¬ í”Œë ˆì´ì–´ì˜ í„´ì´ ì•„ë‹™ë‹ˆë‹¤.");
             return;
         }
 
@@ -108,7 +107,7 @@ public class MemoryGameManager : MonoBehaviour
             Owner = currentPlayerId
         }));
 
-        // ³ª´©¸§
+        // ë‚˜ëˆ„ë¦„
         openCardList.Add(card);
         StartCoroutine(TurnRoutine(card));
         if (openCardList.Count >= 2)
@@ -124,20 +123,20 @@ public class MemoryGameManager : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
 
-        //»ÌÀº 2°³ÀÇ Ä«µå°¡ °°À»°æ¿ì
-        //TODO:»ó´ëÅÏ ³»ÅÏ ¸¸µé¾î¾ßÇÔ
+        //ë½‘ì€ 2ê°œì˜ ì¹´ë“œê°€ ê°™ì„ê²½ìš°
+        //TODO:ìƒëŒ€í„´ ë‚´í„´ ë§Œë“¤ì–´ì•¼í•¨
         if (openCardList[0].cardData.cardType ==
               openCardList[1].cardData.cardType)
         {
-            //TODO: Á¡¼ö ¸¸µé¾î¾ßÇÔ         
-            print("Ä«µå°¡ °°À½!");
+            //TODO: ì ìˆ˜ ë§Œë“¤ì–´ì•¼í•¨         
+            print("ì¹´ë“œê°€ ê°™ìŒ!");
             openCardList.Clear();
             isCardFull = false;
         }
-        //»ÌÀº 2°³ÀÇ Ä«µå°¡ ´Ù¸¦°æ¿ì
+        //ë½‘ì€ 2ê°œì˜ ì¹´ë“œê°€ ë‹¤ë¥¼ê²½ìš°
         else
         {
-            print("Ä«µå°¡ ´Ù¸§");
+            print("ì¹´ë“œê°€ ë‹¤ë¦„");
             StartCoroutine(FailRoutine());
         }
     }
@@ -176,7 +175,7 @@ public class MemoryGameManager : MonoBehaviour
     }
     private void SkipTurn()
     {
-        Debug.LogWarning("ÅÏ ½Ã°£ ÃÊ°ú. ÅÏÀ» ³Ñ±é´Ï´Ù.");
+        Debug.LogWarning("í„´ ì‹œê°„ ì´ˆê³¼. í„´ì„ ë„˜ê¹ë‹ˆë‹¤.");
         UpdateTurnToNextPlayer();
     }
     private async void UpdateTurnToNextPlayer()
@@ -197,7 +196,7 @@ public class MemoryGameManager : MonoBehaviour
         {
             currentPlayerId = e.Snapshot.Value.ToString();
             turnStartTime = Time.time;
-            Debug.Log($"ÇöÀç ÅÏ ÇÃ·¹ÀÌ¾î: {currentPlayerId}");
+            Debug.Log($"í˜„ì¬ í„´ í”Œë ˆì´ì–´: {currentPlayerId}");
         }
     }
     private void OnBoardChanged(object sender, ValueChangedEventArgs e)

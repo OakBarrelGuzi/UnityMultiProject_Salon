@@ -7423,7 +7423,7 @@ GameObject:
   - component: {fileID: 7309319964486746263}
   - component: {fileID: 8598890890326605520}
   - component: {fileID: 2483973221634199406}
-  - component: {fileID: 5853628833062825018}
+  - component: {fileID: 8598890890326605521}
   m_Layer: 0
   m_Name: Card_Place_Obj
   m_TagString: Untagged
@@ -28716,49 +28716,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &5853628833062825018
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1434086184337051326}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe7e1dc58e939a540ad2b472692afc3c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cardSpawnPos:
-  - {fileID: 932549908537670977}
-  - {fileID: 5096273889865965643}
-  - {fileID: 2054303750507635953}
-  - {fileID: 7371182863434215140}
-  - {fileID: 5002655573913782408}
-  - {fileID: 1310394011}
-  - {fileID: 477006605678746366}
-  - {fileID: 2501124884773734820}
-  - {fileID: 4988852624791066399}
-  - {fileID: 6295236517842078507}
-  - {fileID: 1607999494027774149}
-  - {fileID: 4191135065035806256}
-  - {fileID: 927940910219735007}
-  - {fileID: 33991758982501418}
-  - {fileID: 7089996885797534410}
-  - {fileID: 5749910082869765098}
-  - {fileID: 1161791982666946191}
-  - {fileID: 1924032489894648414}
-  - {fileID: 4511150377266355976}
-  - {fileID: 2031196464}
-  cardsprite:
-  - {fileID: 21300000, guid: 4519cfe0d53c33e4481e91a177e399f1, type: 3}
-  - {fileID: 21300000, guid: a34ce5b0114227249b5f4fab404c1fd2, type: 3}
-  - {fileID: 21300000, guid: d86e0424f729ca8489043d3edca78074, type: 3}
-  - {fileID: 21300000, guid: 86893d58603a5994a919849476a84ae6, type: 3}
-  - {fileID: 21300000, guid: 201b03997d785db4c858f1c1644eb769, type: 3}
-  - {fileID: 21300000, guid: 4c90296006dcbf24484bd302aec02d06, type: 3}
-  - {fileID: 21300000, guid: fc82106427068bd4793872e025961d59, type: 3}
-  cardPrefab: {fileID: 8188970094648401075, guid: 5ed2f76d938d8d6468d6b060461ce6f2,
-    type: 3}
 --- !u!114 &5855646200697667222
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42617,6 +42574,49 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &8598890890326605521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1434086184337051326}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 78c313ea66fe0e44b8a01967d24bf80a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cardSpawnPos:
+  - {fileID: 932549908537670977}
+  - {fileID: 5096273889865965643}
+  - {fileID: 2054303750507635953}
+  - {fileID: 7371182863434215140}
+  - {fileID: 5002655573913782408}
+  - {fileID: 1310394011}
+  - {fileID: 477006605678746366}
+  - {fileID: 2501124884773734820}
+  - {fileID: 4988852624791066399}
+  - {fileID: 6295236517842078507}
+  - {fileID: 1607999494027774149}
+  - {fileID: 4191135065035806256}
+  - {fileID: 927940910219735007}
+  - {fileID: 33991758982501418}
+  - {fileID: 7089996885797534410}
+  - {fileID: 5749910082869765098}
+  - {fileID: 1161791982666946191}
+  - {fileID: 1924032489894648414}
+  - {fileID: 4511150377266355976}
+  - {fileID: 2031196464}
+  cardsprite:
+  - {fileID: 21300000, guid: 4519cfe0d53c33e4481e91a177e399f1, type: 3}
+  - {fileID: 21300000, guid: a34ce5b0114227249b5f4fab404c1fd2, type: 3}
+  - {fileID: 21300000, guid: d86e0424f729ca8489043d3edca78074, type: 3}
+  - {fileID: 21300000, guid: 86893d58603a5994a919849476a84ae6, type: 3}
+  - {fileID: 21300000, guid: 201b03997d785db4c858f1c1644eb769, type: 3}
+  - {fileID: 21300000, guid: 4c90296006dcbf24484bd302aec02d06, type: 3}
+  - {fileID: 21300000, guid: fc82106427068bd4793872e025961d59, type: 3}
+  cardPrefab: {fileID: 6338390213383771241, guid: 5ed2f76d938d8d6468d6b060461ce6f2,
+    type: 3}
 --- !u!114 &8604021559381362196
 MonoBehaviour:
   m_ObjectHideFlags: 0
