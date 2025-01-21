@@ -2,17 +2,29 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Salon.Firebase.Database;
+using Salon.Character;
 
 public class Inventory : MonoBehaviour
 {
     public List<Socket> socketList = new List<Socket>();
+    public Player Owner;
+    public AnimController animController;
 
     public Item itemPrefab;
 
     [SerializeField]
     private Transform emojiInven;
     [SerializeField]
-    private Transform anumeInven;
+    private Transform animInven;
+
+    public async void Initialize()
+    {
+        UserInventory inventory = await ItemManager.Instance.LoadPlayerInventory();
+        foreach (var item in inventory.Items)
+        {
+            AddInventoryItem(item);
+        }
+    }
 
     public void AddInventoryItem(ItemData itemData)
     {
@@ -23,7 +35,7 @@ public class Inventory : MonoBehaviour
         }
         else if (itemData.itemType == ItemType.Anime)
         {
-            invenitem = Instantiate(itemPrefab, anumeInven.transform);
+            invenitem = Instantiate(itemPrefab, animInven.transform);
         }
         if (invenitem != null)
         {
@@ -39,12 +51,13 @@ public class Inventory : MonoBehaviour
             itemName = itemData.itemName,
             itemType = itemData.itemType,
         };
+
         AddInventoryItem(data);
     }
 
     public void SocketItemDataAdd(ItemData itemData)
     {
-        List<Socket> sockets = socketList.FindAll(socket => socket.socketType == itemData.itemType);
+        List<Socket> sockets = socketList.FindAll(socket => socket.itemType == itemData.itemType);
 
         if (sockets == null) return;
         Socket target = sockets.Find(socket => socket.itemData == null);

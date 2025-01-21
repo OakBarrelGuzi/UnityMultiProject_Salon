@@ -19,7 +19,6 @@ namespace Salon.Firebase
         public DatabaseReference DbReference { get => dbReference; }
         private FirebaseAuth auth;
         private FirebaseUser currentUser;
-
         private bool isConnected = false;
         private DatabaseReference connectionRef;
 
@@ -142,6 +141,12 @@ namespace Salon.Firebase
                 {
                     await FriendManager.Instance.Initialize();
                     Debug.Log("[FirebaseManager] FriendManager 레퍼런스 업데이트 완료");
+                }
+
+                if (GameRoomManager.Instance != null)
+                {
+                    await GameRoomManager.Instance.Initialize();
+                    Debug.Log("[FirebaseManager] GameRoomManager 레퍼런스 업데이트 완료");
                 }
 
                 Debug.Log("[FirebaseManager] 모든 매니저 초기화 완료");
@@ -408,7 +413,7 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task<bool> RegisterWithEmailAsync(string email, string password)
+        public async Task<bool> SignUpWithEmailAsync(string email, string password)
         {
             try
             {
@@ -463,6 +468,7 @@ namespace Salon.Firebase
                         Friends = new Dictionary<string, bool>(),
                         GameStats = new Dictionary<GameType, UserStats>(),
                         Invites = new Dictionary<string, InviteData>(),
+                        Gold = 50000,
                     };
 
                     Debug.Log("[FirebaseManager] 데이터베이스에 사용자 데이터 저장 시도...");

@@ -473,7 +473,6 @@ namespace Salon.DartGame
             {
                 ScenesManager.Instance.ChanageScene("LobbyScene");
             }
-
         }
     }
 }

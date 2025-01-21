@@ -20,6 +20,7 @@ public class ChatBox : MonoBehaviour
         else
         {
             senderText.text = $"{DisplayNameUtils.RemoveTag(sender)} : ";
+            messageText.text = $"{message}";
         }
 
         if (emoji != null)

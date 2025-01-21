@@ -86,23 +86,40 @@ namespace Salon.Firebase
             Debug.Log("[RoomManager] 채널 레퍼런스 초기화 완료");
         }
 
-        public void UnsubscribeFromChannel()
+        public async Task UnsubscribeFromChannel()
         {
-            if (CurrentChannelPlayersRef != null)
+            try
             {
-                CurrentChannelPlayersRef.ChildAdded -= OnPlayerAdded;
-                CurrentChannelPlayersRef.ChildRemoved -= OnPlayerRemoved;
-                CurrentChannelPlayersRef = null;
-            }
+                if (CurrentChannelPlayersRef != null)
+                {
+                    CurrentChannelPlayersRef.ChildAdded -= OnPlayerAdded;
+                    CurrentChannelPlayersRef.ChildRemoved -= OnPlayerRemoved;
+                    CurrentChannelPlayersRef = null;
+                }
 
-            foreach (var query in playerPositionQueries.Values)
+                foreach (var query in playerPositionQueries.Values)
+                {
+                    query.ValueChanged -= OnPositionChanged;
+                }
+                playerPositionQueries.Clear();
+
+                foreach (var query in playerAnimationQueries.Values)
+                {
+                    query.ValueChanged -= OnAnimationChanged;
+                }
+                playerAnimationQueries.Clear();
+
+                ClearChannelReferences();
+                Debug.Log("[RoomManager] 채널 구독 해제 완료");
+
+                // 구독 해제 후 약간의 딜레이를 줘서 모든 이벤트가 정리되도록 합니다
+                await Task.Delay(100);
+            }
+            catch (Exception ex)
             {
-                query.ValueChanged -= OnPositionChanged;
+                Debug.LogError($"[RoomManager] 채널 구독 해제 실패: {ex.Message}");
+                throw;
             }
-            playerPositionQueries.Clear();
-
-            ClearChannelReferences();
-            Debug.Log("[RoomManager] 채널 구독 해제 완료");
         }
 
         public void DestroyAllPlayers()
@@ -313,7 +330,7 @@ namespace Salon.Firebase
             }
         }
 
-        public void InstantiatePlayer(string displayName, GamePlayerData playerData, bool isLocalPlayer = false)
+        public async void InstantiatePlayer(string displayName, GamePlayerData playerData, bool isLocalPlayer = false)
         {
             try
             {
@@ -327,9 +344,10 @@ namespace Salon.Firebase
                         throw new Exception("[RoomManager] localPlayerPrefab이 null입니다.");
                     }
 
-                    LocalPlayer localPlayer = Instantiate(localPlayerPrefab.gameObject, spawnPosition, Quaternion.identity, spawnParent).GetComponent<LocalPlayer>();
+                    LocalPlayer localPlayer = Instantiate(localPlayerPrefab.gameObject, spawnPosition, Quaternion.identity).GetComponent<LocalPlayer>();
                     localPlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = localPlayer.gameObject;
+                    GameManager.Instance.player = localPlayer;
                 }
                 else
                 {
@@ -338,7 +356,20 @@ namespace Salon.Firebase
                         throw new Exception("[RoomManager] remotePlayerPrefab이 null입니다.");
                     }
 
-                    RemotePlayer remotePlayer = Instantiate(remotePlayerPrefab.gameObject, spawnPosition, Quaternion.identity, spawnParent).GetComponent<RemotePlayer>();
+                    var positionSnapshot = await CurrentChannelPlayersRef.Child(displayName).Child("Position").GetValueAsync();
+                    if (positionSnapshot.Exists)
+                    {
+                        string compressedData = positionSnapshot.Value as string;
+                        if (!string.IsNullOrEmpty(compressedData))
+                        {
+                            var (position, direction, _) = NetworkPositionCompressor.DecompressToVectors(compressedData);
+                            spawnPosition = position;
+
+                            Debug.Log($"[RoomManager] 리모트 플레이어 {displayName}의 초기 위치: {position}");
+                        }
+                    }
+
+                    RemotePlayer remotePlayer = Instantiate(remotePlayerPrefab.gameObject, spawnPosition, Quaternion.identity).GetComponent<RemotePlayer>();
                     remotePlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = remotePlayer.gameObject;
                 }
@@ -354,7 +385,7 @@ namespace Salon.Firebase
 
         void OnApplicationQuit()
         {
-            UnsubscribeFromChannel();
+            _ = UnsubscribeFromChannel();
         }
 
         public async Task JoinChannel(string channelName)

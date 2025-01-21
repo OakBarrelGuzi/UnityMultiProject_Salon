@@ -357,7 +357,7 @@ GameObject:
   - component: {fileID: 305752001673206159}
   - component: {fileID: 424096968662962399}
   m_Layer: 5
-  m_Name: Inventory_Buttn
+  m_Name: Inventory_Button
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1794,7 +1794,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 50,000
+  m_text: 0
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 62aa4d7a82df3454bb87bf08165483b1, type: 2}
   m_sharedMaterial: {fileID: 2074185014867903490, guid: 62aa4d7a82df3454bb87bf08165483b1,
@@ -2764,6 +2764,7 @@ MonoBehaviour:
   dpadOuter: {fileID: 0}
   directionalPointer: {fileID: 6450296408589768749}
   dpadCosmetic: {fileID: 3418750721239189875}
+  popupButton: {fileID: 0}
   innerRadius: 0
   pointerRadius: 0
 --- !u!1 &6295866436910873552
@@ -3360,6 +3361,8 @@ MonoBehaviour:
   isOpen: 0
   chatPopUp: {fileID: 6535040069479098840}
   friendsButton: {fileID: 7841011632294668017}
+  inventoryButton: {fileID: 424096968662962399}
+  goldText: {fileID: 3217972551918827801}
 --- !u!1 &7639185934020445583
 GameObject:
   m_ObjectHideFlags: 0

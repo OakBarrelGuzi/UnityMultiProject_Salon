@@ -16,12 +16,17 @@ namespace Salon.Character
         public PopupButton popupButton;
         private Vector3 cachedInput;
         public bool lerpStopping;
-        public float moveSpeed;
+        public float moveSpeed = 5f;
+        public float rotationSpeed = 10f;
+        public float smoothTime = 0.1f;
 
-        public Vector3 CurrentVelocity => cachedInput * moveSpeed;
+        public Vector3 CurrentVelocity => smoothVelocity;
 
-        private Rigidbody rb;
+        private CharacterController characterController;
         private bool isInitialized = false;
+        private Vector3 currentVelocity;
+        private Vector3 smoothVelocity;
+        private Vector3 smoothDampVelocity;
 
         void Start()
         {
@@ -71,7 +76,22 @@ namespace Salon.Character
             if (animator == null)
                 animator = GetComponent<Animator>();
 
-            rb = GetComponent<Rigidbody>();
+            characterController = GetComponent<CharacterController>();
+            if (characterController == null)
+            {
+                characterController = gameObject.AddComponent<CharacterController>();
+                characterController.slopeLimit = 45f;
+                characterController.stepOffset = 0.3f;
+                characterController.skinWidth = 0.08f;
+                characterController.minMoveDistance = 0.001f;
+            }
+
+            // Rigidbody 제거 (만약 있다면)
+            Rigidbody rb = GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                Destroy(rb);
+            }
 
             isInitialized = true;
             Debug.Log("[InputController] 초기화 완료");
@@ -79,7 +99,10 @@ namespace Salon.Character
 
         private void Update()
         {
+            if (!isInitialized) return;
+
             HandleInput();
+            HandleMovement();
             UpdateAnimation();
         }
 
@@ -96,55 +119,45 @@ namespace Salon.Character
                 cameraRight.Normalize();
 
                 cachedInput = cameraRight * inputMove.directionXZ.x + cameraForward * inputMove.directionXZ.z;
+                cachedInput = Vector3.ClampMagnitude(cachedInput, 1f);
 
                 if (cachedInput != Vector3.zero)
                 {
-                    transform.forward = cachedInput.normalized;
+                    Quaternion targetRotation = Quaternion.LookRotation(cachedInput);
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
                 }
             }
             else
             {
-                if (lerpStopping)
-                {
-                    cachedInput = Vector3.Lerp(cachedInput, Vector3.zero, moveSpeed * Time.deltaTime);
-                }
-                else
-                {
-                    cachedInput = Vector3.zero;
-                }
+                cachedInput = Vector3.zero;
             }
         }
 
-        private void Move()
+        private void HandleMovement()
         {
-            if (rb != null)
-            {
-                Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
+            if (characterController == null) return;
 
-            }
-        }
+            Vector3 targetVelocity = cachedInput * moveSpeed;
+            smoothVelocity = Vector3.SmoothDamp(smoothVelocity, targetVelocity, ref smoothDampVelocity, smoothTime);
 
-        private void FixedUpdate()
-        {
-            RaycastHit hit;
-            Vector3 movement = cachedInput * moveSpeed * Time.fixedDeltaTime;
-            if (!Physics.Raycast(transform.position + Vector3.up * 5f, movement.normalized, out hit, movement.magnitude
-                , Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            if (characterController.isGrounded)
             {
-                transform.position += movement;
+                // 지면에 있을 때만 이동
+                characterController.Move(smoothVelocity * Time.deltaTime);
             }
             else
             {
-                print("충돌 감지: " + hit.collider.name);
+                // 공중에 있을 때는 중력 적용
+                smoothVelocity.y += Physics.gravity.y * Time.deltaTime;
+                characterController.Move(smoothVelocity * Time.deltaTime);
             }
-
         }
 
         private void UpdateAnimation()
         {
             if (animator != null)
             {
-                float currentSpeed = cachedInput.magnitude;
+                float currentSpeed = smoothVelocity.magnitude / moveSpeed;
                 animator.SetFloat("MoveSpeed", currentSpeed);
             }
         }

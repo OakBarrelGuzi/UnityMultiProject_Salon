@@ -2,11 +2,16 @@ using UnityEngine;
 using Salon.Firebase;
 using Salon.Controller;
 using UnityEngine.UI;
+using TMPro;
+using Newtonsoft.Json;
+using Salon.Firebase.Database;
 
 public class LobbyPanel : Panel
 {
     public ChatPopUp chatPopUp;
     public Button friendsButton;
+    public Button inventoryButton;
+    public TextMeshProUGUI goldText;
 
     private void OnEnable()
     {
@@ -18,6 +23,15 @@ public class LobbyPanel : Panel
         chatPopUp.Initialize();
         ChatManager.Instance.OnReceiveChat += HandleChat;
         friendsButton.onClick.AddListener(OnFriendsButtonClick);
+        UpdateGoldText();
+    }
+
+    public async void UpdateGoldText()
+    {
+        var currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID);
+        var currentUserSnapshot = await currentUserRef.GetValueAsync();
+        var currentUser = JsonConvert.DeserializeObject<UserData>(currentUserSnapshot.GetRawJsonValue());
+        goldText.text = currentUser.Gold.ToString();
     }
 
     private void OnFriendsButtonClick()
