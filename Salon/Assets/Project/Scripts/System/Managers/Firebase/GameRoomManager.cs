@@ -134,6 +134,8 @@ namespace Salon.Firebase
                 await SetRoomDeletionOnDisconnect(channelId, newRoomId);
                 roomCreationUI.SetRoomData(newRoomId, channelId, hostPlayerId);
                 Debug.Log($"[GameRoomManager] 방 생성 완료: {newRoomId}");
+
+                WaitForPlayerJoin(channelId, newRoomId);
                 return newRoomId;
             }
             catch (Exception ex)
@@ -142,14 +144,27 @@ namespace Salon.Firebase
                 return null;
             }
         }
+        private void WaitForPlayerJoin(string channelId, string roomId)
+        {
+            var roomPlayersRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId).Child("Players");
 
+            roomPlayersRef.ChildAdded += async (sender, e) =>
+            {
+                if (e.Snapshot.Exists && e.Snapshot.Key != currentPlayerId) // 현재 플레이어 제외
+                {
+                    Debug.Log($"[GameRoomManager] 새로운 플레이어 참가 감지: {e.Snapshot.Key}");
+
+                    roomCreationUI.OnFind();
+                    await Task.Delay(3000);
+                    ScenesManager.Instance.ChanageScene("MemoryGame");
+                }
+            };
+        }
         /// <summary>
         /// 방에 참가
         /// </summary>
         public async Task JoinRoom(string channelId, string roomId, string playerInfo)
         {
-            roomCreationUI.OnFind();
-            await Task.Delay(3000);
             try
             {
                 var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
@@ -180,6 +195,10 @@ namespace Salon.Firebase
                 await SetRoomDeletionOnDisconnect(channelId, roomId);
                 roomCreationUI.SetRoomData(roomId, channelId, playerInfo);
                 Debug.Log($"[GameRoomManager] 방 참가 완료: {roomId}");
+
+                roomCreationUI.OnFind();
+                await Task.Delay(3000);
+                ScenesManager.Instance.ChanageScene("MemoryGame");
             }
             catch (Exception ex)
             {
