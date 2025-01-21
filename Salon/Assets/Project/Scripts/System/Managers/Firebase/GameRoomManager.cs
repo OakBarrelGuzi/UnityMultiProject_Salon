@@ -156,6 +156,7 @@ namespace Salon.Firebase
 
                     roomCreationUI.OnFind();
                     await Task.Delay(3000);
+                    UIManager.Instance.CloseAllPanels();
                     ScenesManager.Instance.ChanageScene("MemoryGame");
                 }
             };
@@ -198,6 +199,7 @@ namespace Salon.Firebase
 
                 roomCreationUI.OnFind();
                 await Task.Delay(3000);
+                UIManager.Instance.CloseAllPanels();
                 ScenesManager.Instance.ChanageScene("MemoryGame");
             }
             catch (Exception ex)
