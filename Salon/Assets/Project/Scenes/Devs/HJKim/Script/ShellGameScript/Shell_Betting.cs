@@ -20,12 +20,6 @@ namespace Salon.ShellGame
 
         private void Start()
         {
-            close_Button.onClick.AddListener(() =>
-            {
-                print("뒤로가기 버튼이 눌렸습니당");
-                shellGameUI.difficult_Panel.gameObject.SetActive(true);//다시 나이도 선택창으로 가기
-                shellGameUI.betting_Panel.gameObject.SetActive(false);
-            });
 
             start_Button.onClick.AddListener(() =>
             {

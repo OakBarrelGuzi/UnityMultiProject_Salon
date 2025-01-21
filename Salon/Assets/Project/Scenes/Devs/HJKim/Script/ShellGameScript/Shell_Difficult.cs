@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using static ShellGameDiffi.Difficult;
+
 
 public class Shell_Difficult : Shell_Panel
 {
@@ -40,4 +40,16 @@ public class Shell_Difficult : Shell_Panel
             shellGameUI.gameObject.SetActive(false);
         });
     }
+    private void OnEnable()
+    {
+        shellGameUI.betting_Panel.close_Button.onClick.RemoveAllListeners();
+        shellGameUI.betting_Panel.close_Button.onClick.AddListener(() =>
+        {
+            shellGameUI.betting_Panel.gameObject.SetActive(false);
+            gameObject.SetActive(true);
+        });
+    }
+
+
+
 }

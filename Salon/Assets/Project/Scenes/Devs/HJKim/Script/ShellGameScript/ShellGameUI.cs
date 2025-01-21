@@ -7,11 +7,11 @@ namespace Salon.ShellGame
 {
     public class ShellGameUI : Panel
     {
-        public ShuffleManager shuffleManager { get;private set; }
+        public ShellGameManager shuffleManager { get;private set; }
 
         public List<Shell_Panel> shell_Panels = new List<Shell_Panel>();
 
-        [Header("Panel Setting")]
+        //[Header("Panel Setting")]
         public Shell_Difficult difficult_Panel;
         public Shell_Betting betting_Panel;
         public Shell_Clear clear_Panel;
@@ -26,7 +26,7 @@ namespace Salon.ShellGame
         [SerializeField]
         private float fxDelay = 1;
 
-        public void Initialize(ShuffleManager shuffleManager)
+        public void Initialize(ShellGameManager shuffleManager)
         {
             this.shuffleManager = shuffleManager;
 

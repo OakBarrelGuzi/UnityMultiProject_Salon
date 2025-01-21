@@ -1,3 +1,4 @@
+using Salon.ShellGame;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -8,7 +9,7 @@ public class Cup : MonoBehaviour
     public bool isMoving = false;
     public bool isSelectable = false;
 
-    private ShuffleManager manager;
+    private ShellGameManager manager;
     //컵의 이동
     private float moveSpeed;
     private Vector3 targetPosition;
@@ -21,7 +22,7 @@ public class Cup : MonoBehaviour
         }
     }
 
-    public void Initialize(ShuffleManager shuffleManager)
+    public void Initialize(ShellGameManager shuffleManager)
     {
         manager = shuffleManager;
     }
