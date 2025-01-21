@@ -15,6 +15,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
     private List<Panel> panels = new List<Panel>();
     [SerializeField] private List<Panel> panelsPrefabs = new List<Panel>();
     public bool IsInitialized { get; private set; }
+    public bool isTesting;
 
     public IEnumerator InitializeRoutine()
     {
@@ -32,8 +33,10 @@ public class UIManager : Singleton<UIManager>, IInitializable
     private void Start()
     {
         Initialize();
-        StartCoroutine(InitializeRoutine());
-
+        if (!isTesting) 
+        { 
+            StartCoroutine(InitializeRoutine()); 
+        }       
     }
 
     void Update()

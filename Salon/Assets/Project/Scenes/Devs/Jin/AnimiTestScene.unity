@@ -415,8 +415,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 707925947}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.20212743, y: -0, z: -0, w: 0.97935927}
-  m_LocalPosition: {x: 0, y: 1.59, z: -3.31}
+  m_LocalRotation: {x: -0.10759971, y: 0.0050675394, z: -0.0005483378, w: -0.9941813}
+  m_LocalPosition: {x: -1.4869775, y: 11.240564, z: -16.686613}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -593,7 +593,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1737401409}
-  - component: {fileID: 1737401408}
   m_Layer: 0
   m_Name: AnimaTest
   m_TagString: Untagged
@@ -601,23 +600,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1737401408
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1737401407}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15fa6790dfdb16a47bc1b9cd4f17ce94, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  clipList: []
-  TestClip: {fileID: 7400000, guid: 783e557f7cc4ad9408c49b9f451a68ca, type: 2}
-  TestClip2: {fileID: 7400000, guid: bb6ee2453559ccd41a52b94b02e1144a, type: 2}
-  animator: {fileID: 8600465572556393896}
-  targetClipName: ActionState
 --- !u!4 &1737401409
 Transform:
   m_ObjectHideFlags: 0
@@ -5246,8 +5228,9 @@ MonoBehaviour:
       m_Calls: []
   m_text: 50,000
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 62aa4d7a82df3454bb87bf08165483b1, type: 2}
+  m_sharedMaterial: {fileID: 2074185014867903490, guid: 62aa4d7a82df3454bb87bf08165483b1,
+    type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5271,7 +5254,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 72
+  m_fontSize: 60.75
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -8194,6 +8177,7 @@ GameObject:
   - component: {fileID: 8414566797193124207}
   - component: {fileID: 8600465572556393896}
   - component: {fileID: 8059740624952602955}
+  - component: {fileID: 8600465572556393897}
   m_Layer: 0
   m_Name: LocalPlayer
   m_TagString: Untagged
@@ -8790,6 +8774,20 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8600465572556393897
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8000408126698553956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15fa6790dfdb16a47bc1b9cd4f17ce94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animator: {fileID: 8600465572556393896}
+  TestClip: {fileID: 7400000, guid: ebf2abbcddfe9fa4a80b079d7dc23110, type: 2}
 --- !u!114 &8635003120348991450
 MonoBehaviour:
   m_ObjectHideFlags: 0

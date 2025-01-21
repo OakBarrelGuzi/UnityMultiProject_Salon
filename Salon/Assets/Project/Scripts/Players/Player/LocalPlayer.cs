@@ -10,6 +10,7 @@ namespace Salon.Character
     public class LocalPlayer : Player
     {
         private DatabaseReference posRef;
+        private DatabaseReference AnimRef;
         private float positionUpdateInterval = 0.5f;
         private float lastPositionUpdateTime;
         private InputController inputController;
@@ -27,8 +28,15 @@ namespace Salon.Character
             lastPositionUpdateTime = Time.time;
             lastSentPositionData = NetworkPositionCompressor.CompressVector3(transform.position, transform.forward, true);
             posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
+            AnimRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Animation");
+
             CameraController cc = Camera.main.GetComponent<CameraController>();
             cc.SetTarget(transform);
+        }
+
+        public async void OnAnim()
+        {
+            await AnimRef.SetValueAsync("1");
         }
 
         private void Update()
@@ -99,8 +107,6 @@ namespace Salon.Character
 
                     if (interactionComponent.InteractionType == InteractionType.DartGame)
                         UIManager.Instance.OpenPanel(PanelType.DartGame);
-                    else if (interactionComponent.InteractionType == InteractionType.CardGame)
-                        UIManager.Instance.OpenPanel(PanelType.PartyRoom);
                     else
                         inputController.popupButton.gameObject.SetActive(true);
                 }
@@ -114,8 +120,6 @@ namespace Salon.Character
                 inputController.popupButton.SetInteraction(InteractionType.None);
                 if (other.GetComponent<InteractionComponent>().InteractionType == InteractionType.DartGame)
                     UIManager.Instance.ClosePanel(PanelType.DartGame);
-                if (other.GetComponent<InteractionComponent>().InteractionType == InteractionType.CardGame)
-                    UIManager.Instance.ClosePanel(PanelType.PartyRoom);
                 else
                     inputController.popupButton.gameObject.SetActive(false);
             }
