@@ -57,3 +57,10 @@ public enum InteractionType
     ShellGame,
     CardGame
 }
+
+public enum SocketType
+{
+    None,
+    Inventory,
+    Activated,
+}

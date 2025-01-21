@@ -66,6 +66,7 @@ namespace Salon.Firebase.Database
         public Dictionary<string, FriendRequestData> FriendRequests { get; set; }
         public int BestDartScore { get; set; }
         public int Gold { get; set; }
+        public UserInventory Inventory { get; set; }
         public UserData()
         {
             DisplayName = "";
@@ -308,7 +309,7 @@ namespace Salon.Firebase.Database
     [Serializable]
     public class ItemData
     {
-        public float itemCost { get; set; }
+        public int itemCost { get; set; }
 
         public string itemName { get; set; }
 
