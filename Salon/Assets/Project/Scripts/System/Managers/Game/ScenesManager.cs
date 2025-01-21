@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Salon.Firebase;
+using Salon.Character;
 
 public class ScenesManager : Singleton<ScenesManager>
 {
@@ -23,6 +24,13 @@ public class ScenesManager : Singleton<ScenesManager>
 
     public void ChanageScene(string nextScene)
     {
+        // 로비씬으로 돌아가기 전에 플레이어 위치 저장
+        if (nextScene != "LobbyScene" && GameManager.Instance != null && GameManager.Instance.player != null)
+        {
+            RoomManager.Instance.savedPlayerPosition = GameManager.Instance.player.transform.position;
+            Debug.Log($"[ScenesManager] 플레이어 위치 저장: {RoomManager.Instance.savedPlayerPosition}");
+        }
+
         SceneManager.LoadScene(nextScene, LoadSceneMode.Single);
     }
 
@@ -38,7 +46,10 @@ public class ScenesManager : Singleton<ScenesManager>
         }
         else
         {
+
+            RoomManager.Instance.DestroyAllPlayers();
             await RoomManager.Instance.UnsubscribeFromChannel();
+
         }
     }
 }

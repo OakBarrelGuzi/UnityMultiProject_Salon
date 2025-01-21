@@ -62,6 +62,6 @@ public enum InteractionType
 public enum SocketType
 {
     None,
-    Inventory,
-    Activated,
+    Emoji,
+    Anim
 }

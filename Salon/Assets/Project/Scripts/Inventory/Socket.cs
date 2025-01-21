@@ -80,4 +80,3 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
     }
 
 }
-

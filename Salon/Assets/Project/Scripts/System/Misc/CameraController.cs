@@ -10,10 +10,13 @@ public class CameraController : MonoBehaviour
 
     private void Start()
     {
+        initialOffset = new Vector3(356f, 358f, 356f);
+        initialRotation = Quaternion.Euler(35f, -135f, 0f);
+
         if (target != null)
         {
-            initialOffset = transform.position - target.position;
-            initialRotation = transform.rotation;
+            transform.position = target.position + initialOffset;
+            transform.rotation = initialRotation;
         }
     }
     private void LateUpdate()
@@ -33,8 +36,11 @@ public class CameraController : MonoBehaviour
         target = newTarget;
         if (target != null)
         {
-            initialOffset = transform.position - target.position;
-            initialRotation = transform.rotation;
+            initialOffset = new Vector3(356f, 358f, 356f);
+            initialRotation = Quaternion.Euler(35f, -135f, 0f);
+
+            transform.position = target.position + initialOffset;
+            transform.rotation = initialRotation;
         }
     }
 }
