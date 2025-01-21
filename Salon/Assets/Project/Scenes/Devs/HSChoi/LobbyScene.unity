@@ -1549,9 +1549,10 @@ GameObject:
   - component: {fileID: 4901026947058923594}
   - component: {fileID: 6666768981094663884}
   - component: {fileID: 70476826871037375}
+  - component: {fileID: 6666768981094663885}
   m_Layer: 0
   m_Name: Card_Interaction_AREA
-  m_TagString: Untagged
+  m_TagString: Interactive
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27100,9 +27101,10 @@ GameObject:
   - component: {fileID: 1006374675547821211}
   - component: {fileID: 3206030911141764870}
   - component: {fileID: 3210304016132724556}
+  - component: {fileID: 3210304016132724557}
   m_Layer: 0
   m_Name: Dart_Interaction_AREA
-  m_TagString: Untagged
+  m_TagString: Interactive
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -27128,6 +27130,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.99999994, y: 0.99999994, z: 0.9999999}
   m_Center: {x: 0, y: 0, z: -0.00000023841858}
+--- !u!114 &3210304016132724557
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3210304016132724555}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 276694d7571c5e54bb8c15d92d51ec5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InteractionType: 2
 --- !u!4 &3210964486603141913
 Transform:
   m_ObjectHideFlags: 0
@@ -46769,9 +46784,10 @@ GameObject:
   - component: {fileID: 3635114733404668119}
   - component: {fileID: 7176301488722455702}
   - component: {fileID: 2638846796660265372}
+  - component: {fileID: 7176301488722455703}
   m_Layer: 0
   m_Name: Shop_Interaction_AREA
-  m_TagString: Untagged
+  m_TagString: Interactive
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -55406,9 +55422,10 @@ GameObject:
   - component: {fileID: 2001539142392611902}
   - component: {fileID: 4131295489460879260}
   - component: {fileID: 7904120567443121205}
+  - component: {fileID: 7904120567443121206}
   m_Layer: 0
   m_Name: Shell_Interaction_AREA
-  m_TagString: Untagged
+  m_TagString: Interactive
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -55649,6 +55666,19 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &6666768981094663885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 143289383254801181}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 276694d7571c5e54bb8c15d92d51ec5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InteractionType: 4
 --- !u!1 &6672710605566340094
 GameObject:
   m_ObjectHideFlags: 0
@@ -59585,6 +59615,19 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7176301488722455703
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5664767521104510542}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 276694d7571c5e54bb8c15d92d51ec5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InteractionType: 1
 --- !u!4 &7176473168262005241
 Transform:
   m_ObjectHideFlags: 0
@@ -64784,6 +64827,19 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7904120567443121206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6637287114138423281}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 276694d7571c5e54bb8c15d92d51ec5d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  InteractionType: 3
 --- !u!4 &7904664800156339728
 Transform:
   m_ObjectHideFlags: 0

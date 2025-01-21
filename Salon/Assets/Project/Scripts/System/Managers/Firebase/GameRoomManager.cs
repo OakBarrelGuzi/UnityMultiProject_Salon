@@ -60,7 +60,7 @@ namespace Salon.Firebase
 
             // 1. 방 목록 가져오기
             var roomList = await GetRoomList(channelId);
-            roomCreationUI.gameObject.SetActive(true);
+            UIManager.Instance.OpenPanel(PanelType.PartyRoom);
             await Task.Delay(3000);
             // 2. 빈 방 찾기
             foreach (string roomId in roomList)
