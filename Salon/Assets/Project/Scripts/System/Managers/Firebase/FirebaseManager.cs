@@ -19,7 +19,6 @@ namespace Salon.Firebase
         public DatabaseReference DbReference { get => dbReference; }
         private FirebaseAuth auth;
         private FirebaseUser currentUser;
-
         private bool isConnected = false;
         private DatabaseReference connectionRef;
 

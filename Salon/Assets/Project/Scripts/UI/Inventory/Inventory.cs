@@ -12,7 +12,7 @@ public class Inventory : MonoBehaviour
     [SerializeField]
     private Transform emojiInven;
     [SerializeField]
-    private Transform anumeInven;
+    private Transform animInven;
 
     public void AddInventoryItem(ItemData itemData)
     {
@@ -23,7 +23,7 @@ public class Inventory : MonoBehaviour
         }
         else if (itemData.itemType == ItemType.Anime)
         {
-            invenitem = Instantiate(itemPrefab, anumeInven.transform);
+            invenitem = Instantiate(itemPrefab, animInven.transform);
         }
         if (invenitem != null)
         {

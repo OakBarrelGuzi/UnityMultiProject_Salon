@@ -80,6 +80,16 @@ namespace Salon.Firebase.Database
         }
     }
     [Serializable]
+    public class UserInventory
+    {
+        public List<ItemData> Items { get; set; }
+
+        public UserInventory()
+        {
+            Items = new List<ItemData>();
+        }
+    }
+    [Serializable]
     public class InviteData
     {
         public string ChannelName { get; set; }
