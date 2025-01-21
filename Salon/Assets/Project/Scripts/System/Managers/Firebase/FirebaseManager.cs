@@ -144,6 +144,12 @@ namespace Salon.Firebase
                     Debug.Log("[FirebaseManager] FriendManager 레퍼런스 업데이트 완료");
                 }
 
+                if (GameRoomManager.Instance != null)
+                {
+                    await GameRoomManager.Instance.Initialize();
+                    Debug.Log("[FirebaseManager] GameRoomManager 레퍼런스 업데이트 완료");
+                }
+
                 Debug.Log("[FirebaseManager] 모든 매니저 초기화 완료");
             }
             catch (Exception ex)
