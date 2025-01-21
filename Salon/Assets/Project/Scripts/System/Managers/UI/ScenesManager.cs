@@ -10,9 +10,9 @@ public class ScenesManager : Singleton<ScenesManager>
     [Header("SceneSet")]
     public string[] playScenes;
 
-    private void Awake()
+    protected override void Awake()
     {
-        DontDestroyOnLoad(gameObject);
+        base.Awake();
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
 

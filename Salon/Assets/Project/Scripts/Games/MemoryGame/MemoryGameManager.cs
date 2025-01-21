@@ -52,8 +52,9 @@ public class MemoryGameManager : MonoBehaviour
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
 
-        memoryGamePanelUi = UIManager.Instance.GetComponentInChildren<MemoryGamePanelUi>();
         UIManager.Instance.CloseAllPanels();
+        UIManager.Instance.OpenPanel(PanelType.MemoryGame);
+        memoryGamePanelUi = UIManager.Instance.GetComponentInChildren<MemoryGamePanelUi>();
         memoryGamePanelUi.gameObject.SetActive(true);
     }
     private void OnDestroy()
