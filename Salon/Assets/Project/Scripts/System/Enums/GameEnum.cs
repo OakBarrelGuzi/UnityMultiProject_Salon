@@ -14,7 +14,8 @@ public enum PanelType
     MainDisplay,
     Dart,
     DartGame,
-    PartyRoom
+    PartyRoom,
+    ShellGame
 }
 public enum InviteStatus
 {
@@ -55,4 +56,11 @@ public enum InteractionType
     DartGame,
     ShellGame,
     CardGame
+}
+
+public enum SocketType
+{
+    None,
+    Inventory,
+    Activated,
 }
