@@ -13,7 +13,7 @@ namespace Salon.Firebase
     public class GameRoomManager : Singleton<GameRoomManager>
     {
         private DatabaseReference dbReference;
-        private RoomCreationUI roomCreationUI;
+        public RoomCreationUI roomCreationUI;
         public string currentRoomId;
         public string currentChannelId;
         public string currentPlayerId;
@@ -26,7 +26,6 @@ namespace Salon.Firebase
         {
             dbReference = await GetDbReference();
             Debug.Log("[GameRoomManager] 초기화 완료");
-            roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
         }
 
         private async Task<DatabaseReference> GetDbReference()
@@ -62,6 +61,7 @@ namespace Salon.Firebase
             var roomList = await GetRoomList(channelId);
             UIManager.Instance.OpenPanel(PanelType.PartyRoom);
             await Task.Delay(3000);
+            roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
             // 2. 빈 방 찾기
             foreach (string roomId in roomList)
             {
@@ -130,7 +130,12 @@ namespace Salon.Firebase
                 await dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(newRoomId).SetRawJsonValueAsync(roomJson);
 
                 currentRoomId = newRoomId;
+
+                await SetRoomDeletionOnDisconnect(channelId, newRoomId);
+                roomCreationUI.SetRoomData(newRoomId, channelId, hostPlayerId);
                 Debug.Log($"[GameRoomManager] 방 생성 완료: {newRoomId}");
+
+                WaitForPlayerJoin(channelId, newRoomId);
                 return newRoomId;
             }
             catch (Exception ex)
@@ -139,14 +144,28 @@ namespace Salon.Firebase
                 return null;
             }
         }
+        private void WaitForPlayerJoin(string channelId, string roomId)
+        {
+            var roomPlayersRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId).Child("Players");
 
+            roomPlayersRef.ChildAdded += async (sender, e) =>
+            {
+                if (e.Snapshot.Exists && e.Snapshot.Key != currentPlayerId) // 현재 플레이어 제외
+                {
+                    Debug.Log($"[GameRoomManager] 새로운 플레이어 참가 감지: {e.Snapshot.Key}");
+
+                    roomCreationUI.OnFind();
+                    await Task.Delay(3000);
+                    UIManager.Instance.CloseAllPanels();
+                    ScenesManager.Instance.ChanageScene("MemoryGame");
+                }
+            };
+        }
         /// <summary>
         /// 방에 참가
         /// </summary>
         public async Task JoinRoom(string channelId, string roomId, string playerInfo)
         {
-            roomCreationUI.gameObject.GetComponent<RoomCreationUI>().OnFind();
-            await Task.Delay(3000);
             try
             {
                 var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
@@ -173,7 +192,15 @@ namespace Salon.Firebase
                 await roomRef.SetRawJsonValueAsync(updatedRoomJson);
 
                 currentRoomId = roomId;
+
+                await SetRoomDeletionOnDisconnect(channelId, roomId);
+                roomCreationUI.SetRoomData(roomId, channelId, playerInfo);
                 Debug.Log($"[GameRoomManager] 방 참가 완료: {roomId}");
+
+                roomCreationUI.OnFind();
+                await Task.Delay(3000);
+                UIManager.Instance.CloseAllPanels();
+                ScenesManager.Instance.ChanageScene("MemoryGame");
             }
             catch (Exception ex)
             {
@@ -182,8 +209,6 @@ namespace Salon.Firebase
         }
         private async Task SetHostAsFirstTurn(string channelId, string roomId, string hostPlayerId)
         {
-            roomCreationUI.gameObject.GetComponent<RoomCreationUI>().OnFind();
-            await Task.Delay(3000);
             try
             {
                 var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
@@ -246,5 +271,20 @@ namespace Salon.Firebase
                 Debug.LogError($"[GameRoomManager] 방 삭제 실패: {ex.Message}");
             }
         }
+        public async Task SetRoomDeletionOnDisconnect(string channelId, string roomId)
+        {
+            try
+            {
+                var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
+
+                await roomRef.OnDisconnect().RemoveValue();
+                Debug.Log($"[GameRoomManager] 클라이언트 연결 해제 시 방 {roomId} 자동 삭제 설정 완료.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GameRoomManager] 연결 해제 시 방 삭제 설정 실패: {ex.Message}");
+            }
+        }
+
     }
 }
