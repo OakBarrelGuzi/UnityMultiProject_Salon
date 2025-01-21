@@ -296,6 +296,7 @@ namespace Salon.Firebase
             {
                 Debug.Log("[ChannelManager] OnDestroy 시작");
                 CleanupResources();
+
                 Debug.Log("[ChannelManager] OnDestroy 완료");
             }
             catch (Exception ex)
