@@ -76,7 +76,7 @@ namespace Salon.Firebase.Database
             Invites = new Dictionary<string, InviteData>();
             FriendRequests = new Dictionary<string, FriendRequestData>();
             BestDartScore = 0;
-            Gold = 10000;
+            Gold = 50000;
         }
     }
     [Serializable]

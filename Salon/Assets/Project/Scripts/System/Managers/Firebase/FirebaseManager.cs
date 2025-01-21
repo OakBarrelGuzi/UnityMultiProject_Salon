@@ -414,7 +414,7 @@ namespace Salon.Firebase
             }
         }
 
-        public async Task<bool> RegisterWithEmailAsync(string email, string password)
+        public async Task<bool> SignUpWithEmailAsync(string email, string password)
         {
             try
             {
@@ -469,6 +469,7 @@ namespace Salon.Firebase
                         Friends = new Dictionary<string, bool>(),
                         GameStats = new Dictionary<GameType, UserStats>(),
                         Invites = new Dictionary<string, InviteData>(),
+                        Gold = 50000,
                     };
 
                     Debug.Log("[FirebaseManager] 데이터베이스에 사용자 데이터 저장 시도...");
