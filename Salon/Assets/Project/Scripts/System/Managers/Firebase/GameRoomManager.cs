@@ -13,7 +13,7 @@ namespace Salon.Firebase
     public class GameRoomManager : Singleton<GameRoomManager>
     {
         private DatabaseReference dbReference;
-        private RoomCreationUI roomCreationUI;
+        public RoomCreationUI roomCreationUI;
         public string currentRoomId;
         public string currentChannelId;
         public string currentPlayerId;
@@ -26,7 +26,6 @@ namespace Salon.Firebase
         {
             dbReference = await GetDbReference();
             Debug.Log("[GameRoomManager] 초기화 완료");
-            roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
         }
 
         private async Task<DatabaseReference> GetDbReference()
@@ -62,6 +61,7 @@ namespace Salon.Firebase
             var roomList = await GetRoomList(channelId);
             UIManager.Instance.OpenPanel(PanelType.PartyRoom);
             await Task.Delay(3000);
+            roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
             // 2. 빈 방 찾기
             foreach (string roomId in roomList)
             {
@@ -130,6 +130,8 @@ namespace Salon.Firebase
                 await dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(newRoomId).SetRawJsonValueAsync(roomJson);
 
                 currentRoomId = newRoomId;
+
+                roomCreationUI.SetRoomData(newRoomId, channelId, hostPlayerId);
                 Debug.Log($"[GameRoomManager] 방 생성 완료: {newRoomId}");
                 return newRoomId;
             }
@@ -145,7 +147,7 @@ namespace Salon.Firebase
         /// </summary>
         public async Task JoinRoom(string channelId, string roomId, string playerInfo)
         {
-            roomCreationUI.gameObject.GetComponent<RoomCreationUI>().OnFind();
+            roomCreationUI.OnFind();
             await Task.Delay(3000);
             try
             {
@@ -173,6 +175,8 @@ namespace Salon.Firebase
                 await roomRef.SetRawJsonValueAsync(updatedRoomJson);
 
                 currentRoomId = roomId;
+
+                roomCreationUI.SetRoomData(roomId, channelId, playerInfo);
                 Debug.Log($"[GameRoomManager] 방 참가 완료: {roomId}");
             }
             catch (Exception ex)
@@ -182,8 +186,6 @@ namespace Salon.Firebase
         }
         private async Task SetHostAsFirstTurn(string channelId, string roomId, string hostPlayerId)
         {
-            roomCreationUI.gameObject.GetComponent<RoomCreationUI>().OnFind();
-            await Task.Delay(3000);
             try
             {
                 var roomRef = dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(roomId);
