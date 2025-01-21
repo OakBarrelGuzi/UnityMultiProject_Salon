@@ -12,44 +12,6 @@ namespace Salon.Firebase.Database
         public string status { get; set; }
     }
 
-    public static class DisplayNameUtils
-    {
-        public static string ToDisplayFormat(string serverName)
-        {
-            if (string.IsNullOrEmpty(serverName)) return string.Empty;
-            return serverName.Replace("_", "#");
-        }
-
-        public static string ToServerFormat(string displayName)
-        {
-            if (string.IsNullOrEmpty(displayName)) return string.Empty;
-            return displayName.Replace("#", "_");
-        }
-        public static string RemoveTag(string displayName)
-        {
-            if (string.IsNullOrEmpty(displayName)) return string.Empty;
-            return displayName.Split('_')[0];
-        }
-
-        public static bool IsValidDisplayName(string displayName)
-        {
-            if (string.IsNullOrEmpty(displayName)) return false;
-
-            int hashCount = displayName.Split('#').Length - 1;
-            if (hashCount != 1) return false;
-
-            int hashIndex = displayName.IndexOf('#');
-            if (hashIndex <= 0 || hashIndex >= displayName.Length - 1) return false;
-
-            return true;
-        }
-
-        public static string GenerateDisplayName(string baseName, string tag)
-        {
-            return $"{baseName}#{tag}";
-        }
-    }
-
     [Serializable]
     public class CommonChannelData
     {
@@ -243,7 +205,6 @@ namespace Salon.Firebase.Database
         public GamePlayerState State { get; set; }
         public Dictionary<string, object> GameSpecificData { get; set; }
         public string Position { get; set; }
-
         public AnimType Animation { get; set; }
 
         public GamePlayerData(string displayName, bool isHost = false)
@@ -292,9 +253,9 @@ namespace Salon.Firebase.Database
     public class GameState
     {
         public bool IsGameActive { get; set; }
-        public string CurrentTurnPlayerId { get; set; } // ���� ���� �÷��̾ ����
+        public string CurrentTurnPlayerId { get; set; }
         public string Winner { get; set; }
-        public long LastActionTimestamp { get; set; } // ���� �ð��� ������� ��, �ڵ����� ���� �ѱ�ų� ���ӿ��� �й��ϵ���
+        public long LastActionTimestamp { get; set; }
         public GameState()
         {
             IsGameActive = true;
@@ -303,12 +264,12 @@ namespace Salon.Firebase.Database
             LastActionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
     }
-
+        
     [Serializable]
     public class PlayerData
     {
         public string DisplayName { get; set; }
-        public bool IsHost { get; set; } // ���� ���� ��ư�� ���� �� ����
+        public bool IsHost { get; set; }
         public int Score { get; set; }
 
         public PlayerData(string displayName, bool isHost)
@@ -323,7 +284,7 @@ namespace Salon.Firebase.Database
     public class CardData
     {
         public bool IsFlipped { get; set; }
-        public string Owner { get; set; } // PlayerName
+        public string Owner { get; set; }
 
         public CardData()
         {
@@ -332,14 +293,21 @@ namespace Salon.Firebase.Database
         }
 
     }
+    [Serializable]
+    public class ItemData
+    {
+        public float itemCost { get; set; }
+
+        public string itemName { get; set; }
+
+        public ItemType itemType { get; set; }
+    }
 
     [Serializable]
-    public enum InteractionType
+    public enum ItemType
     {
-        None,
-        Shop,
-        DartGame,
-        ShellGame,
-        CardGame
+        Anime,
+        Emoji,
     }
+
 }

@@ -9,11 +9,11 @@ public class Card : MonoBehaviour
 
     private MemoryGameManager memoryGameManager;
 
-    public InGameCard cardData {get;set;}
+    public InGameCard cardData { get; set; }
 
-    public Quaternion startQuaternion { get;set;}
+    public Quaternion startQuaternion { get; set; }
 
-    public Quaternion targetQuaternion { get;set;}
+    public Quaternion targetQuaternion { get; set; }
 
     private SpriteRenderer spriteRenderer;
 
@@ -22,7 +22,7 @@ public class Card : MonoBehaviour
     private void Awake()
     {
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        
+
     }
 
     public void Initialize(MemoryGameManager Manager)
@@ -60,7 +60,6 @@ public class Card : MonoBehaviour
         }
     }
 
-
 }
 
 public struct InGameCard
@@ -68,7 +67,6 @@ public struct InGameCard
     public CARDTYPE cardType;
     public Sprite cardSprite;
 }
-
 
 public enum CARDTYPE
 {
