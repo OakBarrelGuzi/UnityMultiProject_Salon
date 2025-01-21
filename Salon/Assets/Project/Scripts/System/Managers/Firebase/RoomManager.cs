@@ -314,19 +314,44 @@ namespace Salon.Firebase
             var displayName = e.Snapshot.Key;
             try
             {
-                Debug.Log($"[RoomManager] OnPlayerRemoved: 플레이어 제거 - {displayName}");
+                Debug.Log($"[RoomManager] OnPlayerRemoved: 플레이어 제거 시작 - {displayName}");
+
+                // 플레이어 위치 구독 해제
                 UnsubscribeFromPlayerPosition(displayName);
 
+                // 플레이어 애니메이션 구독 해제
+                if (playerAnimationQueries.TryGetValue(displayName, out var animQuery))
+                {
+                    animQuery.ValueChanged -= OnAnimationChanged;
+                    playerAnimationQueries.Remove(displayName);
+                }
+
+                // 플레이어 오브젝트 제거
                 if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
                 {
-                    DestroyImmediate(playerObject);
+                    Debug.Log($"[RoomManager] 플레이어 오브젝트 제거 시도 - {displayName}, GameObject: {playerObject.name}");
+
+                    if (playerObject != null)
+                    {
+                        Destroy(playerObject);
+                        Debug.Log($"[RoomManager] 플레이어 오브젝트 Destroy 호출 완료 - {displayName}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[RoomManager] 플레이어 오브젝트가 이미 null임 - {displayName}");
+                    }
+
                     instantiatedPlayers.Remove(displayName);
-                    Debug.Log($"[RoomManager] {displayName}의 플레이어 오브젝트 제거 완료");
+                    Debug.Log($"[RoomManager] 플레이어 {displayName} 제거 완료");
+                }
+                else
+                {
+                    Debug.LogWarning($"[RoomManager] 제거할 플레이어를 찾을 수 없음 - {displayName}");
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[RoomManager] 플레이어 제거 처리 실패: {ex.Message}");
+                Debug.LogError($"[RoomManager] 플레이어 제거 처리 실패: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
             }
         }
 

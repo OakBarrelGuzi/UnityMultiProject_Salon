@@ -36,5 +36,9 @@ public class ScenesManager : Singleton<ScenesManager>
             UIManager.Instance.OpenPanel(PanelType.Lobby);
             await RoomManager.Instance.JoinChannel(ChannelManager.Instance.CurrentChannel);
         }
+        else
+        {
+            await RoomManager.Instance.UnsubscribeFromChannel();
+        }
     }
 }
