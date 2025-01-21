@@ -25,7 +25,9 @@ namespace Salon.ShellGame
             {
                 shellGameUI.betting_Panel.gameObject.SetActive(false);  // 배팅 UI 숨기기
                 shellGameUI.gameInfo_Panel.gameObject.SetActive(true);//라운드가 적혀있음
+                shellGameUI.shuffleManager.SetCup();
                 shellGameUI.shuffleManager.StartGame();      // 게임 시작
+                start_Button.onClick?.RemoveListener(shellGameUI.shuffleManager.SetCup);
             });
         }
 

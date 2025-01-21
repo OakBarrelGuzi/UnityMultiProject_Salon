@@ -26,15 +26,21 @@ namespace Salon.ShellGame
         //초반 애니메이션용 컵과 구슬
         public GameObject anime_Cup;
         public GameObject anime_Ball;
+
+        private Vector3 anime_Cup_Pos; 
+        private Vector3 anime_Ball_Pos;
+
         private GameObject spinner;//빈껍데기 스피너
         [SerializeField]
         private Transform table_pos;
 
 
         public int round { get; private set; } = 1;
+        public int TextRound { get; private set; } = 1;
         private int cupCount;
         private bool isStart = false;
         private bool isCanSelect = false;
+        private bool isTurning = false;
         private float cupDis;
         private float animaMoveSpeed = 5f;
         public Transform animeMovePoint;
@@ -42,10 +48,13 @@ namespace Salon.ShellGame
         private float speed = 0f;
         [SerializeField]
         private float roundSpeed = 0f;
-        //TODO:서버 소지금 할당
         [SerializeField]
         private float Duration = 0f;
+
+        //TODO:서버 소지금 할당
         public int myGold { get; private set; }
+        //TODO: 투두
+        public int BettingGOld { get; private set; }
 
         private void Awake()
         {
@@ -61,10 +70,12 @@ namespace Salon.ShellGame
             plusShuffleSpeed[SHELLDIFFICULTY.Normal] = 1f + roundSpeed;
             plusShuffleSpeed[SHELLDIFFICULTY.Hard] = 1.5f + roundSpeed;
 
-            shuffleDuration[SHELLDIFFICULTY.Easy] = 5f +Duration;
+            shuffleDuration[SHELLDIFFICULTY.Easy] = 5f + Duration;
             shuffleDuration[SHELLDIFFICULTY.Normal] = 7f + Duration;
             shuffleDuration[SHELLDIFFICULTY.Hard] = 10f + Duration;
 
+            anime_Cup_Pos = anime_Cup.transform.position;
+            anime_Ball_Pos = anime_Ball.transform.position;
         }
         private void Start()
         {
@@ -74,14 +85,22 @@ namespace Salon.ShellGame
 
             uiManager.Initialize(this);
 
-            uiManager.gameInfo_Panel.round_Text.text = $"ROUND {round}";
-            uiManager.clear_Panel.clearRound_Text.text = $"ROUND{round}";
+            uiManager.gameInfo_Panel.round_Text.text = $"ROUND {TextRound}";
+            uiManager.clear_Panel.clearRound_Text.text = $"ROUND{TextRound}";
+
+            uiManager.clear_Panel.go_Button.onClick.AddListener(() =>
+            {
+                NextRound();
+                uiManager.clear_Panel.gameObject.SetActive(false);
+            });
+
         }
 
         private void Update()
         {
             if (spinner != null)
             {
+                isTurning = true;
                 CupShuffle();
             }
             else if (spinner == null && isStart == true)
@@ -114,6 +133,7 @@ namespace Salon.ShellGame
                 (spinner.transform.rotation,
                 Quaternion.Euler(0f, 180f, 0f),
                 Time.deltaTime * (shuffleSpeed[shellDifficulty] + (round * plusShuffleSpeed[shellDifficulty])) / cupDis);
+            print(shuffleSpeed[shellDifficulty] + (round * plusShuffleSpeed[shellDifficulty]));
             if (Quaternion.Angle(spinner.transform.rotation,
                 Quaternion.Euler(0f, -180f, 0f)) < 0.05f)
             {
@@ -123,6 +143,7 @@ namespace Salon.ShellGame
                 }
 
                 Destroy(spinner);
+                isTurning = false;
             }
         }
 
@@ -131,23 +152,27 @@ namespace Salon.ShellGame
             yield return new WaitForSeconds(shuffleDuration[shellDifficulty]);
 
             isStart = false;
+
+            yield return new WaitUntil(() => isTurning == false);
+
             isCanSelect = true;
-            float time=5f;
-            while (time>=0 && isCanSelect==true )
+
+            float time = 5f;
+            while (time >= 0 && isCanSelect == true)
             {
                 time -= Time.deltaTime;
                 uiManager.gameInfo_Panel.timer_Text.text = ((int)time).ToString();
                 yield return null;
             }
-            if(time <= 0)
+            if (time <= 0)
             {
                 //TODO: 시간초과 패배
-                print("Wls님 개같이 패배");
+                print("현J님 개같이 패배");
                 isCanSelect = false;
                 uiManager.gameOver_Panel.gameObject.SetActive(true);
 
             }
-            
+
 
         }
 
@@ -157,21 +182,13 @@ namespace Salon.ShellGame
             {
                 return;
             }
+            isCanSelect = false;
 
             StartCoroutine(CheckCup(cup));
 
-            //if (cup.hasBall == true)
-            //{
-            //    uiManager.clear_Panel.gameObject.SetActive(true);
-            //}
-            //else if (cup.hasBall == false)
-            //{
-            //    uiManager.gameOver_Panel.gameObject.SetActive(true);
-            //}
-            //isCanSelect = false;
         }
 
-        private IEnumerator SetAnime()
+        public void SetCup()
         {
 
             foreach (Cup cup in cups)
@@ -187,6 +204,9 @@ namespace Salon.ShellGame
             }
             cups[1].hasBall = true;//구슬이 있는컵은 3번째컵(중앙)
 
+        }
+        private IEnumerator setAnime()
+        {
             print("멈춰! 컵내려오는중~~~~");
             yield return new WaitForSeconds(1.5f);
             print("움직여! 컵 다내려옴~~");
@@ -200,13 +220,14 @@ namespace Salon.ShellGame
             StartCoroutine(ShuffleStart());
             yield return new WaitForSeconds(5f);
         }
-
         public void StartGame()//여기가 게임 시작하는 초입 애니 들어가야함
         {
             anime_Cup.gameObject.SetActive(true);
+            anime_Cup.transform.position = anime_Cup_Pos;
             anime_Ball.gameObject.SetActive(true);
+            anime_Ball.transform.position = anime_Ball_Pos;
 
-            StartCoroutine(SetAnime());
+            StartCoroutine(setAnime());
             StartCoroutine(StartAnime());
         }
 
@@ -225,20 +246,21 @@ namespace Salon.ShellGame
             cups[1].gameObject.SetActive(false);
             anime_Cup.gameObject.SetActive(true);
             anime_Ball.gameObject.SetActive(true);
-            while (Vector3.Distance(anime_Ball.transform.position, animeMovePoint.position) > 0.01f)
+            while (Vector3.Distance(anime_Ball.transform.position,
+                cups[1].transform.position + new Vector3(0, -0.3f, 0)) > 0.01f)
             {
                 anime_Ball.transform.position = Vector3.Lerp(
                     anime_Ball.transform.position,
-                    animeMovePoint.position,
+                    cups[1].transform.position + new Vector3(0, -0.3f, 0),
                     animaMoveSpeed * Time.deltaTime);
                 yield return null;
             }
             while (Vector3.Distance(anime_Cup.transform.position,
-                animeMovePoint.position + new Vector3(0, 0.3f, 0)) > 0.01f)
+                cups[1].transform.position) > 0.01f)
             {
                 anime_Cup.transform.position = Vector3.Lerp(
                     anime_Cup.transform.position,
-                    animeMovePoint.position + new Vector3(0, 0.3f, 0),//너무 아래로 내려가니까 y축으로 좀 덜내려가도록 조정
+                    cups[1].transform.position,//너무 아래로 내려가니까 y축으로 좀 덜내려가도록 조정
                     animaMoveSpeed * Time.deltaTime);
                 yield return null;
             }
@@ -279,6 +301,38 @@ namespace Salon.ShellGame
                 uiManager.clear_Panel.gameObject.SetActive(false);
             }
             isCanSelect = false;
+            checkBall.y -= 2f;
+            while (Vector3.Distance(cup.transform.position,checkBall) > 0.01f)
+            {
+                cup.transform.position = Vector3.Lerp(
+                  cup.transform.position,
+                   checkBall,
+                  5.5f * Time.deltaTime);
+
+                yield return null;
+            }
+
         }
+
+        public void NextRound()
+        {
+            TextRound++;
+            round++;
+            if (round > 10)
+            {
+                round = 10;
+            }
+            isStart = false;
+            isCanSelect = false;
+                    
+            uiManager.gameInfo_Panel.round_Text.text = $"ROUND {TextRound}";
+            uiManager.clear_Panel.clearRound_Text.text = $"ROUND{TextRound} Clear";
+            uiManager.gameInfo_Panel.timer_Text.text = "5";
+
+
+            StartGame();
+        }
+
+
     }
 }

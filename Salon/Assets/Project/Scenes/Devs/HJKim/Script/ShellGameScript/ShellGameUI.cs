@@ -26,6 +26,8 @@ namespace Salon.ShellGame
         [SerializeField]
         private float fxDelay = 1;
 
+        
+
         public void Initialize(ShellGameManager shuffleManager)
         {
             this.shuffleManager = shuffleManager;
