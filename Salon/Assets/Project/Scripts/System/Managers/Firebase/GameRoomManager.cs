@@ -124,7 +124,7 @@ namespace Salon.Firebase
             {
                 string newRoomId = Guid.NewGuid().ToString();
                 GameRoomData newRoom = new GameRoomData(newRoomId, hostPlayerId);
-
+                newRoom.Players.Add(hostPlayerId, new GamePlayerData(hostPlayerId));
                 // Firebase에 방 데이터 저장
                 string roomJson = JsonConvert.SerializeObject(newRoom);
                 await dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(newRoomId).SetRawJsonValueAsync(roomJson);
@@ -195,7 +195,6 @@ namespace Salon.Firebase
 
                 await SetRoomDeletionOnDisconnect(channelId, roomId);
                 roomCreationUI.SetRoomData(roomId, channelId, playerInfo);
-                Debug.Log($"[GameRoomManager] 방 참가 완료: {roomId}");
 
                 roomCreationUI.OnFind();
                 await Task.Delay(3000);
