@@ -33,6 +33,11 @@ namespace Salon.Character
             posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
             AnimRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Animation");
 
+            if (animController != null)
+            {
+                animController.OnAnimationStateChanged += HandleAnimationStateChanged;
+            }
+
             StartCoroutine(SetupCamera());
         }
 
@@ -157,6 +162,22 @@ namespace Salon.Character
                     UIManager.Instance.ClosePanel(PanelType.DartGame);
                 else
                     inputController.popupButton.gameObject.SetActive(false);
+            }
+        }
+
+        private void HandleAnimationStateChanged(bool isPlaying)
+        {
+            if (inputController != null)
+            {
+                inputController.enabled = !isPlaying;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (animController != null)
+            {
+                animController.OnAnimationStateChanged -= HandleAnimationStateChanged;
             }
         }
     }

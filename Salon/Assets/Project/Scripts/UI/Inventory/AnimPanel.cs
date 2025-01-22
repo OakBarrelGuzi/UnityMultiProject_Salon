@@ -8,8 +8,20 @@ public class AnimPanel : Panel
 {
     public List<Socket> socketList;
 
+    public override void Open()
+    {
+        base.Open();
+        Initialize();
+    }
+
     public override async void Initialize()
     {
+        // 모든 소켓의 타입을 Anim으로 설정
+        foreach (var socket in socketList)
+        {
+            socket.itemType = ItemType.Anim;
+        }
+
         await RefreshActivatedItems();
     }
 
@@ -20,7 +32,12 @@ public class AnimPanel : Panel
         // 소켓 초기화 및 이벤트 연결
         foreach (var socket in socketList)
         {
+            // 기존 이벤트 리스너 제거
+            socket.OnItemChanged -= HandleSocketItemChanged;
             socket.OnItemChanged += HandleSocketItemChanged;
+
+            // 소켓 초기화
+            socket.ClearItem();
 
             // 활성화된 애니메이션 아이템 찾아서 소켓에 설정
             var activeItem = activatedItems.Items.Find(item =>

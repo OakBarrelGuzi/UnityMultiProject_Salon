@@ -236,7 +236,7 @@ namespace Salon.Firebase
                     RoomManager.Instance.JoinChannel(channelName)
                 );
 
-                ItemManager.Instance.Initialize();
+                await ItemManager.Instance.Initialize();
 
                 Debug.Log($"[ChannelManager] {channelName} 채널 입장 완료");
             }

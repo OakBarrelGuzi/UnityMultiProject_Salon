@@ -16,6 +16,9 @@ public class AnimController : MonoBehaviour
 
     private bool isShowingEmoji = false;
 
+    public bool IsPlayingAnimation { get; private set; }
+    public System.Action<bool> OnAnimationStateChanged;
+
     private void Start()
     {
         Initialize();
@@ -25,6 +28,7 @@ public class AnimController : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         currentController = SetupOverrideController();
+        IsPlayingAnimation = false;
     }
 
     private AnimatorOverrideController SetupOverrideController()
@@ -77,6 +81,20 @@ public class AnimController : MonoBehaviour
     {
         AnimationClip clip = ItemManager.Instance.GetAnimClip(animName);
         ClipChange(clip);
+        IsPlayingAnimation = true;
+        OnAnimationStateChanged?.Invoke(true);
         animator.SetTrigger("ASTrigger");
+
+        if (clip != null)
+        {
+            StartCoroutine(WaitForAnimationEnd(clip.length));
+        }
+    }
+
+    private IEnumerator WaitForAnimationEnd(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        IsPlayingAnimation = false;
+        OnAnimationStateChanged?.Invoke(false);
     }
 }

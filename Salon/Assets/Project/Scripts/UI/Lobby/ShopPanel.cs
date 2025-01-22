@@ -24,6 +24,12 @@ public class ShopPanel : Panel
 
     private List<ShopItem> spawnedItems = new List<ShopItem>();
 
+    public override void Open()
+    {
+        base.Open();
+        Initialize();
+    }
+
     public override async void Initialize()
     {
         closeButton.onClick.AddListener(Close);
@@ -45,7 +51,6 @@ public class ShopPanel : Panel
 
     private async Task RefreshShopItems()
     {
-        // 기존 아이템 제거
         foreach (var item in spawnedItems)
         {
             if (item != null)
@@ -55,16 +60,17 @@ public class ShopPanel : Panel
         }
         spawnedItems.Clear();
 
-        // 현재 보유한 아이템 목록 가져오기
         var inventory = await ItemManager.Instance.LoadPlayerInventory();
-        var ownedItems = inventory.Items;
+        var activatedItems = await ItemManager.Instance.LoadPlayerActivatedItems();
 
-        // 상점 아이템 생성
+        var ownedItems = new List<ItemData>();
+        ownedItems.AddRange(inventory.Items);
+        ownedItems.AddRange(activatedItems.Items);
+
         var allItems = ItemManager.Instance.GetAllItem();
 
         foreach (var itemData in allItems)
         {
-            // 이미 보유한 아이템은 제외
             if (ownedItems.Any(item =>
                 item.itemName == itemData.itemName &&
                 item.itemType == itemData.itemType))
@@ -72,7 +78,6 @@ public class ShopPanel : Panel
                 continue;
             }
 
-            // 현재 탭에 맞는 아이템만 표시
             Transform parent = (itemData.itemType == ItemType.Emoji) ? emojiParent : animParent;
             if (!parent.gameObject.activeSelf) continue;
 

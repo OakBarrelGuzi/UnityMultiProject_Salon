@@ -8,73 +8,80 @@ using TMPro;
 
 public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    private ItemData ItemData;
-    public ItemData itemData => ItemData;
+    [Header("UI Components")]
+    public Image itemIcon;
 
-    public Image image;
+    public ItemData itemData;
 
-    public Sprite itemImage;
+    private RectTransform rectTransform;
+    private Canvas canvas;
+    private Transform originalParent;
+    private int originalSiblingIndex;
+    private Vector2 originalPosition;
+    private CanvasGroup canvasGroup;
 
-    public TextMeshProUGUI itemPrice;
-
-    public RectTransform rectTransform { get; private set; }
-
-    public Canvas canvas { get; private set; }
-    private Transform parent;
-    private int siblingIndex;
-
-    public Vector2 originalPosition { get; private set; }
-
-    public virtual void Initialize(ItemData itemData)
+    private void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
         canvas = GetComponentInParent<Canvas>();
+        canvasGroup = GetComponent<CanvasGroup>();
 
-        ItemData data = new ItemData()
+        if (canvasGroup == null)
         {
-            itemCost = itemData.itemCost,
-            itemName = itemData.itemName,
-            itemType = itemData.itemType,
+            canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+    }
+
+    public virtual void Initialize(ItemData data)
+    {
+        // 아이템 데이터 복사
+        itemData = new ItemData()
+        {
+            itemName = data.itemName,
+            itemType = data.itemType,
+            itemCost = data.itemCost,
         };
 
-        ItemData = data;
-
-        itemImage = ItemManager.Instance.GetItemSprite(itemData.itemName);
-        image.sprite = itemImage;
-
-        itemPrice.text = itemData.itemCost.ToString();
-
+        // 아이템 아이콘 설정
+        itemIcon.sprite = ItemManager.Instance.GetItemSprite(itemData.itemName);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        parent = transform.parent;
-        siblingIndex = transform.GetSiblingIndex();
+        originalParent = transform.parent;
+        originalSiblingIndex = transform.GetSiblingIndex();
         originalPosition = rectTransform.anchoredPosition;
-        transform.SetParent(canvas.transform);
 
-        image.raycastTarget = false;
+        // 드래그 중인 아이템을 캔버스의 최상위로 이동
+        transform.SetParent(canvas.transform);
+        transform.SetAsLastSibling();
+
+        // 드래그 중인 아이템의 레이캐스트 차단
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.alpha = 0.6f;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        Vector2 localPoint;
-
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
             canvas.transform as RectTransform,
             eventData.position,
             canvas.worldCamera,
-            out localPoint
-        );
-        rectTransform.position = canvas.transform.TransformPoint(localPoint);
+            out Vector2 localPoint))
+        {
+            rectTransform.position = canvas.transform.TransformPoint(localPoint);
+        }
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        transform.SetParent(parent);
-        transform.SetSiblingIndex(siblingIndex);
+        // 원래 위치로 복귀
+        transform.SetParent(originalParent);
+        transform.SetSiblingIndex(originalSiblingIndex);
         rectTransform.anchoredPosition = originalPosition;
 
-        image.raycastTarget = true;
+        // 레이캐스트 차단 해제
+        canvasGroup.blocksRaycasts = true;
+        canvasGroup.alpha = 1f;
     }
 }

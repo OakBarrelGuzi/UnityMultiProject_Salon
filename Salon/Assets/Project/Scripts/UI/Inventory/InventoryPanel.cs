@@ -26,6 +26,12 @@ public class InventoryPanel : Panel
 
     private List<Item> spawnedItems = new List<Item>();
 
+    public override void Open()
+    {
+        base.Open();
+        Initialize();
+    }
+
     public override async void Initialize()
     {
         InitializeUI();

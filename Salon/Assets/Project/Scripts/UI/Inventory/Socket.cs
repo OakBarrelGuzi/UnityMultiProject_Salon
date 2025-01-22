@@ -11,10 +11,24 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
     public ItemData itemData { get; private set; }
     public ItemType itemType;
     private Image image;
+    private Panel parentPanel;
 
     private void Start()
     {
         image = GetComponentInChildren<Image>();
+        parentPanel = GetComponentInParent<Panel>();
+        // 처음에는 이미지를 투명하게 설정
+        SetImageOpacity(0);
+    }
+
+    private void SetImageOpacity(float opacity)
+    {
+        if (image != null)
+        {
+            Color color = image.color;
+            color.a = opacity;
+            image.color = color;
+        }
     }
 
     public void OnDrop(PointerEventData eventData)
@@ -34,7 +48,8 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
     public void AddSocketItem(Item item)
     {
         if (itemType != item.itemData.itemType) return;
-        this.image.sprite = item.image.sprite;
+        this.image.sprite = item.itemIcon.sprite;
+        SetImageOpacity(1); // 아이템이 추가될 때 이미지를 보이게 함
 
         ItemData data = new ItemData()
         {
@@ -64,6 +79,7 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
         };
         itemData = item;
         image.sprite = ItemManager.Instance.GetItemSprite(data.itemName);
+        SetImageOpacity(1); // 아이템이 추가될 때 이미지를 보이게 함
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -73,11 +89,22 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
             if (itemData.itemType == ItemType.Emoji)
             {
                 GameManager.Instance.player.GetComponent<LocalPlayer>().animController.SetEmoji(itemData.itemName);
+                parentPanel?.Close();
             }
             else if (itemData.itemType == ItemType.Anim)
             {
                 GameManager.Instance.player.GetComponent<LocalPlayer>().animController.SetAnime(itemData.itemName);
+                parentPanel?.Close();
             }
+        }
+    }
+
+    public void ClearItem()
+    {
+        itemData = null;
+        if (image != null)
+        {
+            SetImageOpacity(0);
         }
     }
 }

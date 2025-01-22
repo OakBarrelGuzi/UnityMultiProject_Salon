@@ -14,7 +14,7 @@ public class ItemManager : Singleton<ItemManager>
     private DatabaseReference activatedItemRef;
     public List<ItemData> ItemList { get; private set; }
 
-    public async void Initialize()
+    public async Task Initialize()
     {
         inventoryRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Inventory");
         activatedItemRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("ActivatedItems");
