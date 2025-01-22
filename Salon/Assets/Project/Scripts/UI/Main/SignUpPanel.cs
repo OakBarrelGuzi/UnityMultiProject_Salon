@@ -95,7 +95,7 @@ public class SignUpPanel : Panel
             LogManager.Instance.ShowLog("비밀번호와 비밀번호 확인이 일치하지 않습니다.");
             return;
         }
-        bool result = await FirebaseManager.Instance.RegisterWithEmailAsync(idInputField.text, passwordInputField.text);
+        bool result = await FirebaseManager.Instance.SignUpWithEmailAsync(idInputField.text, passwordInputField.text);
         try
         {
             if (result)

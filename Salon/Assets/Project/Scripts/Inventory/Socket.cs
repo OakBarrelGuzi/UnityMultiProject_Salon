@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Salon.Firebase.Database;
+using Salon.Character;
 
 public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
 {
@@ -9,7 +10,7 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
 
     public ItemData itemData { get; private set; }
 
-    public ItemType socketType;
+    public ItemType itemType;
 
     private Image image;
     private void Start()
@@ -34,7 +35,7 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
 
     public void AddSocketItem(Item item)
     {
-        if (socketType != item.itemData.itemType) return;
+        if (itemType != item.itemData.itemType) return;
         this.image.sprite = item.image.sprite;
         if (itemData != null)
         {
@@ -61,20 +62,19 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
         itemData = item;
     }
 
-    //?????? ???
     public void OnPointerClick(PointerEventData eventData)
     {
         if (itemData != null)
         {
-            print(itemData.itemCost);
-            print(itemData.itemName);
-            print(itemData.itemType);
-        }
-        else
-        {
-            print("???????? ?????");
+            if (itemData.itemType == ItemType.Emoji)
+            {
+                GameManager.Instance.player.GetComponent<LocalPlayer>().animController.SetEmoji(itemData.itemName);
+            }
+            else if (itemData.itemType == ItemType.Anime)
+            {
+                GameManager.Instance.player.GetComponent<LocalPlayer>().animController.SetAnime(itemData.itemName);
+            }
         }
     }
 
 }
-

@@ -1,4 +1,7 @@
+
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class AnimController : MonoBehaviour
 {
@@ -7,16 +10,14 @@ public class AnimController : MonoBehaviour
 
     private AnimatorOverrideController currentController;
 
-    private string originalCMotionName = "IdleArmSwing";
+    private string originalMotionName = "IdleArmSwing";
 
-    public AnimationClip TestClip;
+    public Image EmojiImage;
 
     //가지고있는대상에서 명시적으로 초기화 해야함
     private void Start()
     {
         Initialize();
-        ClipChange(TestClip);
-        animator.SetTrigger("ASTrigger");
     }
 
     public void Initialize()
@@ -33,7 +34,6 @@ public class AnimController : MonoBehaviour
         return overrideController;
     }
 
-
     public void ClipChange(AnimationClip animationClip)
     {
         if (currentController == null)
@@ -43,7 +43,7 @@ public class AnimController : MonoBehaviour
 
         if (animationClip != null)
         {
-            currentController[originalCMotionName] = animationClip;
+            currentController[originalMotionName] = animationClip;
         }
     }
 
@@ -55,4 +55,18 @@ public class AnimController : MonoBehaviour
         currentController = SetupOverrideController();
     }
 
+    public async void SetEmoji(string emojiName)
+    {
+        EmojiImage.sprite = ItemManager.Instance.GetEmojiSprite(emojiName);
+        EmojiImage.gameObject.SetActive(true);
+        await Task.Delay(3000);
+        EmojiImage.gameObject.SetActive(false);
+    }
+
+    public void SetAnime(string animName)
+    {
+        AnimationClip clip = ItemManager.Instance.GetAnimeClip(animName);
+        ClipChange(clip);
+        animator.SetTrigger("ASTrigger");
+    }
 }

@@ -64,7 +64,9 @@ namespace Salon.Firebase.Database
         public Dictionary<GameType, UserStats> GameStats { get; set; }
         public Dictionary<string, InviteData> Invites { get; set; }
         public Dictionary<string, FriendRequestData> FriendRequests { get; set; }
-        public int bestDartScore { get; set; }
+        public int BestDartScore { get; set; }
+        public int Gold { get; set; }
+        public UserInventory Inventory { get; set; }
         public UserData()
         {
             DisplayName = "";
@@ -74,7 +76,18 @@ namespace Salon.Firebase.Database
             GameStats = new Dictionary<GameType, UserStats>();
             Invites = new Dictionary<string, InviteData>();
             FriendRequests = new Dictionary<string, FriendRequestData>();
-            bestDartScore = 0;
+            BestDartScore = 0;
+            Gold = 50000;
+        }
+    }
+    [Serializable]
+    public class UserInventory
+    {
+        public List<ItemData> Items { get; set; }
+
+        public UserInventory()
+        {
+            Items = new List<ItemData>();
         }
     }
     [Serializable]
@@ -264,7 +277,7 @@ namespace Salon.Firebase.Database
             LastActionTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
     }
-        
+
     [Serializable]
     public class PlayerData
     {
@@ -296,7 +309,7 @@ namespace Salon.Firebase.Database
     [Serializable]
     public class ItemData
     {
-        public float itemCost { get; set; }
+        public int itemCost { get; set; }
 
         public string itemName { get; set; }
 

@@ -4,6 +4,7 @@ using Salon.Firebase.Database;
 using Salon.Firebase;
 using System;
 using Firebase.Database;
+using System.Collections;
 
 namespace Salon.Character
 {
@@ -15,9 +16,11 @@ namespace Salon.Character
         private float lastPositionUpdateTime;
         private InputController inputController;
         private string lastSentPositionData;
+        public AnimController animController;
 
         public override void Initialize(string displayName)
         {
+            print("LocalPlayer Initialize");
             base.Initialize(displayName);
             inputController = GetComponent<InputController>();
             if (inputController != null)
@@ -30,8 +33,40 @@ namespace Salon.Character
             posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
             AnimRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Animation");
 
-            CameraController cc = Camera.main.GetComponent<CameraController>();
-            cc.SetTarget(transform);
+            StartCoroutine(SetupCamera());
+        }
+
+        private IEnumerator SetupCamera()
+        {
+            int maxAttempts = 10;
+            int currentAttempt = 0;
+
+            while (currentAttempt < maxAttempts)
+            {
+                Camera mainCam = Camera.main;
+                if (mainCam != null)
+                {
+                    CameraController cc = mainCam.GetComponent<CameraController>();
+                    if (cc == null)
+                    {
+                        print("메인 카메라에 CameraController가 없어서 추가합니다.");
+                        cc = mainCam.gameObject.AddComponent<CameraController>();
+                    }
+
+                    print($"카메라 컨트롤러 설정 완료: {mainCam.gameObject.name}");
+                    cc.SetTarget(this.gameObject.transform);
+                    yield break;
+                }
+                else
+                {
+                    print("메인 카메라를 찾을 수 없습니다. 재시도 중...");
+                }
+
+                currentAttempt++;
+                yield return new WaitForSeconds(0.2f);
+            }
+
+            Debug.LogError("카메라 설정 실패: 메인 카메라를 찾을 수 없습니다.");
         }
 
         public async void OnAnim()

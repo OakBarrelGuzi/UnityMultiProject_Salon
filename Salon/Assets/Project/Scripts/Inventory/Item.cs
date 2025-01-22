@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using Salon.Firebase.Database;
+using TMPro;
 
 public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -13,6 +14,8 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
     public Image image;
 
     public Sprite itemImage;
+
+    public TextMeshProUGUI itemPrice;
 
     public RectTransform rectTransform { get; private set; }
 
@@ -33,12 +36,14 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
             itemName = itemData.itemName,
             itemType = itemData.itemType,
         };
-        this.ItemData = data;
 
-        if (itemImage != null)
-        {
-            image.sprite = itemImage;
-        }
+        ItemData = data;
+
+        itemImage = ItemManager.Instance.GetItemSprite(itemData.itemName);
+        image.sprite = itemImage;
+
+        itemPrice.text = itemData.itemCost.ToString();
+
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -64,7 +69,7 @@ public class Item : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHand
         rectTransform.position = canvas.transform.TransformPoint(localPoint);
     }
 
-    void IEndDragHandler.OnEndDrag(PointerEventData eventData)
+    public void OnEndDrag(PointerEventData eventData)
     {
 
         transform.SetParent(parent);

@@ -4,10 +4,10 @@ using UnityEngine.EventSystems;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
 
-namespace Salon.DartGame 
+namespace Salon.DartGame
 {
 
-    public class DartResultPanel : MonoBehaviour , IPointerClickHandler
+    public class DartResultPanel : MonoBehaviour, IPointerClickHandler
     {
         public TextMeshProUGUI bestScoreText;
         public TextMeshProUGUI scoreText;

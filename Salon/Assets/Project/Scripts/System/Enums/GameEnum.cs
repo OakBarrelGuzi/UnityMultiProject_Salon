@@ -15,7 +15,8 @@ public enum PanelType
     Dart,
     DartGame,
     PartyRoom,
-    ShellGame
+    ShellGame,
+    MemoryGame
 }
 public enum InviteStatus
 {
