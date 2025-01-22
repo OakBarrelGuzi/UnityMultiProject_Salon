@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Salon.Inven
 {
-    public class InventoryUI : MonoBehaviour
+    public class InventoryUI : Panel
     {
         [SerializeField]
         private Button emojiInvenButton;
@@ -22,28 +22,41 @@ namespace Salon.Inven
         private GameObject emojiPopupPanel;
         [SerializeField]
         private GameObject animePopupPanel;
-        private void Awake()
+
+        public override void Open()
         {
-            invenExitButton.onClick.AddListener(()=>gameObject.SetActive(false));
-            emojiInvenButton.onClick.AddListener(() => 
+            base.Open();
+        }
+
+        public override void Initialize()
+        {
+            invenExitButton.onClick.AddListener(Close);
+
+            emojiInvenButton.onClick.AddListener(() =>
             {
                 emojiInven.SetActive(true);
                 emojiPopupPanel.SetActive(true);
                 animeInven.SetActive(false);
                 animePopupPanel.SetActive(false);
             });
+
             animeInvenButton.onClick.AddListener(() =>
             {
                 animeInven.SetActive(true);
                 animePopupPanel.SetActive(true);
                 emojiInven.SetActive(false);
                 emojiPopupPanel.SetActive(false);
-            } );
+            });
 
             emojiInven.SetActive(true);
-            emojiPopupPanel.SetActive(true );
+            emojiPopupPanel.SetActive(true);
             animeInven.SetActive(false);
             animePopupPanel.SetActive(false);
+        }
+
+        public override void Close()
+        {
+            base.Close();
         }
     }
 }
