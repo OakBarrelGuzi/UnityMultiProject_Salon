@@ -10,6 +10,8 @@ namespace Salon.ShellGame
         public ShellGameManager shuffleManager { get;private set; }
 
         public List<Shell_Panel> shell_Panels = new List<Shell_Panel>();
+         
+
 
         //[Header("Panel Setting")]
         public Shell_Difficult difficult_Panel;

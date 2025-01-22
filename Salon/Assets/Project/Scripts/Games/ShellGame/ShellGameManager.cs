@@ -1,6 +1,10 @@
+using Firebase.Database;
+using Salon.Firebase;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Salon.ShellGame
 {
@@ -51,6 +55,10 @@ namespace Salon.ShellGame
         [SerializeField]
         private float Duration = 0f;
 
+        public string UserUID { get; private set; }
+
+        public DatabaseReference currentUserRef { get; private set; }
+
         //TODO:서버 소지금 할당
         public int myGold { get; private set; }
         //TODO: 투두
@@ -77,7 +85,7 @@ namespace Salon.ShellGame
             anime_Cup_Pos = anime_Cup.transform.position;
             anime_Ball_Pos = anime_Ball.transform.position;
         }
-        private void Start()
+        private async void Start()
         {
             UIManager.Instance.CloseAllPanels();
             UIManager.Instance.OpenPanel(PanelType.ShellGame);
@@ -94,6 +102,29 @@ namespace Salon.ShellGame
                 uiManager.clear_Panel.gameObject.SetActive(false);
             });
 
+            UserUID = FirebaseManager.Instance.CurrentUserUID;
+
+
+            currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("Gold");
+
+            try
+            {
+                var snapshot = await currentUserRef.GetValueAsync();
+                if (snapshot.Exists)
+                {
+                    myGold = int.Parse(snapshot.Value.ToString());
+                    print(myGold);
+                }
+                else
+                {
+                    Debug.Log("점수 데이터가 없습니다");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"점수 가져오기 실패: {e.Message}");
+            }
+       
         }
 
         private void Update()
@@ -333,6 +364,10 @@ namespace Salon.ShellGame
             StartGame();
         }
 
+        private async void MyGoldLoad()
+        {
+
+        }
 
     }
 }
