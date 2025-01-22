@@ -27,8 +27,12 @@ public class MemoryGameManager : MonoBehaviour
 
     private int cardnum = 0;
 
+    private int localPlayerScore;
+    private int remotePlayerScore;
+
     private List<Card> openCardList = new List<Card>();
 
+    private Coroutine turnTimeUiRoutine;
     private string currentPlayerId;
     private string roomId;
     private DatabaseReference roomRef;
@@ -56,6 +60,8 @@ public class MemoryGameManager : MonoBehaviour
         UIManager.Instance.OpenPanel(PanelType.MemoryGame);
         memoryGamePanelUi = UIManager.Instance.GetComponentInChildren<MemoryGamePanelUi>();
         memoryGamePanelUi.gameObject.SetActive(true);
+
+        turnTimeUiRoutine = StartCoroutine(TurnCountRoutine());
     }
     private void OnDestroy()
     {
@@ -220,5 +226,30 @@ public class MemoryGameManager : MonoBehaviour
                 }
             }
         }
+    }
+
+    private IEnumerator TurnCountRoutine()
+    {
+        while (true)
+        {
+
+            if (currentPlayerId == GameRoomManager.Instance.currentPlayerId)
+            {
+                print("지금 내턴");
+                memoryGamePanelUi.cardPanel.player1_Time.value = 1f - (Time.time - turnStartTime) / 60f;
+                memoryGamePanelUi.cardPanel.player2_Time.value = 1f;
+
+            }
+            else if (currentPlayerId != GameRoomManager.Instance.currentPlayerId)
+            {
+                print("상대 턴");
+                memoryGamePanelUi.cardPanel.player2_Time.value = 1f - (Time.time - turnStartTime) / 60f;
+                memoryGamePanelUi.cardPanel.player1_Time.value = 1f;
+            }
+
+            yield return new WaitForSeconds(0.5f);
+
+        }
+
     }
 }
