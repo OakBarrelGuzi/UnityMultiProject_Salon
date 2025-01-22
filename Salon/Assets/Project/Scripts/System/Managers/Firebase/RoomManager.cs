@@ -15,11 +15,15 @@ namespace Salon.Firebase
     {
         private DatabaseReference dbReference;
         private DatabaseReference channelsRef;
-        private DatabaseReference currentChannelRef;
+        public DatabaseReference currentChannelRef { get; private set; }
         public DatabaseReference CurrentChannelPlayersRef { get; private set; }
         private Dictionary<string, GameObject> instantiatedPlayers = new Dictionary<string, GameObject>();
         private Dictionary<string, Query> playerPositionQueries = new Dictionary<string, Query>();
         private Dictionary<string, Query> playerAnimationQueries = new Dictionary<string, Query>();
+        private Dictionary<string, long> lastEmojiTimestamps = new Dictionary<string, long>();
+        private Dictionary<string, long> lastAnimationTimestamps = new Dictionary<string, long>();
+
+        public string CurrentChannelName => currentChannelRef?.Key;
 
         public LocalPlayer localPlayerPrefab;
         public RemotePlayer remotePlayerPrefab;
@@ -189,25 +193,31 @@ namespace Salon.Firebase
         {
             try
             {
-                print("[RoomManager] 플레이어 위치/애니메이션션 변경 구독 시작: " + displayName);
+                print("[RoomManager] 플레이어 위치/애니메이션/이모지 변경 구독 시작: " + displayName);
                 if (playerPositionQueries.ContainsKey(displayName))
                 {
                     print($"[RoomManager] 플레이어 위치 변경 구독 중복: {displayName}");
                     playerPositionQueries[displayName].ValueChanged -= OnPositionChanged;
                 }
-                print("[RoomManager] 플레이어 위치/애니메이션 변경 구독 중복 해제 완료: " + displayName);
+                print("[RoomManager] 플레이어 위치/애니메이션/이모지 변경 구독 중복 해제 완료: " + displayName);
+
                 var positionQuery = CurrentChannelPlayersRef.Child(displayName).Child("Position");
                 positionQuery.ValueChanged += OnPositionChanged;
+
                 var animationQuery = CurrentChannelPlayersRef.Child(displayName).Child("Animation");
                 animationQuery.ValueChanged += OnAnimationChanged;
-                print("[RoomManager] 플레이어 위치/애니메이션 변경 구독 완료: " + displayName);
+
+                var emojiQuery = CurrentChannelPlayersRef.Child(displayName).Child("Emoji");
+                emojiQuery.ValueChanged += OnEmojiChanged;
+
+                print("[RoomManager] 플레이어 위치/애니메이션/이모지 변경 구독 완료: " + displayName);
                 playerPositionQueries[displayName] = positionQuery;
                 playerAnimationQueries[displayName] = animationQuery;
-                Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 완료");
+                Debug.Log($"[RoomManager] {displayName}의 위치/애니메이션/이모지 변경 구독 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[RoomManager] 플레이어 위치 구독 실패: {ex.Message}");
+                Debug.LogError($"[RoomManager] 플레이어 위치/애니메이션/이모지 구독 실패: {ex.Message}");
             }
         }
 
@@ -218,6 +228,50 @@ namespace Salon.Firebase
                 query.ValueChanged -= OnPositionChanged;
                 playerPositionQueries.Remove(displayName);
                 Debug.Log($"[RoomManager] {displayName}의 위치 변경 구독 해제 완료");
+            }
+        }
+
+        private void OnEmojiChanged(object sender, ValueChangedEventArgs args)
+        {
+            if (!args.Snapshot.Exists)
+            {
+                Debug.Log("[RoomManager] OnEmojiChanged : 스냅샷이 존재하지 않음");
+                return;
+            }
+            var displayName = args.Snapshot.Reference.Parent.Key;
+
+            if (displayName == FirebaseManager.Instance.GetCurrentDisplayName())
+            {
+                Debug.Log("나 본인 OnEmojiChanged가 바뀜");
+                return;
+            }
+
+            if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
+            {
+                var emojiData = args.Snapshot.Value as Dictionary<string, object>;
+                if (emojiData != null &&
+                    emojiData.ContainsKey("name") &&
+                    emojiData.ContainsKey("timestamp"))
+                {
+                    string emojiName = emojiData["name"].ToString();
+                    long timestamp = Convert.ToInt64(emojiData["timestamp"]);
+
+                    // 타임스탬프가 더 최신이거나 처음 실행되는 경우에만 실행
+                    if (!lastEmojiTimestamps.ContainsKey(displayName) ||
+                        timestamp > lastEmojiTimestamps[displayName])
+                    {
+                        lastEmojiTimestamps[displayName] = timestamp;
+                        var remotePlayer = playerObject.GetComponent<RemotePlayer>();
+                        if (remotePlayer != null && remotePlayer.animController != null)
+                        {
+                            remotePlayer.animController.SetEmoji(emojiName);
+                        }
+                        else
+                        {
+                            Debug.LogError($"[RoomManager] {displayName}의 RemotePlayer 또는 AnimController가 null입니다.");
+                        }
+                    }
+                }
             }
         }
 
@@ -238,10 +292,30 @@ namespace Salon.Firebase
 
             if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
             {
-                //string type = args.Snapshot.Value as string;
-                //AnimType animtype = (AnimType)int.Parse(type);
-                var Player = playerObject.GetComponent<RemotePlayer>();
-                Player.PlayAnimation();
+                var animData = args.Snapshot.Value as Dictionary<string, object>;
+                if (animData != null &&
+                    animData.ContainsKey("name") &&
+                    animData.ContainsKey("timestamp"))
+                {
+                    string animName = animData["name"].ToString();
+                    long timestamp = Convert.ToInt64(animData["timestamp"]);
+
+                    // 타임스탬프가 더 최신이거나 처음 실행되는 경우에만 실행
+                    if (!lastAnimationTimestamps.ContainsKey(displayName) ||
+                        timestamp > lastAnimationTimestamps[displayName])
+                    {
+                        lastAnimationTimestamps[displayName] = timestamp;
+                        var remotePlayer = playerObject.GetComponent<RemotePlayer>();
+                        if (remotePlayer != null)
+                        {
+                            remotePlayer.PlayAnimation(animName);
+                        }
+                        else
+                        {
+                            Debug.LogError($"[RoomManager] {displayName}의 RemotePlayer가 null입니다.");
+                        }
+                    }
+                }
             }
         }
 

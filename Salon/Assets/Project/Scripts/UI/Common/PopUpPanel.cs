@@ -17,7 +17,6 @@ namespace Salon.UI
         public UnityEvent OnClose = new UnityEvent();
         private Action onAcceptAction;
         private Action onDeclineAction;
-        private bool isAccepted = false;
 
         private void Awake()
         {
@@ -55,14 +54,12 @@ namespace Salon.UI
 
         private void OnAcceptButtonClicked()
         {
-            isAccepted = true;
             onAcceptAction?.Invoke();
             Close();
         }
 
         private void OnDeclineButtonClicked()
         {
-            isAccepted = false;
             onDeclineAction?.Invoke();
             Close();
         }

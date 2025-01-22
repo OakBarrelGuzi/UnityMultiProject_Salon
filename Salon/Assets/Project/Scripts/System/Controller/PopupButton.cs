@@ -31,13 +31,13 @@ public class PopupButton : MonoBehaviour
     public void SetInteraction(InteractionType interactionType)
     {
         currentInteraction = interactionType;
-        Debug.Log($"[PopupButton] ÇöÀç »óÈ£ÀÛ¿ë Å¸ÀÔ ¼³Á¤: {currentInteraction}");
+        Debug.Log($"[PopupButton] í˜„ì¬ ìƒí˜¸ì‘ìš© íƒ€ì… ì„¤ì •: {currentInteraction}");
     }
 
     private void HandleButtonClick()
     {
-        Debug.Log($"[PopupButton] ¹öÆ° Å¬¸¯µÊ - »óÈ£ÀÛ¿ë Å¸ÀÔ: {currentInteraction}");
-        HandleInteraction(currentInteraction); // ÇöÀç ¼³Á¤µÈ InteractionType Ã³¸®
+        Debug.Log($"[PopupButton] ë²„íŠ¼ í´ë¦­ë¨ - ìƒí˜¸ì‘ìš© íƒ€ì…: {currentInteraction}");
+        HandleInteraction(currentInteraction); // í˜„ì¬ ì„¤ì •ëœ InteractionType ì²˜ë¦¬
     }
 
     private void HandleInteraction(InteractionType interactionType)
@@ -45,12 +45,12 @@ public class PopupButton : MonoBehaviour
         switch (interactionType)
         {
             case InteractionType.Shop:
-                Debug.Log("»óÁ¡ ¿­±â");
+                Debug.Log("ìƒì  ì—´ê¸°");
                 OpenShop();
                 break;
 
             case InteractionType.ShellGame:
-                Debug.Log("½© °ÔÀÓ ½ÃÀÛ");
+                Debug.Log("ì‰˜ ê²Œì„ ì‹œì‘");
                 StartShellGame();
                 break;
 
@@ -59,25 +59,26 @@ public class PopupButton : MonoBehaviour
                 break;
 
             default:
-                Debug.LogWarning("¾Ë ¼ö ¾ø´Â »óÈ£ÀÛ¿ë Å¸ÀÔ");
+                Debug.LogWarning("ì•Œ ìˆ˜ ì—†ëŠ” ìƒí˜¸ì‘ìš© íƒ€ì…");
                 break;
         }
     }
 
-    // °¢ InteractionTypeº° ·ÎÁ÷ Ã³¸® ¸Ş¼­µå
+    // ê° InteractionTypeë³„ ë¡œì§ ì²˜ë¦¬ ë©”ì„œë“œ
     private void OpenShop()
     {
-        Debug.Log("[PopupButton] »óÁ¡À» ¿­¾ú½À´Ï´Ù!");
-        // »óÁ¡ ¿­±â ·ÎÁ÷ ±¸Çö
+        Debug.Log("[PopupButton] ìƒì ì„ ì—´ì—ˆìŠµë‹ˆë‹¤!");
+
+        UIManager.Instance.OpenPanel(PanelType.Shop);
     }
     private void StartShellGame()
     {
-        ScenesManager.Instance.ChanageScene("SalonShell");
-        // ½© °ÔÀÓ ½ÃÀÛ ·ÎÁ÷ ±¸Çö
+        Debug.Log("[PopupButton] ì‰˜ ê²Œì„ì„ ì‹œì‘í–ˆìŠµë‹ˆë‹¤!");
+        // ì‰˜ ê²Œì„ ì‹œì‘ ë¡œì§ êµ¬í˜„
     }
     private async void StartCardGame()
     {
-        await GameRoomManager.Instance.JoinOrCreateRandomRoom(ChannelManager.Instance.CurrentChannel, 
+        await GameRoomManager.Instance.JoinOrCreateRandomRoom(ChannelManager.Instance.CurrentChannel,
             ChannelManager.Instance.currentUserDisplayName);
     }
 }

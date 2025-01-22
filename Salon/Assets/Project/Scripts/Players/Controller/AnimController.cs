@@ -1,7 +1,7 @@
-
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class AnimController : MonoBehaviour
 {
@@ -10,11 +10,15 @@ public class AnimController : MonoBehaviour
 
     private AnimatorOverrideController currentController;
 
-    private string originalMotionName = "IdleArmSwing";
+    private string originalMotionName = "ArmSwing";
 
-    public Image EmojiImage;
+    public SpriteRenderer EmojiImage;
 
-    //가지고있는대상에서 명시적으로 초기화 해야함
+    private bool isShowingEmoji = false;
+
+    public bool IsPlayingAnimation { get; private set; }
+    public System.Action<bool> OnAnimationStateChanged;
+
     private void Start()
     {
         Initialize();
@@ -24,6 +28,7 @@ public class AnimController : MonoBehaviour
     {
         animator = GetComponent<Animator>();
         currentController = SetupOverrideController();
+        IsPlayingAnimation = false;
     }
 
     private AnimatorOverrideController SetupOverrideController()
@@ -47,26 +52,49 @@ public class AnimController : MonoBehaviour
         }
     }
 
-    [Tooltip("Animator를 변경할때 사용 변경할려는 State이름 동일하게 해야함")]
-    public void AnimatorChange(RuntimeAnimatorController controller)
-    {
-        animator.runtimeAnimatorController = controller;
-
-        currentController = SetupOverrideController();
-    }
-
     public async void SetEmoji(string emojiName)
     {
         EmojiImage.sprite = ItemManager.Instance.GetEmojiSprite(emojiName);
         EmojiImage.gameObject.SetActive(true);
+        isShowingEmoji = true;
+
+        StartCoroutine(UpdateEmojiFacing());
+
         await Task.Delay(3000);
+        isShowingEmoji = false;
         EmojiImage.gameObject.SetActive(false);
+    }
+
+    private IEnumerator UpdateEmojiFacing()
+    {
+        while (isShowingEmoji && EmojiImage != null && EmojiImage.gameObject.activeSelf)
+        {
+            if (Camera.main != null)
+            {
+                EmojiImage.transform.forward = -Camera.main.transform.forward;
+            }
+            yield return null;
+        }
     }
 
     public void SetAnime(string animName)
     {
-        AnimationClip clip = ItemManager.Instance.GetAnimeClip(animName);
+        AnimationClip clip = ItemManager.Instance.GetAnimClip(animName);
         ClipChange(clip);
+        IsPlayingAnimation = true;
+        OnAnimationStateChanged?.Invoke(true);
         animator.SetTrigger("ASTrigger");
+
+        if (clip != null)
+        {
+            StartCoroutine(WaitForAnimationEnd(clip.length));
+        }
+    }
+
+    private IEnumerator WaitForAnimationEnd(float duration)
+    {
+        yield return new WaitForSeconds(duration);
+        IsPlayingAnimation = false;
+        OnAnimationStateChanged?.Invoke(false);
     }
 }
