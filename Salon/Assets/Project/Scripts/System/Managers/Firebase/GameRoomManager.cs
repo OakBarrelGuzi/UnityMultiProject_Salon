@@ -184,9 +184,7 @@ namespace Salon.Firebase
                     return;
                 }
 
-                roomData.Players.Add(playerInfo, new GamePlayerData(playerInfo));
-                if (roomData.Players.Count == 1) // 처음 플레이어가 첫턴
-                    roomData.GameState.CurrentTurnPlayerId = playerInfo;
+                roomData.Players[playerInfo] = new GamePlayerData(playerInfo);
 
                 string updatedRoomJson = JsonConvert.SerializeObject(roomData);
                 await roomRef.SetRawJsonValueAsync(updatedRoomJson);
