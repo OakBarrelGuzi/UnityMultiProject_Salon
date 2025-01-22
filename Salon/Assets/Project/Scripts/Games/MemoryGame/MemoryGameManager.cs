@@ -40,17 +40,18 @@ public class MemoryGameManager : MonoBehaviour
     private float turnStartTime;
     private void Start()
     {
-        CardRandomSet();
 
         roomId = GameRoomManager.Instance.currentRoomId;
         roomRef = FirebaseDatabase.DefaultInstance
             .GetReference("Channels")
-            .Child(GameRoomManager.Instance.currentChannelId)
+            .Child(ChannelManager.Instance.CurrentChannel)
             .Child("GameRooms")
             .Child(roomId);
 
         // 턴 시작 시간 초기화
         turnStartTime = Time.time;
+
+        CardRandomSet();
 
         // Firebase 리스너 등록
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
