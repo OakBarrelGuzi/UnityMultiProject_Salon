@@ -17,8 +17,8 @@ public enum PanelType
     PartyRoom,
     ShellGame,
     MemoryGame,
-    EmojiActivated,
-    AnimActivated,
+    Emoji,
+    Animation,
     Inventory,
     Shop
 }

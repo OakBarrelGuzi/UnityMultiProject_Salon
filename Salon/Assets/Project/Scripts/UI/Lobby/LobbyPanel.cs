@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 using Newtonsoft.Json;
 using Salon.Firebase.Database;
+using Firebase.Database;
 
 public class LobbyPanel : Panel
 {
@@ -14,6 +15,7 @@ public class LobbyPanel : Panel
     public Button animButton;
     public Button emojiButton;
     public TextMeshProUGUI goldText;
+    public DatabaseReference goldRef;
 
     private void OnEnable()
     {
@@ -28,28 +30,28 @@ public class LobbyPanel : Panel
         UpdateGoldText();
         animButton.onClick.AddListener(() =>
         {
-            var panel = UIManager.Instance.GetPanelByType(PanelType.AnimActivated);
+            var panel = UIManager.Instance.GetPanelByType(PanelType.Animation);
             bool isOpen = panel?.isOpen ?? false;
             if (isOpen)
-                UIManager.Instance.ClosePanel(PanelType.AnimActivated);
+                UIManager.Instance.ClosePanel(PanelType.Animation);
             else
             {
-                if (UIManager.Instance.GetPanelByType(PanelType.EmojiActivated) != null)
-                    UIManager.Instance.ClosePanel(PanelType.EmojiActivated);
-                UIManager.Instance.OpenPanel(PanelType.AnimActivated);
+                if (UIManager.Instance.GetPanelByType(PanelType.Emoji) != null)
+                    UIManager.Instance.ClosePanel(PanelType.Emoji);
+                UIManager.Instance.OpenPanel(PanelType.Animation);
             }
         });
         emojiButton.onClick.AddListener(() =>
         {
-            var panel = UIManager.Instance.GetPanelByType(PanelType.EmojiActivated);
+            var panel = UIManager.Instance.GetPanelByType(PanelType.Emoji);
             bool isOpen = panel?.isOpen ?? false;
             if (isOpen)
-                UIManager.Instance.ClosePanel(PanelType.EmojiActivated);
+                UIManager.Instance.ClosePanel(PanelType.Emoji);
             else
             {
-                if (UIManager.Instance.GetPanelByType(PanelType.AnimActivated) != null)
-                    UIManager.Instance.ClosePanel(PanelType.AnimActivated);
-                UIManager.Instance.OpenPanel(PanelType.EmojiActivated);
+                if (UIManager.Instance.GetPanelByType(PanelType.Animation) != null)
+                    UIManager.Instance.ClosePanel(PanelType.Animation);
+                UIManager.Instance.OpenPanel(PanelType.Emoji);
             }
         });
         inventoryButton.onClick.AddListener(() =>
@@ -62,6 +64,14 @@ public class LobbyPanel : Panel
                 UIManager.Instance.OpenPanel(PanelType.Inventory);
             }
         });
+
+        goldRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Gold");
+        goldRef.ValueChanged += OnGoldChanged;
+    }
+
+    private void OnGoldChanged(object sender, ValueChangedEventArgs e)
+    {
+        UpdateGoldText();
     }
 
     public async void UpdateGoldText()
@@ -81,6 +91,7 @@ public class LobbyPanel : Panel
     {
         ChatManager.Instance.OnReceiveChat -= HandleChat;
         chatPopUp.ClearChat();
+        goldRef.ValueChanged -= OnGoldChanged;
         base.Close();
     }
 

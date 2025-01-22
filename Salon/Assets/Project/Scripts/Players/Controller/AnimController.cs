@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class AnimController : MonoBehaviour
 {
@@ -13,7 +14,8 @@ public class AnimController : MonoBehaviour
 
     public SpriteRenderer EmojiImage;
 
-    //가지고있는대상에서 명시적으로 초기화 해야함
+    private bool isShowingEmoji = false;
+
     private void Start()
     {
         Initialize();
@@ -50,16 +52,25 @@ public class AnimController : MonoBehaviour
     {
         EmojiImage.sprite = ItemManager.Instance.GetEmojiSprite(emojiName);
         EmojiImage.gameObject.SetActive(true);
+        isShowingEmoji = true;
 
-        // 이모지 스프라이트가 항상 카메라를 향하도록 설정
-        if (Camera.main != null)
-        {
-            // 카메라의 forward 방향의 반대 방향을 바라보도록 설정 (빌보드 효과)
-            EmojiImage.transform.forward = -Camera.main.transform.forward;
-        }
+        StartCoroutine(UpdateEmojiFacing());
 
         await Task.Delay(3000);
+        isShowingEmoji = false;
         EmojiImage.gameObject.SetActive(false);
+    }
+
+    private IEnumerator UpdateEmojiFacing()
+    {
+        while (isShowingEmoji && EmojiImage != null && EmojiImage.gameObject.activeSelf)
+        {
+            if (Camera.main != null)
+            {
+                EmojiImage.transform.forward = -Camera.main.transform.forward;
+            }
+            yield return null;
+        }
     }
 
     public void SetAnime(string animName)
