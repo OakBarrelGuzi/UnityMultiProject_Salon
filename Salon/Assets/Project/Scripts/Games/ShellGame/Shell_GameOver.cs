@@ -11,6 +11,10 @@ public class Shell_GameOver : Shell_Panel
     //TODO:배팅골드 할당
     public TextMeshProUGUI bettingGold_Text;
 
+    private void OnEnable()
+    {
+        bettingGold_Text.text = shellGameUI.shuffleManager.BettingGold.ToString();
+    }
 
     private void Start()
     {

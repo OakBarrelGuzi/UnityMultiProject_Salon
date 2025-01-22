@@ -32,17 +32,38 @@ public class Shell_Clear : Shell_Panel
             shellGameUI.betting_Panel.gameObject.SetActive(true);
             gameObject.SetActive(false);
         });
-
-    }
-    private void OnEnable()
-    {
-        shellGameUI.betting_Panel.close_Button.onClick.RemoveAllListeners();
-        shellGameUI.betting_Panel.close_Button.onClick.AddListener(() =>
+        go_Button.onClick.AddListener(() =>
         {
-            gameObject.SetActive(true);
-            shellGameUI.betting_Panel.gameObject.SetActive(false);
+            shellGameUI.shuffleManager.NextRound();
 
+            if (All_betting_Toggle.isOn == true)
+            {
+               shellGameUI.shuffleManager.BettingGold = 
+                Mathf.Min(shellGameUI.shuffleManager.maxBetting[shellGameUI.shuffleManager.shellDifficulty] 
+                * shellGameUI.shuffleManager.round,
+                shellGameUI.shuffleManager.myGold);
+            }
+            shellGameUI.PanelOpen(shellGameUI.gameInfo_Panel, this);
         });
     }
+
+    private void Update()
+    {
+        if (All_betting_Toggle.isOn == true)
+        {
+            int maxBettingGold = Mathf.Min(shellGameUI.shuffleManager.myGold,
+                shellGameUI.shuffleManager.maxBetting
+                [shellGameUI.shuffleManager.shellDifficulty] *
+                shellGameUI.shuffleManager.round);
+
+            shellGameUI.shuffleManager.BettingGold = maxBettingGold;
+            bettingGold_Text.text = maxBettingGold.ToString();
+        }
+        else
+        {
+            bettingGold_Text.text = shellGameUI.shuffleManager.BettingGold.ToString();
+        }
+    }
+
 }
  

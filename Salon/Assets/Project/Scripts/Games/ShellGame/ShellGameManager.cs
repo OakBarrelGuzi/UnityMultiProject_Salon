@@ -3,6 +3,7 @@ using Salon.Firebase;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -18,13 +19,15 @@ namespace Salon.ShellGame
         [SerializeField]
         private float spinSpeed = 5;//회전 속도 
         public Dictionary<SHELLDIFFICULTY, int> maxBetting { get; private set; } = new Dictionary<SHELLDIFFICULTY, int>();
+        public Dictionary<SHELLDIFFICULTY, float> bettingReturn { get; private set; } = new Dictionary<SHELLDIFFICULTY, float>();
         public Dictionary<SHELLDIFFICULTY, float> shuffleSpeed { get; private set; } = new Dictionary<SHELLDIFFICULTY, float>();
         public Dictionary<SHELLDIFFICULTY, float> plusShuffleSpeed { get; private set; } = new Dictionary<SHELLDIFFICULTY, float>();
         public Dictionary<SHELLDIFFICULTY, float> shuffleDuration { get; private set; } = new Dictionary<SHELLDIFFICULTY, float>();
+        public Dictionary<SHELLDIFFICULTY, string> difficultyText { get; private set; } = new Dictionary<SHELLDIFFICULTY, string>();
 
         private ShellGameUI uiManager;
 
-        private SHELLDIFFICULTY shellDifficulty;
+        public SHELLDIFFICULTY shellDifficulty { get; private set; }
 
         [Header("Anime")]
         //초반 애니메이션용 컵과 구슬
@@ -60,15 +63,19 @@ namespace Salon.ShellGame
         public DatabaseReference currentUserRef { get; private set; }
 
         //TODO:서버 소지금 할당
-        public int myGold { get; private set; }
+        public int myGold { get; private set; } = 0;
         //TODO: 투두
-        public int BettingGOld { get; private set; }
+        public int BettingGold { get; set; } = 0;
 
         private void Awake()
         {
             maxBetting[SHELLDIFFICULTY.Easy] = 10;
             maxBetting[SHELLDIFFICULTY.Normal] = 50;
             maxBetting[SHELLDIFFICULTY.Hard] = 100;
+
+            bettingReturn[SHELLDIFFICULTY.Easy] = 1.2f;
+            bettingReturn[SHELLDIFFICULTY.Normal] = 1.5f;
+            bettingReturn[SHELLDIFFICULTY.Hard] = 2f;
 
             shuffleSpeed[SHELLDIFFICULTY.Easy] = 4.5f + speed;
             shuffleSpeed[SHELLDIFFICULTY.Normal] = 6f + speed;
@@ -82,28 +89,16 @@ namespace Salon.ShellGame
             shuffleDuration[SHELLDIFFICULTY.Normal] = 7f + Duration;
             shuffleDuration[SHELLDIFFICULTY.Hard] = 10f + Duration;
 
+            difficultyText[SHELLDIFFICULTY.Easy] = "쉬움";
+            difficultyText[SHELLDIFFICULTY.Normal] = "보통";
+            difficultyText[SHELLDIFFICULTY.Hard] = "어려움";
+
             anime_Cup_Pos = anime_Cup.transform.position;
             anime_Ball_Pos = anime_Ball.transform.position;
         }
         private async void Start()
         {
-            UIManager.Instance.CloseAllPanels();
-            UIManager.Instance.OpenPanel(PanelType.ShellGame);
-            uiManager = UIManager.Instance.GetComponentInChildren<ShellGameUI>();
-
-            uiManager.Initialize(this);
-
-            uiManager.gameInfo_Panel.round_Text.text = $"ROUND {TextRound}";
-            uiManager.clear_Panel.clearRound_Text.text = $"ROUND{TextRound}";
-
-            uiManager.clear_Panel.go_Button.onClick.AddListener(() =>
-            {
-                NextRound();
-                uiManager.clear_Panel.gameObject.SetActive(false);
-            });
-
             UserUID = FirebaseManager.Instance.CurrentUserUID;
-
 
             currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("Gold");
 
@@ -113,7 +108,7 @@ namespace Salon.ShellGame
                 if (snapshot.Exists)
                 {
                     myGold = int.Parse(snapshot.Value.ToString());
-                    print(myGold);
+                    print($"돈가져왔당! {myGold}");
                 }
                 else
                 {
@@ -124,7 +119,24 @@ namespace Salon.ShellGame
             {
                 Debug.LogError($"점수 가져오기 실패: {e.Message}");
             }
-       
+
+            UIManager.Instance.CloseAllPanels();
+            UIManager.Instance.OpenPanel(PanelType.ShellGame);
+            uiManager = UIManager.Instance.GetComponentInChildren<ShellGameUI>();
+
+            uiManager.Initialize(this);
+
+            uiManager.gameInfo_Panel.round_Text.text = $"ROUND {TextRound}";
+            uiManager.clear_Panel.clearRound_Text.text = $"ROUND{TextRound}";
+      
+            uiManager.clear_Panel.go_Button.onClick.AddListener(() =>
+            {
+                NextRound();
+                uiManager.clear_Panel.gameObject.SetActive(false);
+            });
+            
+
+
         }
 
         private void Update()
@@ -150,7 +162,8 @@ namespace Salon.ShellGame
             //컵 움직이기
             Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
             cupDis = Vector3.Distance(cups[firstCup].transform.position, cups[secondCup].transform.position);
-            cupDis = Mathf.Min(cupDis, 5f);
+            cupDis = Mathf.Max(cupDis, 2.5f);
+            cupDis = Mathf.Min(cupDis,4.5f);
             //스피너 가운데에 생성
             spinner = new GameObject("Spinner");
             spinner.transform.position = spinnerPos;
@@ -258,6 +271,9 @@ namespace Salon.ShellGame
             anime_Ball.gameObject.SetActive(true);
             anime_Ball.transform.position = anime_Ball_Pos;
 
+            int rewardGold = myGold - BettingGold;
+            MyGoldWrite(rewardGold);
+
             StartCoroutine(setAnime());
             StartCoroutine(StartAnime());
         }
@@ -297,7 +313,7 @@ namespace Salon.ShellGame
             }
         }
 
-        private IEnumerator CheckCup(Cup cup)
+        private  IEnumerator CheckCup(Cup cup)
         {
             if (cup.hasBall == true)
             {
@@ -323,13 +339,20 @@ namespace Salon.ShellGame
 
             if (cup.hasBall == true)
             {
-                uiManager.clear_Panel.gameObject.SetActive(true);
-                uiManager.gameOver_Panel.gameObject.SetActive(false);
+                TextRound++;
+                round++;
+                if (round > 10)
+                {
+                    round = 10;
+                }
+                uiManager.PanelOpen(uiManager.clear_Panel, uiManager.gameInfo_Panel);
+                uiManager.clear_Panel.bettingGold_Text.text = BettingGold.ToString();
+                int rewardGold = myGold + (int)((float)BettingGold * bettingReturn[shellDifficulty]);
+                MyGoldWrite(rewardGold);
             }
             else if (cup.hasBall == false)
             {
-                uiManager.gameOver_Panel.gameObject.SetActive(true);
-                uiManager.clear_Panel.gameObject.SetActive(false);
+                uiManager.PanelOpen(uiManager.gameOver_Panel, uiManager.clear_Panel);
             }
             isCanSelect = false;
             checkBall.y -= 2f;
@@ -347,27 +370,58 @@ namespace Salon.ShellGame
 
         public void NextRound()
         {
-            TextRound++;
-            round++;
-            if (round > 10)
-            {
-                round = 10;
-            }
+
             isStart = false;
             isCanSelect = false;
-                    
-            uiManager.gameInfo_Panel.round_Text.text = $"ROUND {TextRound}";
-            uiManager.clear_Panel.clearRound_Text.text = $"ROUND{TextRound} Clear";
-            uiManager.gameInfo_Panel.timer_Text.text = "5";
 
+            UiSeting();
 
             StartGame();
         }
 
-        private async void MyGoldLoad()
+        private void UiSeting()
         {
-
+            uiManager.gameInfo_Panel.round_Text.text = $"ROUND {TextRound}";
+            uiManager.clear_Panel.clearRound_Text.text = $"ROUND{TextRound} Clear";
+            uiManager.gameInfo_Panel.timer_Text.text = "TIME";
         }
 
+        private async void MyGoldLoad()
+        {
+            try
+            {
+                var snapshot = await currentUserRef.GetValueAsync();
+                if (snapshot.Exists)
+                {
+                    myGold = int.Parse(snapshot.Value.ToString());
+                    print($"돈가져왔당! {myGold}");
+                }
+                else
+                {
+                    Debug.Log("점수 데이터가 없습니다");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"점수 가져오기 실패: {e.Message}");
+            }
+        }
+
+        public bool CheckGold()
+        {
+            if (myGold <= 0)
+            {
+                LogManager.Instance.ShowLog("돈.이.부.족.하.시.네.요.!^^!");
+                ScenesManager.Instance.ChanageScene("LobbyScene");
+                return false;
+            }
+            return true;
+        }
+
+        public async void MyGoldWrite(int Gold)
+        {
+            myGold = Gold;
+            await currentUserRef.SetValueAsync(myGold);
+        }
     }
 }

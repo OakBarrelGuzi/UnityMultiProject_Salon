@@ -22,13 +22,12 @@ namespace Salon.ShellGame
         public Shell_Option option_Panel;
         public Shell_Exit exit_Panel;
         public Shell_MyGold myGold_Panel;
+        public CountStart countStart;
         [Header("Strat Count")]
         [SerializeField]
         private GameObject[] fxObj;
         [SerializeField]
         private float fxDelay = 1;
-
-        
 
         public void Initialize(ShellGameManager shuffleManager)
         {
@@ -40,15 +39,32 @@ namespace Salon.ShellGame
                 shellpanel.gameObject.SetActive(false);
             }
                 
-            difficult_Panel.gameObject.SetActive(true);
+            PanelOpen(difficult_Panel);
+            countStart.gameObject.SetActive(true);
         }
 
-        public void ShowBettingUI()
+
+        public void PanelOpen(Shell_Panel OpenPanel, Shell_Panel OffPanel)
         {
-            difficult_Panel.gameObject.SetActive(false);
-            betting_Panel.gameObject.SetActive(true);
+            OffPanel.gameObject.SetActive(false);
+            PanelOpen(OpenPanel);
         }
-      public IEnumerator PlayCount()
+        public void PanelOpen(Shell_Panel OpenPanel)
+        {
+            if (OpenPanel is Shell_Betting Betting)
+            {
+                Betting.gameObject.SetActive(true);
+                Betting.bettingSlider.maxValue = shuffleManager.maxBetting[shuffleManager.shellDifficulty];
+                Betting.myGoldText.text = shuffleManager.myGold.ToString();
+                myGold_Panel.gameObject.SetActive(false);
+                return;
+            }
+            OpenPanel.gameObject.SetActive(true);
+            myGold_Panel.gameObject.SetActive(true);
+        }
+
+
+        public IEnumerator PlayCount()
         {
             foreach (GameObject fx in fxObj)
             {

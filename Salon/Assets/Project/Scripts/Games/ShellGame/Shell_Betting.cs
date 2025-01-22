@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -16,6 +17,9 @@ namespace Salon.ShellGame
 
         public TextMeshProUGUI bettingGoldText;
 
+        public TextMeshProUGUI bettingReturnInfoText;
+
+
         public Slider bettingSlider;
 
         private void Start()
@@ -23,13 +27,51 @@ namespace Salon.ShellGame
 
             start_Button.onClick.AddListener(() =>
             {
-                shellGameUI.betting_Panel.gameObject.SetActive(false);  // 배팅 UI 숨기기
-                shellGameUI.gameInfo_Panel.gameObject.SetActive(true);//라운드가 적혀있음
-                shellGameUI.shuffleManager.SetCup();
+                shellGameUI.PanelOpen(shellGameUI.gameInfo_Panel,this);//라운드가 적혀있음
                 shellGameUI.shuffleManager.StartGame();      // 게임 시작
-                start_Button.onClick?.RemoveListener(shellGameUI.shuffleManager.SetCup);
             });
         }
 
+        private void Update()
+        {
+            bettingGoldText.text = bettingSlider.value.ToString();
+           
+        }
+
+        private void OnEnable()
+        {
+            myGoldText.text = shellGameUI.shuffleManager.myGold.ToString();
+
+            bettingReturnInfoText.text =
+                $"{shellGameUI.shuffleManager.difficultyText[shellGameUI.shuffleManager.shellDifficulty]} 난이도를 선택하셨습니다. 성공 보상 배율은{shellGameUI.shuffleManager.bettingReturn[shellGameUI.shuffleManager.shellDifficulty]}배입니다.";
+
+            bettingSlider.minValue = Mathf.Min(shellGameUI.shuffleManager.myGold, 1);
+
+            int maxBettingGold = Mathf.Min(shellGameUI.shuffleManager.myGold,
+                shellGameUI.shuffleManager.maxBetting
+                [shellGameUI.shuffleManager.shellDifficulty] * 
+                shellGameUI.shuffleManager.round);
+
+            bettingSlider.maxValue = maxBettingGold;
+
+            bettingSlider.value = MathF.Min(bettingSlider.minValue, 1);
+        }
+
+        private void OnDisable()
+        {
+            close_Button.onClick.RemoveAllListeners();
+            close_Button.onClick.AddListener(() =>
+            {
+                shellGameUI.PanelOpen(shellGameUI.clear_Panel, this);
+            });
+            start_Button.onClick.RemoveAllListeners();
+            start_Button.onClick.AddListener(() =>
+            {
+                shellGameUI.PanelOpen(shellGameUI.gameInfo_Panel, this);
+                shellGameUI.shuffleManager.NextRound();
+            });
+
+            shellGameUI.shuffleManager.BettingGold = (int)bettingSlider.value;
+        }
     }
 }

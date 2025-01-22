@@ -21,8 +21,10 @@ public class Shell_GameInfo : Shell_Panel
         );
 
       
-}
-
-
+    }
+    private void Update()
+    {
+        bettingGold_Text.text = shellGameUI.shuffleManager.BettingGold.ToString();
+    }
 }
 

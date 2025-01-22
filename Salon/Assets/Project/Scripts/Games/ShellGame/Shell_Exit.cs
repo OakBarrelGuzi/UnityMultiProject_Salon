@@ -1,6 +1,8 @@
+using Salon.Firebase;
 using System.Collections;
 using System.Collections.Generic;
- using UnityEngine;
+using System.Threading.Tasks;
+using UnityEngine;
 using UnityEngine.UI;
 
 public class Shell_Exit : Shell_Panel
@@ -22,4 +24,8 @@ public class Shell_Exit : Shell_Panel
             gameObject.SetActive(false);
         });
     }
+
+
 }
+
+//졸렬 이스터에그
