@@ -79,7 +79,7 @@ public class MemoryGameManager : MonoBehaviour
             SkipTurn();
         }
     }
-    private void CardRandomSet()
+    private async void CardRandomSet()
     {
         HashSet<int> randomCardSet = new HashSet<int>();
         while (randomCardSet.Count < CARDCOUNT)
@@ -98,6 +98,14 @@ public class MemoryGameManager : MonoBehaviour
             };
             card.Initialize(this);
             tableCardList.Add(card);
+
+            string cardId = card.cardData.cardType.ToString();
+            await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
+            {
+                IsFlipped = false,
+                Owner = null
+            }));
+
             cardnum++;
             if (cardnum > 6) cardnum = 0;
         }
@@ -220,9 +228,18 @@ public class MemoryGameManager : MonoBehaviour
                 var cardData = JsonUtility.FromJson<CardData>(child.GetRawJsonValue());
                 var card = tableCardList.Find(c => c.cardData.cardType.ToString() == child.Key);
 
-                if (card != null && cardData.IsFlipped && !card.cardOpen)
+                if (card != null)
                 {
-                    StartCoroutine(TurnRoutine(card));
+                    if (cardData.IsFlipped && !card.cardOpen)
+                    {
+                        card.cardOpen = true;
+                        StartCoroutine(TurnRoutine(card));
+                    }
+                    else if (!cardData.IsFlipped && card.cardOpen)
+                    {
+                        card.cardOpen = false;
+                        StartCoroutine(TurnRoutine(card));
+                    }
                 }
             }
         }
