@@ -33,10 +33,10 @@ public class UIManager : Singleton<UIManager>, IInitializable
     private void Start()
     {
         Initialize();
-        if (!isTesting) 
-        { 
-            StartCoroutine(InitializeRoutine()); 
-        }       
+        if (!isTesting)
+        {
+            StartCoroutine(InitializeRoutine());
+        }
     }
 
     void Update()
@@ -237,6 +237,11 @@ public class UIManager : Singleton<UIManager>, IInitializable
             panel.Close();
         }
         Debug.Log("[UIManager] CloseAllPanels 완료");
+    }
+
+    public Panel GetPanelByType(PanelType panelType)
+    {
+        return panels.FirstOrDefault(p => p.panelType == panelType);
     }
 
     public T GetUI<T>() where T : Panel

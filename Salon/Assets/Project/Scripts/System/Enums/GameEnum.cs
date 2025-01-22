@@ -16,7 +16,11 @@ public enum PanelType
     DartGame,
     PartyRoom,
     ShellGame,
-    MemoryGame
+    MemoryGame,
+    EmojiActivated,
+    AnimActivated,
+    Inventory,
+    Shop
 }
 public enum InviteStatus
 {
@@ -39,14 +43,22 @@ public enum GameType
     ShellGame,
     DartGame,
     MemoryGame,
-    HoldBeerGame
 
 }
 
 public enum AnimType
 {
     None,
-    Beer
+    Beer,
+    ArmSwing,
+    CheckWatch,
+    ChugDrink,
+    CrossChest,
+    DespairPose,
+    DrinkThrow,
+    FootTap,
+    LegShake,
+    Sippin
 }
 
 [Serializable]
@@ -57,4 +69,11 @@ public enum InteractionType
     DartGame,
     ShellGame,
     CardGame
+}
+
+[Serializable]
+public enum ItemType
+{
+    Anim,
+    Emoji,
 }

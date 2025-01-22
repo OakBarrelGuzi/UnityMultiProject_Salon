@@ -1,4 +1,3 @@
-
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,9 +9,9 @@ public class AnimController : MonoBehaviour
 
     private AnimatorOverrideController currentController;
 
-    private string originalMotionName = "IdleArmSwing";
+    private string originalMotionName = "ArmSwing";
 
-    public Image EmojiImage;
+    public SpriteRenderer EmojiImage;
 
     //가지고있는대상에서 명시적으로 초기화 해야함
     private void Start()
@@ -47,25 +46,25 @@ public class AnimController : MonoBehaviour
         }
     }
 
-    [Tooltip("Animator를 변경할때 사용 변경할려는 State이름 동일하게 해야함")]
-    public void AnimatorChange(RuntimeAnimatorController controller)
-    {
-        animator.runtimeAnimatorController = controller;
-
-        currentController = SetupOverrideController();
-    }
-
     public async void SetEmoji(string emojiName)
     {
         EmojiImage.sprite = ItemManager.Instance.GetEmojiSprite(emojiName);
         EmojiImage.gameObject.SetActive(true);
+
+        // 이모지 스프라이트가 항상 카메라를 향하도록 설정
+        if (Camera.main != null)
+        {
+            // 카메라의 forward 방향의 반대 방향을 바라보도록 설정 (빌보드 효과)
+            EmojiImage.transform.forward = -Camera.main.transform.forward;
+        }
+
         await Task.Delay(3000);
         EmojiImage.gameObject.SetActive(false);
     }
 
     public void SetAnime(string animName)
     {
-        AnimationClip clip = ItemManager.Instance.GetAnimeClip(animName);
+        AnimationClip clip = ItemManager.Instance.GetAnimClip(animName);
         ClipChange(clip);
         animator.SetTrigger("ASTrigger");
     }

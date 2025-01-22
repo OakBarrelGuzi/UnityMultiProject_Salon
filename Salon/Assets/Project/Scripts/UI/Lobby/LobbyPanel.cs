@@ -11,6 +11,8 @@ public class LobbyPanel : Panel
     public ChatPopUp chatPopUp;
     public Button friendsButton;
     public Button inventoryButton;
+    public Button animButton;
+    public Button emojiButton;
     public TextMeshProUGUI goldText;
 
     private void OnEnable()
@@ -24,6 +26,42 @@ public class LobbyPanel : Panel
         ChatManager.Instance.OnReceiveChat += HandleChat;
         friendsButton.onClick.AddListener(OnFriendsButtonClick);
         UpdateGoldText();
+        animButton.onClick.AddListener(() =>
+        {
+            var panel = UIManager.Instance.GetPanelByType(PanelType.AnimActivated);
+            bool isOpen = panel?.isOpen ?? false;
+            if (isOpen)
+                UIManager.Instance.ClosePanel(PanelType.AnimActivated);
+            else
+            {
+                if (UIManager.Instance.GetPanelByType(PanelType.EmojiActivated) != null)
+                    UIManager.Instance.ClosePanel(PanelType.EmojiActivated);
+                UIManager.Instance.OpenPanel(PanelType.AnimActivated);
+            }
+        });
+        emojiButton.onClick.AddListener(() =>
+        {
+            var panel = UIManager.Instance.GetPanelByType(PanelType.EmojiActivated);
+            bool isOpen = panel?.isOpen ?? false;
+            if (isOpen)
+                UIManager.Instance.ClosePanel(PanelType.EmojiActivated);
+            else
+            {
+                if (UIManager.Instance.GetPanelByType(PanelType.AnimActivated) != null)
+                    UIManager.Instance.ClosePanel(PanelType.AnimActivated);
+                UIManager.Instance.OpenPanel(PanelType.EmojiActivated);
+            }
+        });
+        inventoryButton.onClick.AddListener(() =>
+        {
+            bool isOpen = UIManager.Instance.GetPanelByType(PanelType.Inventory)?.isOpen ?? false;
+            if (isOpen)
+                UIManager.Instance.ClosePanel(PanelType.Inventory);
+            else
+            {
+                UIManager.Instance.OpenPanel(PanelType.Inventory);
+            }
+        });
     }
 
     public async void UpdateGoldText()

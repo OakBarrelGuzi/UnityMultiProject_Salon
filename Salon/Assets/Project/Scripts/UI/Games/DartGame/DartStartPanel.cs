@@ -16,7 +16,7 @@ public class DartStartPanel : Panel
         Initialize();
     }
 
-    private void Initialize()
+    public override void Initialize()
     {
         startButton.onClick.AddListener(StartButtonClick);
         //rankingButton.onClick.AddListener();
