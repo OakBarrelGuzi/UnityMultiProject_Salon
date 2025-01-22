@@ -6,6 +6,7 @@ using Firebase.Database;
 using Salon.Firebase;
 using Salon.Firebase.Database;
 using Newtonsoft.Json;
+using Random = UnityEngine.Random;
 
 public class MemoryGameManager : MonoBehaviour
 {
@@ -40,20 +41,11 @@ public class MemoryGameManager : MonoBehaviour
     private float turnStartTime;
     private void Start()
     {
-
         roomId = GameRoomManager.Instance.currentRoomId;
-        roomRef = FirebaseDatabase.DefaultInstance
-            .GetReference("Channels")
-            .Child(ChannelManager.Instance.CurrentChannel)
-            .Child("GameRooms")
-            .Child(roomId);
+        roomRef = GameRoomManager.Instance.roomRef;
 
-        // 턴 시작 시간 초기화
         turnStartTime = Time.time;
 
-        CardRandomSet();
-
-        // Firebase 리스너 등록
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
 
@@ -61,6 +53,8 @@ public class MemoryGameManager : MonoBehaviour
         UIManager.Instance.OpenPanel(PanelType.MemoryGame);
         memoryGamePanelUi = UIManager.Instance.GetComponentInChildren<MemoryGamePanelUi>();
         memoryGamePanelUi.gameObject.SetActive(true);
+
+        CardRandomSet();
 
         turnTimeUiRoutine = StartCoroutine(TurnCountRoutine());
     }
@@ -100,13 +94,15 @@ public class MemoryGameManager : MonoBehaviour
             card.Initialize(this);
             tableCardList.Add(card);
 
-            string cardId = card.cardData.cardType.ToString();
-            await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
+            if (GameRoomManager.Instance.IsHost(GameRoomManager.Instance.currentPlayerId))
             {
-                IsFlipped = false,
-                Owner = null
-            }));
-
+                string cardId = card.cardData.cardType.ToString();
+                await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
+                {
+                    IsFlipped = false,
+                    Owner = null
+                }));
+            }
             cardnum++;
             if (cardnum > 6) cardnum = 0;
         }
@@ -253,14 +249,12 @@ public class MemoryGameManager : MonoBehaviour
 
             if (currentPlayerId == GameRoomManager.Instance.currentPlayerId)
             {
-                print("지금 내턴");
                 memoryGamePanelUi.cardPanel.player1_Time.value = 1f - (Time.time - turnStartTime) / 60f;
                 memoryGamePanelUi.cardPanel.player2_Time.value = 1f;
 
             }
             else if (currentPlayerId != GameRoomManager.Instance.currentPlayerId)
             {
-                print("상대 턴");
                 memoryGamePanelUi.cardPanel.player2_Time.value = 1f - (Time.time - turnStartTime) / 60f;
                 memoryGamePanelUi.cardPanel.player1_Time.value = 1f;
             }

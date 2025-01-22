@@ -245,7 +245,7 @@ namespace Salon.Firebase.Database
         public string RoomName { get; set; }
         public string HostPlayerId { get; set; }
         public bool IsActive { get; set; }
-        public Dictionary<string, GamePlayerData> Players { get; set; }
+        public Dictionary<string, PlayerData> Players { get; set; }
 
         public GameState GameState { get; set; }
         public Dictionary<string, CardData> Board { get; set; }
@@ -255,7 +255,7 @@ namespace Salon.Firebase.Database
             RoomName = roomName;
             HostPlayerId = hostPlayerId;
             IsActive = true;
-            Players = new Dictionary<string, GamePlayerData>();
+            Players = new Dictionary<string, PlayerData>();
 
             GameState = new GameState();
             Board = new Dictionary<string, CardData>();
