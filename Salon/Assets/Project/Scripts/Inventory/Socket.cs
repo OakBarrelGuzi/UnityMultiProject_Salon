@@ -10,8 +10,6 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
 
     public ItemData itemData { get; private set; }
 
-    public SocketType socketType;
-
     public ItemType itemType;
 
     private Image image;
