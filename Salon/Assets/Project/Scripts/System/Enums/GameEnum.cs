@@ -1,3 +1,5 @@
+using System;
+
 public enum PanelType
 {
     None,
@@ -38,4 +40,20 @@ public enum GameType
     MemoryGame,
     HoldBeerGame
 
+}
+
+public enum AnimType
+{
+    None,
+    Beer
+}
+
+[Serializable]
+public enum InteractionType
+{
+    None,
+    Shop,
+    DartGame,
+    ShellGame,
+    CardGame
 }

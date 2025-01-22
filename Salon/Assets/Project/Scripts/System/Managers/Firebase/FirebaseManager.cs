@@ -462,7 +462,7 @@ namespace Salon.Firebase
                         Status = UserStatus.Offline,
                         Friends = new Dictionary<string, bool>(),
                         GameStats = new Dictionary<GameType, UserStats>(),
-                        Invites = new Dictionary<string, InviteData>()
+                        Invites = new Dictionary<string, InviteData>(),
                     };
 
                     Debug.Log("[FirebaseManager] 데이터베이스에 사용자 데이터 저장 시도...");
