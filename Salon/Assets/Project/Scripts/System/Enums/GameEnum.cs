@@ -63,7 +63,10 @@ public enum AnimType
     CheckWatch,
     Sippin,
     DrinkThrow,
-    ChugDrink
+    ChugDrink,
+    ShootingArrow,
+    TwistDance,
+    DropKick,
 }
 
 [Serializable]
