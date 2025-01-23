@@ -73,8 +73,7 @@ public class PopupButton : MonoBehaviour
     }
     private void StartShellGame()
     {
-        Debug.Log("[PopupButton] 쉘 게임을 시작했습니다!");
-        // 쉘 게임 시작 로직 구현
+        ScenesManager.Instance.ChanageScene("SalonShell");
     }
     private async void StartCardGame()
     {
