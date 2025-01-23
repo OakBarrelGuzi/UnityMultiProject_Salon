@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using Salon.Firebase.Database;
 using Salon.Character;
 using System;
+using System.Threading.Tasks;
 
 public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
 {
@@ -31,55 +32,76 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
         }
     }
 
-    public void OnDrop(PointerEventData eventData)
+    public async void OnDrop(PointerEventData eventData)
     {
         if (eventData.pointerDrag.TryGetComponent<Item>(out Item item))
         {
             if (itemType != item.itemData.itemType) return;
 
-            AddSocketItem(item);
+            // 아이템 데이터 미리 캐시
+            ItemData newItemData = new ItemData
+            {
+                itemType = item.itemData.itemType,
+                itemName = item.itemData.itemName,
+                itemCost = item.itemData.itemCost
+            };
+            Sprite itemSprite = item.itemIcon.sprite;
+
+            // 현재 소켓의 아이템이 있다면 인벤토리로 되돌리기
             if (itemData != null)
             {
-                OnItemChanged?.Invoke(itemData);
+                var inventory = await ItemManager.Instance.LoadPlayerInventory();
+                inventory.Items.Add(itemData);
+                await ItemManager.Instance.SavePlayerInventory(inventory);
+
+                // ActivatedItems에서 현재 아이템 제거
+                var activatedItems = await ItemManager.Instance.LoadPlayerActivatedItems();
+                activatedItems.Items.RemoveAll(x =>
+                    x.itemName == itemData.itemName &&
+                    x.itemType == itemData.itemType);
+                await ItemManager.Instance.SavePlayerActivatedItems(activatedItems);
+            }
+
+            // 새 아이템의 UI 설정
+            this.image.sprite = itemSprite;
+            SetImageOpacity(1);
+
+            // 새 아이템 데이터 설정
+            itemData = newItemData;
+
+            // 인벤토리에서 새 아이템 제거
+            var newInventory = await ItemManager.Instance.LoadPlayerInventory();
+            newInventory.Items.RemoveAll(x =>
+                x.itemName == newItemData.itemName &&
+                x.itemType == newItemData.itemType);
+            await ItemManager.Instance.SavePlayerInventory(newInventory);
+
+            // ActivatedItems에 새 아이템 추가
+            var newActivatedItems = await ItemManager.Instance.LoadPlayerActivatedItems();
+            newActivatedItems.Items.Add(newItemData);
+            await ItemManager.Instance.SavePlayerActivatedItems(newActivatedItems);
+
+            // 모든 작업이 완료된 후 드래그된 아이템 UI 제거
+            if (item != null)
+            {
+                Destroy(item.gameObject);
             }
         }
-    }
-
-    public void AddSocketItem(Item item)
-    {
-        if (itemType != item.itemData.itemType) return;
-        this.image.sprite = item.itemIcon.sprite;
-        SetImageOpacity(1); // 아이템이 추가될 때 이미지를 보이게 함
-
-        ItemData data = new ItemData()
-        {
-            itemType = item.itemData.itemType,
-            itemName = item.itemData.itemName,
-            itemCost = item.itemData.itemCost,
-        };
-
-        if (itemData != null)
-        {
-            OnItemChanged?.Invoke(itemData);
-        }
-
-        itemData = data;
-        Destroy(item.gameObject);
     }
 
     public void AddSocketItem(ItemData data)
     {
         if (itemType != data.itemType) return;
 
-        ItemData item = new ItemData()
+        itemData = new ItemData()
         {
             itemName = data.itemName,
             itemCost = data.itemCost,
             itemType = data.itemType,
         };
-        itemData = item;
+
         image.sprite = ItemManager.Instance.GetItemSprite(data.itemName);
-        SetImageOpacity(1); // 아이템이 추가될 때 이미지를 보이게 함
+        SetImageOpacity(1);
     }
 
     public void OnPointerClick(PointerEventData eventData)

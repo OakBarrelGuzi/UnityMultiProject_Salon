@@ -17,6 +17,7 @@ public class ChannelPanel : Panel
 
     private List<ChannelButton> channelButtons = new List<ChannelButton>();
     private bool isProcessing = false;
+    private bool isGettingChannels = false;
 
     void OnEnable() => Initialize();
 
@@ -29,10 +30,16 @@ public class ChannelPanel : Panel
 
     private void ClearChannelButtons()
     {
+        if (channelButtons == null) return;
+
         foreach (ChannelButton button in channelButtons)
         {
-            button.button.onClick.RemoveAllListeners();
-            Destroy(button.gameObject);
+            if (button != null)
+            {
+                if (button.button != null)
+                    button.button.onClick.RemoveAllListeners();
+                Destroy(button.gameObject);
+            }
         }
         channelButtons.Clear();
     }
@@ -45,30 +52,74 @@ public class ChannelPanel : Panel
 
     private async void GetChannels()
     {
-        if (channelButtonPrefab == null)
+        if (isGettingChannels)
         {
-            Debug.LogError("channelButtonPrefab이 할당되지 않았습니다!");
+            Debug.Log("이미 채널 정보를 가져오는 중입니다.");
             return;
         }
 
-        var channelData = await ChannelManager.Instance.WaitForChannelData();
-        if (channelData == null)
+        try
         {
-            Debug.LogError("채널 데이터를 가져오지 못했습니다!");
-            return;
-        }
+            isGettingChannels = true;
 
-        await CreateChannelButtons(channelData);
+            if (channelButtonPrefab == null)
+            {
+                Debug.LogError("channelButtonPrefab이 할당되지 않았습니다!");
+                return;
+            }
+
+            Debug.Log("채널 데이터 요청 시작...");
+            var channelData = await ChannelManager.Instance.WaitForChannelData();
+
+            if (channelData == null)
+            {
+                Debug.LogError("채널 데이터를 가져오지 못했습니다!");
+                return;
+            }
+
+            Debug.Log($"채널 데이터 수신 완료. 채널 수: {channelData.Count}");
+            await CreateChannelButtons(channelData);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"채널 정보 가져오기 실패: {ex.Message}\n{ex.StackTrace}");
+        }
+        finally
+        {
+            isGettingChannels = false;
+        }
     }
 
     private async Task CreateChannelButtons(Dictionary<string, ChannelData> channelData)
     {
-        foreach (var channel in channelData)
+        try
         {
-            var button = Instantiate(channelButtonPrefab, channelParent);
-            button.Initialize(channel.Key, await ChannelManager.Instance.GetChannelUserCount(channel.Key));
-            button.button.onClick.AddListener(() => OnChannelButtonClick(channel.Key));
-            channelButtons.Add(button);
+            foreach (var channel in channelData)
+            {
+                if (channelParent == null)
+                {
+                    Debug.LogError("channelParent가 null입니다!");
+                    return;
+                }
+
+                var button = Instantiate(channelButtonPrefab, channelParent);
+                if (button == null)
+                {
+                    Debug.LogError($"채널 버튼 생성 실패: {channel.Key}");
+                    continue;
+                }
+
+                int userCount = await ChannelManager.Instance.GetChannelUserCount(channel.Key);
+                Debug.Log($"채널 {channel.Key}의 현재 사용자 수: {userCount}");
+
+                button.Initialize(channel.Key, userCount);
+                button.button.onClick.AddListener(() => OnChannelButtonClick(channel.Key));
+                channelButtons.Add(button);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"채널 버튼 생성 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
         }
     }
 

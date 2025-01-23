@@ -229,14 +229,14 @@ namespace Salon.Firebase
 
                 await SetupPlayerData();
 
+                await ItemManager.Instance.Initialize();
+
                 UIManager.Instance.OpenPanel(PanelType.Lobby);
 
                 await Task.WhenAll(
                     ChatManager.Instance.StartListeningToMessages(channelName),
                     RoomManager.Instance.JoinChannel(channelName)
                 );
-
-                await ItemManager.Instance.Initialize();
 
                 Debug.Log($"[ChannelManager] {channelName} 채널 입장 완료");
             }

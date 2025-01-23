@@ -46,11 +46,11 @@ public class ShopPanel : Panel
     {
         emojiPanel.SetActive(showEmoji);
         animPanel.SetActive(!showEmoji);
-        RefreshShopItems().ConfigureAwait(false);
     }
 
     private async Task RefreshShopItems()
     {
+        // 기존 아이템 제거
         foreach (var item in spawnedItems)
         {
             if (item != null)
@@ -72,15 +72,13 @@ public class ShopPanel : Panel
         foreach (var itemData in allItems)
         {
             if (ownedItems.Any(item =>
-                item.itemName == itemData.itemName &&
-                item.itemType == itemData.itemType))
+            item.itemName == itemData.itemName &&
+            item.itemType == itemData.itemType))
             {
                 continue;
             }
 
             Transform parent = (itemData.itemType == ItemType.Emoji) ? emojiParent : animParent;
-            if (!parent.gameObject.activeSelf) continue;
-
             ShopItem shopItem = Instantiate(shopItemPrefab, parent);
             shopItem.Initialize(itemData, this);
             spawnedItems.Add(shopItem);

@@ -78,9 +78,25 @@ namespace Salon.Character
 
         public void PlayAnimation(string animName)
         {
+            if (string.IsNullOrEmpty(animName)) return;
+
             if (animController != null)
             {
                 animController.SetAnime(animName);
+            }
+            else
+            {
+                Debug.LogError($"[RemotePlayer] {displayName}의 AnimController가 null입니다.");
+            }
+        }
+
+        public void PlayEmoji(string emojiName)
+        {
+            if (string.IsNullOrEmpty(emojiName)) return;
+
+            if (animController != null)
+            {
+                animController.SetEmoji(emojiName);
             }
             else
             {
