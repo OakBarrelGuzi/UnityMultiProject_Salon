@@ -7,6 +7,8 @@ using Salon.Firebase;
 using Salon.Firebase.Database;
 using Newtonsoft.Json;
 using Random = UnityEngine.Random;
+using System.Threading.Tasks;
+using System;
 
 public class MemoryGameManager : MonoBehaviour
 {
@@ -20,6 +22,7 @@ public class MemoryGameManager : MonoBehaviour
     private Transform[] cardSpawnPos;
 
     private List<Card> tableCardList = new List<Card>();
+    private Dictionary<string, CardData> board = new Dictionary<string, CardData>();
 
     public Sprite[] cardsprite;
 
@@ -46,6 +49,8 @@ public class MemoryGameManager : MonoBehaviour
 
         turnStartTime = Time.time;
 
+        CardRandomSet();
+
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
 
@@ -53,8 +58,6 @@ public class MemoryGameManager : MonoBehaviour
         UIManager.Instance.OpenPanel(PanelType.MemoryGame);
         memoryGamePanelUi = UIManager.Instance.GetComponentInChildren<MemoryGamePanelUi>();
         memoryGamePanelUi.gameObject.SetActive(true);
-
-        CardRandomSet();
 
         turnTimeUiRoutine = StartCoroutine(TurnCountRoutine());
     }
@@ -76,6 +79,9 @@ public class MemoryGameManager : MonoBehaviour
     }
     private async void CardRandomSet()
     {
+        bool isHost = await IsHost();
+        int cardIndexNumber = 0;
+
         HashSet<int> randomCardSet = new HashSet<int>();
         while (randomCardSet.Count < CARDCOUNT)
         {
@@ -88,20 +94,29 @@ public class MemoryGameManager : MonoBehaviour
 
             card.cardData = new InGameCard
             {
-                cardType = (CARDTYPE)cardnum,
-                cardSprite = cardsprite[cardnum],
+                cardType = (CARDTYPE)(cardnum % 7),
+                cardSprite = cardsprite[cardnum % 7],
+                cardIndex = cardIndexNumber
             };
             card.Initialize(this);
             tableCardList.Add(card);
 
-            string cardId = card.cardData.cardType.ToString();
-            await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
+            string cardId = card.cardData.cardIndex.ToString();
+            if (isHost)
             {
-                IsFlipped = false,
-                Owner = null
-            }));
+                CardData cardData = new CardData { IsFlipped = false };
+                board[cardId] = cardData;
+                try
+                {
+                    await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonConvert.SerializeObject(cardData));
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"Board 노드 생성 실패: {ex.Message}");
+                }
+            }
             cardnum++;
-            if (cardnum > 6) cardnum = 0;
+            cardIndexNumber++;
         }
     }
 
@@ -113,13 +128,34 @@ public class MemoryGameManager : MonoBehaviour
             return;
         }
 
-        card.cardOpen = true;
-        string cardId = card.cardData.cardType.ToString();
-        await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
+        string cardId = card.cardData.cardIndex.ToString();
+        var cardSnapshot = await roomRef.Child("Board").Child(cardId).GetValueAsync();
+
+        if (!cardSnapshot.Exists)
         {
-            IsFlipped = true,
-            Owner = currentPlayerId
-        }));
+            Debug.LogError($"[CardOpen] Firebase에서 {cardId}를 찾을 수 없습니다.");
+            return;
+        }
+
+        var cardData = JsonConvert.DeserializeObject<CardData>(cardSnapshot.GetRawJsonValue());
+        if (cardData.IsFlipped)
+        {
+            Debug.LogWarning("이미 뒤집힌 카드입니다.");
+            return;
+        }
+
+        card.cardOpen = true;
+        cardData.IsFlipped = true;
+        board[cardId] = cardData;
+
+        try
+        {
+            await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonConvert.SerializeObject(cardData));
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[CardOpen] Firebase 업데이트 실패: {ex.Message}");
+        }
 
         // 나누름
         openCardList.Add(card);
@@ -156,18 +192,42 @@ public class MemoryGameManager : MonoBehaviour
     }
     public IEnumerator FailRoutine()
     {
+        foreach (var card in openCardList)
+        {
+            string cardId = card.cardData.cardIndex.ToString();
+
+            if (!board[cardId].IsFlipped)
+            {
+                continue;
+            }
+
+            board[cardId].IsFlipped = false;
+            card.cardOpen = false;
+
+            try
+            {
+                roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonConvert.SerializeObject(board[cardId]));
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FailRoutine] Board 업데이트 실패: {ex.Message}");
+            }
+        }
+
         yield return StartCoroutine(TurnRoutine(openCardList[1]));
 
         yield return StartCoroutine(TurnRoutine(openCardList[0]));
 
         openCardList.Clear();
         isCardFull = false;
+
+        UpdateTurnToNextPlayer();
     }
 
     public IEnumerator TurnRoutine(Card card)
     {
         float elapsedTime = 0f;
-        card.cardOpen = !card.cardOpen;
+        //card.cardOpen = !card.cardOpen;
 
         card.isTurning = true;
 
@@ -219,9 +279,12 @@ public class MemoryGameManager : MonoBehaviour
         {
             foreach (var child in e.Snapshot.Children)
             {
-                var cardData = JsonUtility.FromJson<CardData>(child.GetRawJsonValue());
-                var card = tableCardList.Find(c => c.cardData.cardType.ToString() == child.Key);
+                var cardData = JsonConvert.DeserializeObject<CardData>(child.GetRawJsonValue());
+                string cardId = child.Key;
 
+                board[cardId] = cardData;
+
+                var card = tableCardList.Find(c => c.cardData.cardIndex.ToString() == cardId);
                 if (card != null)
                 {
                     if (cardData.IsFlipped && !card.cardOpen)
@@ -260,5 +323,19 @@ public class MemoryGameManager : MonoBehaviour
 
         }
 
+    }
+    private async Task<bool> IsHost()
+    {
+        var snapshot = await roomRef.GetValueAsync();
+        if (snapshot.Exists)
+        {
+            var roomData = JsonConvert.DeserializeObject<GameRoomData>(snapshot.GetRawJsonValue());
+            if (roomData.Players.ContainsKey(GameRoomManager.Instance.currentPlayerId))
+            {
+                return roomData.Players[GameRoomManager.Instance.currentPlayerId].IsHost;
+            }
+        }
+        Debug.LogWarning("호스트 여부를 확인할 수 없습니다.");
+        return false;
     }
 }

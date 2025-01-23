@@ -61,7 +61,6 @@ namespace Salon.Firebase
             // 1. 방 목록 가져오기
             var roomList = await GetRoomList(channelId);
             UIManager.Instance.OpenPanel(PanelType.PartyRoom);
-            await Task.Delay(3000);
             roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
             // 2. 빈 방 찾기
             foreach (string roomId in roomList)
@@ -126,7 +125,7 @@ namespace Salon.Firebase
                 string newRoomId = Guid.NewGuid().ToString();
                 GameRoomData newRoom = new GameRoomData(newRoomId, hostPlayerId);
                 newRoom.Players.Add(hostPlayerId, new PlayerData(hostPlayerId, true));
-                // Firebase에 방 데이터 저장
+
                 string roomJson = JsonConvert.SerializeObject(newRoom);
                 await dbReference.Child("Channels").Child(channelId).Child("GameRooms").Child(newRoomId).SetRawJsonValueAsync(roomJson);
 
@@ -284,23 +283,6 @@ namespace Salon.Firebase
             {
                 Debug.LogError($"[GameRoomManager] 연결 해제 시 방 삭제 설정 실패: {ex.Message}");
             }
-        }
-        public bool IsHost(string playerId)
-        {
-            var roomData = GetCurrentRoomData();
-            if (roomData != null && roomData.Players.ContainsKey(playerId))
-            {
-                return roomData.Players[playerId].IsHost; // 플레이어의 IsHost 속성 확인
-            }
-            return false;
-        }
-
-        private GameRoomData GetCurrentRoomData()
-        {
-            if (roomRef == null) return null;
-
-            var snapshot = roomRef.GetValueAsync().Result; // Firebase 동기화
-            return snapshot.Exists ? JsonConvert.DeserializeObject<GameRoomData>(snapshot.GetRawJsonValue()) : null;
         }
     }
 }
