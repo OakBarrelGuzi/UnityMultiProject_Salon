@@ -63,7 +63,7 @@ namespace Salon.Firebase
                 {
                     InitializeFirebase();
 
-                    if (auth != null && auth.CurrentUser != null)
+                    if (auth.CurrentUser != null)
                     {
                         // 현재 사용자의 상태 확인
                         var userRef = dbReference.Child("Users").Child(auth.CurrentUser.UserId);
@@ -935,6 +935,97 @@ namespace Salon.Firebase
             {
                 Debug.LogError($"[FirebaseManager] DisplayName 검색 실패: {ex.Message}");
                 return null;
+            }
+        }
+
+        public async Task<bool> UpdateUsername(string newUsername)
+        {
+            if (currentUser == null || string.IsNullOrEmpty(currentUserUID))
+            {
+                Debug.LogError("[FirebaseManager] 사용자가 로그인되어 있지 않습니다.");
+                return false;
+            }
+
+            try
+            {
+                // 현재 사용자의 프로필 업데이트
+                var profile = new UserProfile { DisplayName = newUsername };
+                await currentUser.UpdateUserProfileAsync(profile);
+
+                // 데이터베이스의 사용자 데이터 업데이트
+                var userRef = dbReference.Child("Users").Child(currentUserUID);
+                await userRef.Child("DisplayName").SetValueAsync(newUsername);
+
+                // 현재 인스턴스의 DisplayName 업데이트
+                CurrnetUserDisplayName = newUsername;
+
+                Debug.Log($"[FirebaseManager] 사용자 이름이 성공적으로 업데이트되었습니다: {newUsername}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FirebaseManager] 사용자 이름 업데이트 실패: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<UserData> GetUserData()
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(currentUserUID))
+                {
+                    Debug.LogError("현재 유저 UID가 없습니다.");
+                    return null;
+                }
+
+                var snapshot = await dbReference.Child("Users").Child(currentUserUID).GetValueAsync();
+                if (snapshot.Exists)
+                {
+                    string json = snapshot.GetRawJsonValue();
+                    return JsonConvert.DeserializeObject<UserData>(json);
+                }
+                return new UserData();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"유저 데이터 로드 실패: {e.Message}");
+                return null;
+            }
+        }
+
+        public async Task UpdateUserData(UserData userData)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(currentUserUID))
+                {
+                    Debug.LogError("현재 유저 UID가 없습니다.");
+                    return;
+                }
+
+                // 기존 데이터를 가져옵니다
+                var snapshot = await dbReference.Child("Users").Child(currentUserUID).GetValueAsync();
+                if (snapshot.Exists)
+                {
+                    var existingData = JsonConvert.DeserializeObject<UserData>(snapshot.GetRawJsonValue());
+                    // DisplayName을 기존 값으로 유지
+                    userData.DisplayName = existingData.DisplayName;
+                }
+                else
+                {
+                    // 기존 데이터가 없는 경우 현재 DisplayName 사용
+                    userData.DisplayName = CurrnetUserDisplayName;
+                }
+
+                string json = JsonConvert.SerializeObject(userData);
+                await dbReference.Child("Users").Child(currentUserUID).SetRawJsonValueAsync(json);
+                Debug.Log("유저 데이터 업데이트 완료");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"유저 데이터 업데이트 실패: {e.Message}");
+                throw;
             }
         }
     }
