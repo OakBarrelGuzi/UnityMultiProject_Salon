@@ -21,6 +21,8 @@ namespace Salon.DartGame
         private int turn = 1;
         private int totalScore = 0;
 
+        private int[] RewardScore = new int[] { 100, 777, 900 };
+
         private float turnTime = TURNTIME;
         private float breathTime = BREATHTIME;
 
@@ -463,6 +465,15 @@ namespace Salon.DartGame
                 Debug.LogError($"점수 가져오기 실패: {e.Message}");
             }
 
+            //리워드 점수 같은지 체크크
+            for (int i = 0; i < RewardScore.Length; i++)
+            {
+                if (RewardScore[i] == totalScore)
+                {
+                    Reward(totalScore);
+                }
+            }
+
             if (myTopSocre < totalScore)
             {
                 await currentUserRef.SetValueAsync(totalScore);
@@ -472,6 +483,60 @@ namespace Salon.DartGame
             else
             {
                 ScenesManager.Instance.ChanageScene("LobbyScene");
+            }
+        }
+
+        private async void Reward(int TotalDratSocre)
+        {
+            int myGold = 0;
+
+            var UserUID = FirebaseManager.Instance.CurrentUserUID;
+
+            var currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("Glod");
+
+            try
+            {
+                var snapshot = await currentUserRef.GetValueAsync();
+
+                if (snapshot.Exists)
+                {
+                    myGold = int.Parse(snapshot.Value.ToString());
+                }
+                else
+                {
+                    Debug.Log("골드드 데이터가 없습니다");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"골드드 가져오기 실패: {e.Message}");
+            }
+
+            for (int i = 0; i < RewardScore.Length; i++)
+            {
+                if (RewardScore[i] == TotalDratSocre)
+                {
+                    //TODO: 다른보상 추가로 줘야할수도도
+                    switch (i)
+                    {
+                        case 0:
+                            await currentUserRef.SetValueAsync(myGold + 100);
+
+                            return;
+                        case 1:
+                            await currentUserRef.SetValueAsync(myGold + 777);
+
+                            return;
+                        case 2:
+                            await currentUserRef.SetValueAsync(myGold + 1000);
+
+                            return;
+                        default:
+                            Debug.LogError("해당하는 점수 보상이없음");
+                            return;
+                    }
+
+                }
             }
         }
     }
