@@ -58,7 +58,10 @@ public enum AnimType
     DrinkThrow,
     FootTap,
     LegShake,
-    Sippin
+    Sippin,
+    ShootingArrow,
+    TwistDance,
+    DropKick,
 }
 
 [Serializable]

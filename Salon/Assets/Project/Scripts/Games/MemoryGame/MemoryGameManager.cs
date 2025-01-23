@@ -309,14 +309,14 @@ public class MemoryGameManager : MonoBehaviour
 
             if (currentPlayerId == GameRoomManager.Instance.currentPlayerId)
             {
-                memoryGamePanelUi.cardPanel.player1_Time.value = 1f - (Time.time - turnStartTime) / 60f;
-                memoryGamePanelUi.cardPanel.player2_Time.value = 1f;
+                memoryGamePanelUi.cardPanel.localPlayerTime.value = 1f - (Time.time - turnStartTime) / 60f;
+                memoryGamePanelUi.cardPanel.remotePlayerTime.value = 1f;
 
             }
             else if (currentPlayerId != GameRoomManager.Instance.currentPlayerId)
             {
-                memoryGamePanelUi.cardPanel.player2_Time.value = 1f - (Time.time - turnStartTime) / 60f;
-                memoryGamePanelUi.cardPanel.player1_Time.value = 1f;
+                memoryGamePanelUi.cardPanel.remotePlayerTime.value = 1f - (Time.time - turnStartTime) / 60f;
+                memoryGamePanelUi.cardPanel.localPlayerTime.value = 1f;
             }
 
             yield return new WaitForSeconds(0.5f);
