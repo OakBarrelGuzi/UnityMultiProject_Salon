@@ -17,11 +17,17 @@ namespace Salon.Character
 
         private Animator animator;
         private bool isMoving;
+        public AnimController animController { get; private set; }
 
         public override void Initialize(string displayName)
         {
             base.Initialize(displayName);
             animator = GetComponent<Animator>();
+            animController = GetComponent<AnimController>();
+            if (animController == null)
+            {
+                Debug.LogError($"[RemotePlayer] AnimController를 찾을 수 없습니다: {displayName}");
+            }
             targetPosition = transform.position;
             previousPosition = transform.position;
             targetDirection = transform.forward;
@@ -70,9 +76,16 @@ namespace Salon.Character
             Debug.Log($"[RemotePlayer] {displayName} 업데이트 - Pos: {targetPosition}, Dir: {targetDirection}, Moving: {isMoving}");
         }
 
-        public void PlayAnimation()
+        public void PlayAnimation(string animName)
         {
-            animator.SetTrigger("Test");
+            if (animController != null)
+            {
+                animController.SetAnime(animName);
+            }
+            else
+            {
+                Debug.LogError($"[RemotePlayer] {displayName}의 AnimController가 null입니다.");
+            }
         }
     }
 }

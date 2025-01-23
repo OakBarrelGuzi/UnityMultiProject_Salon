@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6789527313150815554}
   - component: {fileID: 8340982377342233642}
   - component: {fileID: 617258215824432638}
+  - component: {fileID: 3717794322870163070}
   m_Layer: 0
   m_Name: Cup
   m_TagString: Untagged
@@ -27,9 +28,9 @@ Transform:
   m_GameObject: {fileID: 3073313578738753043}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: 0.7071068, w: 0}
-  m_LocalPosition: {x: 4, y: 9.180001, z: -0}
-  m_LocalScale: {x: 0.40391132, y: 0.3436752, z: 0.2837054}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 1.289, z: 0.51}
+  m_LocalScale: {x: 1.03, y: 0.87639403, z: 0.7234672}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 180, y: -90, z: 0}
@@ -83,3 +84,16 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &3717794322870163070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3073313578738753043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9946e13f0ec50f541a8cf9b30e4ec0f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hasBall: 0

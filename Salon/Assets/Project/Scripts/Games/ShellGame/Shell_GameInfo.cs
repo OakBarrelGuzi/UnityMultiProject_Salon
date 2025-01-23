@@ -12,5 +12,19 @@ public class Shell_GameInfo : Shell_Panel
     public TextMeshProUGUI bettingGold_Text;
     public Button setting_Button;
 
+    private void Start()
+    {
+        setting_Button.onClick.AddListener(() =>
+        
+            shellGameUI.option_Panel.gameObject.SetActive(true)
 
+        );
+
+      
+    }
+    private void Update()
+    {
+        bettingGold_Text.text = shellGameUI.shuffleManager.BettingGold.ToString();
+    }
 }
+

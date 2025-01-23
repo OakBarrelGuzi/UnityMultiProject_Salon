@@ -1,3 +1,4 @@
+using Salon.ShellGame;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,7 +6,7 @@ using UnityEngine;
 public class Rounde : MonoBehaviour
 {
 
-    private ShuffleManager shuffleManager;
+    private ShellGameManager shuffleManager;
     public void NextRound()
     {
 

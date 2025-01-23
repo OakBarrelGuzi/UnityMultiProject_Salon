@@ -67,6 +67,7 @@ namespace Salon.Firebase.Database
         public int BestDartScore { get; set; }
         public int Gold { get; set; }
         public UserInventory Inventory { get; set; }
+        public ActivatedItems ActivatedItems { get; set; }
         public UserData()
         {
             DisplayName = "";
@@ -78,6 +79,8 @@ namespace Salon.Firebase.Database
             FriendRequests = new Dictionary<string, FriendRequestData>();
             BestDartScore = 0;
             Gold = 50000;
+            Inventory = new UserInventory();
+            ActivatedItems = new ActivatedItems();
         }
     }
     [Serializable]
@@ -86,6 +89,16 @@ namespace Salon.Firebase.Database
         public List<ItemData> Items { get; set; }
 
         public UserInventory()
+        {
+            Items = new List<ItemData>();
+        }
+    }
+    [Serializable]
+    public class ActivatedItems
+    {
+        public List<ItemData> Items { get; set; }
+
+        public ActivatedItems()
         {
             Items = new List<ItemData>();
         }
@@ -219,6 +232,7 @@ namespace Salon.Firebase.Database
         public Dictionary<string, object> GameSpecificData { get; set; }
         public string Position { get; set; }
         public AnimType Animation { get; set; }
+        public string Emoji { get; set; }
 
         public GamePlayerData(string displayName, bool isHost = false)
         {
@@ -310,17 +324,9 @@ namespace Salon.Firebase.Database
     public class ItemData
     {
         public int itemCost { get; set; }
-
         public string itemName { get; set; }
-
         public ItemType itemType { get; set; }
-    }
-
-    [Serializable]
-    public enum ItemType
-    {
-        Anime,
-        Emoji,
+        public int socketIndex { get; set; }
     }
 
 }
