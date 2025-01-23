@@ -35,7 +35,22 @@ public class InventoryPanel : Panel
     public override async void Initialize()
     {
         InitializeUI();
+        ItemManager.Instance.OnInventoryChanged += HandleInventoryChanged;
         await LoadInventoryItems();
+    }
+
+    public override void Close()
+    {
+        base.Close();
+        ItemManager.Instance.OnInventoryChanged -= HandleInventoryChanged;
+    }
+
+    private void HandleInventoryChanged()
+    {
+        if (gameObject.activeInHierarchy)
+        {
+            RefreshInventory();
+        }
     }
 
     private void InitializeUI()
@@ -91,24 +106,6 @@ public class InventoryPanel : Panel
         Item invenItem = Instantiate(itemPrefab, parent);
         invenItem.Initialize(itemData);
         spawnedItems.Add(invenItem);
-    }
-
-    public async Task AddItemData(ItemData itemData)
-    {
-        var inventory = await ItemManager.Instance.LoadPlayerInventory();
-        inventory.Items.Add(itemData);
-        await ItemManager.Instance.SavePlayerInventory(inventory);
-        AddInventoryItem(itemData);
-    }
-
-    public async Task RemoveItemData(ItemData itemData)
-    {
-        var inventory = await ItemManager.Instance.LoadPlayerInventory();
-        inventory.Items.RemoveAll(item =>
-            item.itemName == itemData.itemName &&
-            item.itemType == itemData.itemType);
-        await ItemManager.Instance.SavePlayerInventory(inventory);
-        await LoadInventoryItems(); // 인벤토리 UI 새로고침
     }
 
     public void RefreshInventory()

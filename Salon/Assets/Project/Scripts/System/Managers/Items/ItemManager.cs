@@ -14,10 +14,24 @@ public class ItemManager : Singleton<ItemManager>
     private DatabaseReference activatedItemRef;
     public List<ItemData> ItemList { get; private set; }
 
+    // 인벤토리 변경 이벤트 추가
+    public event System.Action OnInventoryChanged;
+
     public async Task Initialize()
     {
         inventoryRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Inventory");
         activatedItemRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("ActivatedItems");
+
+        // 인벤토리 변경 리스너 등록
+        inventoryRef.ValueChanged += (sender, args) =>
+        {
+            if (args.DatabaseError != null)
+            {
+                Debug.LogError($"The read failed: {args.DatabaseError.Message}");
+                return;
+            }
+            OnInventoryChanged?.Invoke();
+        };
 
         // ActivatedItems 노드가 없으면 생성
         var snapshot = await activatedItemRef.GetValueAsync();
