@@ -50,20 +50,18 @@ public enum AnimType
 {
     None,
     Beer,
-    YmcaDance,
-    SnakeHipHopDance,
-    NorthernSoulSpinCombo,
-    NorthernSoulFloorCombo,
-    HipHopDancing2,
-    HipHopDancing,
-    DismissingGesture,
-    DancingTwerk,
-    CrosslegFreeze,
-    Breakdance,
+    ArmSwing,
     CheckWatch,
-    Sippin,
+    ChugDrink,
+    CrossChest,
+    DespairPose,
     DrinkThrow,
-    ChugDrink
+    FootTap,
+    LegShake,
+    Sippin,
+    ShootingArrow,
+    TwistDance,
+    DropKick,
 }
 
 [Serializable]

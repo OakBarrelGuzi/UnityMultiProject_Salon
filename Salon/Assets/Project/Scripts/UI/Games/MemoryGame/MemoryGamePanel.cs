@@ -10,5 +10,6 @@ public class MemoryGamePanelUi : Panel
     private void Start()
     {
         cardPanel.gameObject.SetActive(true);
+        cardResultUi.gameObject.SetActive(false);
     }
 }

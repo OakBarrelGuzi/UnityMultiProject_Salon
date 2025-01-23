@@ -1,4 +1,5 @@
 using Salon.Firebase;
+using Salon.Firebase.Database;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -77,6 +78,7 @@ namespace Salon.DartGame
 
         private void Start()
         {
+            // Application.targetFrameRate = 60;
             StartCoroutine(InitializeRoutine());
         }
 
@@ -99,17 +101,7 @@ namespace Salon.DartGame
             {
                 joyStick = gameUi.joyStick;
             }
-            if (scoreTextList.Any())
-            {
-                foreach (TextMeshProUGUI text in scoreTextList)
-                {
-                    if (text != null)
-                    {
-                        Destroy(text.gameObject);
-                    }
-                }
-                scoreTextList.Clear();
-            }
+
             for (int i = 0; i < MAXROUND; i++)
             {
                 TextMeshProUGUI scoretext = Instantiate(gameUi.scoreTextPrefab, gameUi.scoreTextField);
@@ -124,6 +116,21 @@ namespace Salon.DartGame
             NextTurnset();
             StartCoroutine(GameRoutine());
             isGameStarted = true;
+        }
+
+        private void TextClear()
+        {
+            if (scoreTextList.Any())
+            {
+                foreach (TextMeshProUGUI text in scoreTextList)
+                {
+                    if (text != null)
+                    {
+                        Destroy(text.gameObject);
+                    }
+                }
+                scoreTextList.Clear();
+            }
         }
 
         public void NextTurnset()
@@ -143,7 +150,7 @@ namespace Salon.DartGame
 
         }
 
-        private void Update()
+        private void FixedUpdate()
         {
             if (isGameStarted)
             {
@@ -155,6 +162,7 @@ namespace Salon.DartGame
                 DartGameUiUpdate();
             }
         }
+
         private void DartGameUiUpdate()
         {
             gameUi.turnTimeSlider.value = turnTime / TURNTIME;
@@ -442,6 +450,7 @@ namespace Salon.DartGame
 
         private async void GameEnd()
         {
+            TextClear();
             int myTopSocre = 0;
 
             var UserUID = FirebaseManager.Instance.CurrentUserUID;
@@ -465,10 +474,10 @@ namespace Salon.DartGame
                 Debug.LogError($"점수 가져오기 실패: {e.Message}");
             }
 
-            //리워드 점수 같은지 체크크
+            //리워드 점수 같은지 체크
             for (int i = 0; i < RewardScore.Length; i++)
             {
-                if (RewardScore[i] == totalScore)
+                if (RewardScore[i] <= totalScore)
                 {
                     Reward(totalScore);
                 }
@@ -515,22 +524,62 @@ namespace Salon.DartGame
 
             for (int i = 0; i < RewardScore.Length; i++)
             {
-                if (RewardScore[i] == TotalDratSocre)
+                if (RewardScore[i] <= TotalDratSocre)
                 {
+                    var inventory = await ItemManager.Instance.LoadPlayerInventory();
                     //TODO: 다른보상 추가로 줘야할수도도
                     switch (i)
                     {
+
                         case 0:
+
                             await currentUserRef.SetValueAsync(myGold + 100);
 
+                            var dropkickAnim = inventory.Items.Find(item => item.itemName == "DropKick");
+                            if (dropkickAnim == null)
+                            {
+                                ItemData DropKick = new ItemData
+                                {
+                                    itemCost = 0,
+                                    itemName = "DropKick",
+                                    itemType = ItemType.Anim,
+                                };
+                                inventory.Items.Add(DropKick);
+                                await ItemManager.Instance.SavePlayerInventory(inventory);
+                            }
                             return;
                         case 1:
+
                             await currentUserRef.SetValueAsync(myGold + 777);
 
+                            var twistDanceAnim = inventory.Items.Find(item => item.itemName == "TwistDance");
+                            if (twistDanceAnim == null)
+                            {
+                                ItemData TwistDance = new ItemData
+                                {
+                                    itemCost = 0,
+                                    itemName = "TwistDance",
+                                    itemType = ItemType.Anim,
+                                };
+                                inventory.Items.Add(TwistDance);
+                                await ItemManager.Instance.SavePlayerInventory(inventory);
+                            }
                             return;
                         case 2:
                             await currentUserRef.SetValueAsync(myGold + 1000);
 
+                            var shootingArrowAnim = inventory.Items.Find(item => item.itemName == "ShootingArrow");
+                            if (shootingArrowAnim == null)
+                            {
+                                ItemData ShootingArrow = new ItemData
+                                {
+                                    itemCost = 0,
+                                    itemName = "ShootingArrow",
+                                    itemType = ItemType.Anim,
+                                };
+                                inventory.Items.Add(ShootingArrow);
+                                await ItemManager.Instance.SavePlayerInventory(inventory);
+                            }
                             return;
                         default:
                             Debug.LogError("해당하는 점수 보상이없음");
@@ -539,6 +588,11 @@ namespace Salon.DartGame
 
                 }
             }
+        }
+
+        private void OnDisable()
+        {
+            TextClear();
         }
     }
 }

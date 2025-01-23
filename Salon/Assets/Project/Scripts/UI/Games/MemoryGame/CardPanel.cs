@@ -7,13 +7,10 @@ using UnityEngine.UI;
 public class CardPanel : MonoBehaviour
 {
     public Button option_Button;
-    public Button Emoji_Button;
-    public Image player1_Border;
-    public Image player2_Border;
-    public TextMeshProUGUI player1_Score;
-    public TextMeshProUGUI player2_Score;
-    public TextMeshProUGUI player1_Name;
-    public TextMeshProUGUI player2_Name;
-    public Slider player1_Time;
-    public Slider player2_Time;
+    public TextMeshProUGUI localPlayerScore;
+    public TextMeshProUGUI remotePlayerScore;
+    public TextMeshProUGUI localPlayerName;
+    public TextMeshProUGUI remotePlayerName;
+    public Slider localPlayerTime;
+    public Slider remotePlayerTime;
 }
