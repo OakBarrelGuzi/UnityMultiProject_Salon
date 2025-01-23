@@ -68,6 +68,8 @@ namespace Salon.Firebase.Database
         public int Gold { get; set; }
         public UserInventory Inventory { get; set; }
         public ActivatedItems ActivatedItems { get; set; }
+        public CharacterCustomizationData CharacterCustomization { get; set; }
+
         public UserData()
         {
             DisplayName = "";
@@ -81,8 +83,21 @@ namespace Salon.Firebase.Database
             Gold = 50000;
             Inventory = new UserInventory();
             ActivatedItems = new ActivatedItems();
+            CharacterCustomization = new CharacterCustomizationData();
         }
     }
+
+    [Serializable]
+    public class CharacterCustomizationData
+    {
+        public Dictionary<string, string> selectedOptions { get; set; }
+
+        public CharacterCustomizationData()
+        {
+            selectedOptions = new Dictionary<string, string>();
+        }
+    }
+
     [Serializable]
     public class UserInventory
     {
@@ -233,6 +248,7 @@ namespace Salon.Firebase.Database
         public string Position { get; set; }
         public AnimType Animation { get; set; }
         public string Emoji { get; set; }
+        public Dictionary<string, string> CharacterCustomization { get; set; }
 
         public GamePlayerData(string displayName, bool isHost = false)
         {
@@ -242,6 +258,7 @@ namespace Salon.Firebase.Database
             State = GamePlayerState.Waiting;
             GameSpecificData = new Dictionary<string, object>();
             Position = NetworkPositionCompressor.CompressVector3(Vector3.zero, Vector3.forward, false);
+            CharacterCustomization = new Dictionary<string, string>();
         }
     }
 

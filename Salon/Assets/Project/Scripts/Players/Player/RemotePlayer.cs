@@ -1,5 +1,7 @@
 using UnityEngine;
 using Salon.Firebase.Database;
+using Character;
+using System.Collections.Generic;
 
 namespace Salon.Character
 {
@@ -10,6 +12,7 @@ namespace Salon.Character
         private Vector3 targetDirection;
         private Vector3 currentVelocity;
         private Vector3 previousPosition;
+        private CharacterCustomizationManager customizationManager;
 
         [SerializeField] private float positionSmoothTime = 0.15f;
         [SerializeField] private float maxSpeed = 20f;
@@ -24,6 +27,13 @@ namespace Salon.Character
             base.Initialize(displayName);
             animator = GetComponent<Animator>();
             animController = GetComponent<AnimController>();
+
+            customizationManager = GetComponent<CharacterCustomizationManager>();
+            if (customizationManager == null)
+            {
+                customizationManager = gameObject.AddComponent<CharacterCustomizationManager>();
+            }
+
             if (animController == null)
             {
                 Debug.LogError($"[RemotePlayer] AnimController를 찾을 수 없습니다: {displayName}");
@@ -32,6 +42,19 @@ namespace Salon.Character
             previousPosition = transform.position;
             targetDirection = transform.forward;
             currentVelocity = Vector3.zero;
+        }
+
+        public void UpdateCustomization(Dictionary<string, string> customizationData)
+        {
+            if (customizationManager != null && customizationData != null)
+            {
+                customizationManager.ApplyCustomizationData(customizationData);
+                Debug.Log($"[RemotePlayer] {displayName}의 커스터마이제이션 업데이트 완료");
+            }
+            else
+            {
+                Debug.LogError($"[RemotePlayer] {displayName}의 커스터마이제이션 업데이트 실패: customizationManager 또는 데이터가 null입니다.");
+            }
         }
 
         private void Update()

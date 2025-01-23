@@ -6,6 +6,7 @@ using System;
 using Firebase.Database;
 using System.Collections;
 using System.Collections.Generic;
+using Character;
 
 namespace Salon.Character
 {
@@ -19,27 +20,44 @@ namespace Salon.Character
         private InputController inputController;
         private string lastSentPositionData;
         public AnimController animController;
+        private DatabaseReference customizationRef;
+        private CharacterCustomizationManager customizationManager;
 
         public override void Initialize(string displayName)
         {
             print("LocalPlayer Initialize");
             base.Initialize(displayName);
+
+            customizationManager = GetComponent<CharacterCustomizationManager>();
+            if (customizationManager == null)
+            {
+                customizationManager = gameObject.AddComponent<CharacterCustomizationManager>();
+            }
+
             inputController = GetComponent<InputController>();
             if (inputController != null)
             {
                 inputController.enabled = true;
                 inputController.Initialize();
             }
+
             lastPositionUpdateTime = Time.time;
             lastSentPositionData = NetworkPositionCompressor.CompressVector3(transform.position, transform.forward, true);
+
             posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
             AnimRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Animation");
             EmojiRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Emoji");
+            customizationRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("CharacterCustomization");
 
             if (animController != null)
             {
                 animController.OnAnimationStateChanged += HandleAnimationStateChanged;
                 animController.OnEmojiChanged += HandleEmojiChanged;
+            }
+
+            if (customizationManager != null)
+            {
+                customizationManager.OnCustomizationChanged += HandleCustomizationChanged;
             }
 
             StartCoroutine(SetupCamera());
@@ -211,12 +229,30 @@ namespace Salon.Character
             }
         }
 
+        private async void HandleCustomizationChanged(Dictionary<string, string> customizationData)
+        {
+            try
+            {
+                await customizationRef.SetValueAsync(customizationData);
+                Debug.Log("커스터마이제이션 데이터 전송 완료");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"커스터마이제이션 데이터 전송 실패: {e.Message}");
+            }
+        }
+
         private void OnDestroy()
         {
             if (animController != null)
             {
                 animController.OnAnimationStateChanged -= HandleAnimationStateChanged;
                 animController.OnEmojiChanged -= HandleEmojiChanged;
+            }
+
+            if (customizationManager != null)
+            {
+                customizationManager.OnCustomizationChanged -= HandleCustomizationChanged;
             }
         }
     }
