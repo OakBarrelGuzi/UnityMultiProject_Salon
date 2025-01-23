@@ -478,5 +478,24 @@ namespace Salon.Firebase
                 throw;
             }
         }
+
+        public void RemoveAllListeners()
+        {
+            try
+            {
+                if (connectedRef != null && disconnectHandler != null)
+                {
+                    connectedRef.ValueChanged -= disconnectHandler;
+                    connectedRef = null;
+                }
+
+                ClearChannelReferences();
+                Debug.Log("[ChannelManager] 모든 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ChannelManager] 리스너 제거 중 오류 발생: {ex.Message}");
+            }
+        }
     }
 }

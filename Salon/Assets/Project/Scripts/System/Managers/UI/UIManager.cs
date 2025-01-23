@@ -6,6 +6,8 @@ using Salon.Interfaces;
 using Salon.Firebase;
 using System;
 using Salon.System;
+using System.Threading.Tasks;
+using Firebase.Database;
 
 public class UIManager : Singleton<UIManager>, IInitializable
 {
@@ -17,25 +19,66 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public bool IsInitialized { get; private set; }
     public bool isTesting;
 
-    public IEnumerator InitializeRoutine()
-    {
-        yield return new WaitUntil(() => FirebaseManager.Instance.IsInitialized);
-        //if (FirebaseManager.Instance.CurrentUserName != null)
-        //{
-        //     OpenPanel(PanelType.Channel);
-        // }
-        // else
-        // {
-        //     OpenPanel(PanelType.SignIn);
-        // }
-        OpenPanel(PanelType.SignIn);
-    }
-    private void Start()
+    public async void Start()
     {
         Initialize();
         if (!isTesting)
         {
-            StartCoroutine(InitializeRoutine());
+            await InitializeAsync();
+        }
+    }
+
+    private async Task InitializeAsync()
+    {
+        while (!FirebaseManager.Instance.IsInitialized)
+        {
+            await Task.Delay(100);
+        }
+
+        try
+        {
+            // Firebase 초기화 후 추가 대기 시간
+            await Task.Delay(2000);
+
+            if (FirebaseManager.Instance.CurrentUserUID != null)
+            {
+                // 현재 로그인된 사용자의 상태 확인
+                DatabaseReference userRef = FirebaseManager.Instance.DbReference.Child("Users")
+                    .Child(FirebaseManager.Instance.CurrentUserUID)
+                    .Child("Status");
+
+                DataSnapshot snapshot = await userRef.GetValueAsync();
+
+                if (snapshot.Exists)
+                {
+                    int status = Convert.ToInt32(snapshot.Value);
+                    if (status == 1) // UserStatus.Online = 1
+                    {
+                        // 이미 온라인 상태라면 강제 로그아웃
+                        FirebaseManager.Instance.SignOut();
+                        LogManager.Instance.ShowLog("다른 기기에서 로그인된 상태여서 로그아웃되었습니다.");
+                        OpenPanel(PanelType.SignIn);
+                    }
+                    else
+                    {
+                        // 오프라인 상태라면 채널 패널 열기
+                        OpenPanel(PanelType.Channel);
+                    }
+                }
+                else
+                {
+                    OpenPanel(PanelType.SignIn);
+                }
+            }
+            else
+            {
+                OpenPanel(PanelType.SignIn);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[UIManager] 초기화 중 오류 발생: {ex.Message}");
+            OpenPanel(PanelType.SignIn);
         }
     }
 

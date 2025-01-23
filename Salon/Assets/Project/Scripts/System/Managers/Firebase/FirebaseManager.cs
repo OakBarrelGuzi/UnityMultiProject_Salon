@@ -39,11 +39,18 @@ namespace Salon.Firebase
             }
         }
 
-        public async void Initialize()
+        private async Task InitializeAsync()
         {
-            if (IsInitialized || isInitializing)
+            if (IsInitialized)
             {
-                Debug.Log("[FirebaseManager] 이미 초기화되었거나 초기화 중입니다.");
+                Debug.Log("[FirebaseManager] 이미 초기화되었습니다.");
+                initializationComplete?.SetResult(true);
+                return;
+            }
+
+            if (isInitializing)
+            {
+                Debug.Log("[FirebaseManager] 이미 초기화 중입니다.");
                 return;
             }
 
@@ -51,58 +58,77 @@ namespace Salon.Firebase
 
             try
             {
-                initializationComplete = new TaskCompletionSource<bool>();
                 var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync();
                 if (dependencyStatus == DependencyStatus.Available)
                 {
                     InitializeFirebase();
 
-                    // 사용자 정보 먼저 설정
-                    if (auth != null)
+                    if (auth != null && auth.CurrentUser != null)
                     {
-                        currentUser = auth.CurrentUser;
-                        if (currentUser != null)
+                        // 현재 사용자의 상태 확인
+                        var userRef = dbReference.Child("Users").Child(auth.CurrentUser.UserId);
+                        var statusSnapshot = await userRef.Child("Status").GetValueAsync();
+
+                        if (statusSnapshot.Exists)
                         {
-                            currentUserUID = currentUser.UserId;
-                            Debug.Log("[FirebaseManager] 사용자 이름: " + currentUserUID + "/ 이메일 : " + currentUser.Email);
+                            int status = Convert.ToInt32(statusSnapshot.Value);
+                            if (status == (int)UserStatus.Online)
+                            {
+                                Debug.Log("[FirebaseManager] 이미 다른 기기에서 로그인되어 있습니다.");
+                                LogManager.Instance.ShowLog("이미 다른 기기에서 로그인되어 있습니다.");
+                                UIManager.Instance.OpenPanel(PanelType.SignIn);
+                                initializationComplete?.SetResult(false);
+                                return;
+                            }
                         }
-                        else
+
+                        currentUser = auth.CurrentUser;
+                        currentUserUID = currentUser.UserId;
+                        CurrnetUserDisplayName = currentUser.DisplayName;
+                        Debug.Log("[FirebaseManager] 사용자 이름: " + currentUserUID + "/ 이메일 : " + currentUser.Email);
+
+                        try
                         {
-                            Debug.Log("[FirebaseManager] 로그인된 사용자가 없습니다.");
+                            await UpdateIsOnline(true);
+                            var currentUserRef = dbReference.Child("Users").Child(currentUserUID);
+                            await currentUserRef.OnDisconnect().UpdateChildren(new Dictionary<string, object> { { "Status", 3 } });
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogWarning($"[FirebaseManager] 온라인 상태 업데이트 실패: {ex.Message}");
                         }
                     }
 
                     IsInitialized = true;
-                    initializationComplete.SetResult(true);
+                    initializationComplete?.SetResult(true);
 
                     if (currentUser != null)
                     {
-                        await UpdateIsOnline(true);
+                        await InitializeManagers();
                     }
 
-                    var currentUserRef = dbReference.Child("Users").Child(currentUserUID);
-                    print(currentUserUID);
-                    CurrnetUserDisplayName = currentUser.DisplayName;
-                    await currentUserRef.OnDisconnect().UpdateChildren(new Dictionary<string, object> { { "Status", 0 } });
-
-                    await InitializeManagers();
                     Debug.Log("[FirebaseManager] Firebase 초기화 성공");
                 }
                 else
                 {
                     Debug.LogError($"[FirebaseManager] Firebase 초기화 실패: {dependencyStatus}");
-                    initializationComplete.SetResult(false);
+                    initializationComplete?.SetResult(false);
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[FirebaseManager] 초기화 실패: {ex.Message}");
-                initializationComplete.SetResult(false);
+                initializationComplete?.SetResult(false);
             }
             finally
             {
                 isInitializing = false;
             }
+        }
+
+        public void Initialize()
+        {
+            _ = InitializeAsync();
         }
 
         private async Task InitializeManagers()
@@ -183,7 +209,35 @@ namespace Salon.Firebase
                 bool signedIn = (auth.CurrentUser != null);
                 if (signedIn)
                 {
-                    await InitializeManagers();
+                    try
+                    {
+                        // 현재 사용자의 상태 확인
+                        var userRef = dbReference.Child("Users").Child(auth.CurrentUser.UserId);
+                        var statusSnapshot = await userRef.Child("Status").GetValueAsync();
+
+                        if (statusSnapshot.Exists)
+                        {
+                            int status = Convert.ToInt32(statusSnapshot.Value);
+                            if (status == (int)UserStatus.Online)
+                            {
+                                Debug.Log("[FirebaseManager] 이미 다른 기기에서 로그인되어 있습니다.");
+                                LogManager.Instance.ShowLog("이미 다른 기기에서 로그인되어 있습니다.");
+                                UIManager.Instance.OpenPanel(PanelType.SignIn);
+                                return;
+                            }
+                        }
+
+                        await InitializeManagers();
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[FirebaseManager] 사용자 상태 확인 중 오류: {ex.Message}");
+                        auth.SignOut();
+                        if (SceneManager.GetActiveScene().name != "MainScene")
+                        {
+                            SceneManager.LoadScene("MainScene");
+                        }
+                    }
                 }
                 else
                 {
@@ -195,7 +249,6 @@ namespace Salon.Firebase
                     currentUser = null;
                     currentUserUID = null;
                     CurrnetUserDisplayName = null;
-
                 }
             }
         }
@@ -494,26 +547,49 @@ namespace Salon.Firebase
         {
             try
             {
-                var result = await auth.SignInWithEmailAndPasswordAsync(email, password);
-                currentUser = result.User;
+                // 임시 로그인하여 UID 얻기
+                var tempResult = await auth.SignInWithEmailAndPasswordAsync(email, password);
+                string userUID = tempResult.User.UserId;
+
+                // 사용자의 온라인 상태 확인
+                var userSnapshot = await dbReference.Child("Users").Child(userUID).Child("Status").GetValueAsync();
+                if (userSnapshot.Exists)
+                {
+                    int status = Convert.ToInt32(userSnapshot.Value);
+                    if (status == (int)UserStatus.Online)
+                    {
+                        LogManager.Instance.ShowLog("이미 다른 기기에서 로그인되어 있습니다.");
+                        auth.SignOut(); // 임시 로그인 해제
+                        return false;
+                    }
+                }
+
+                // 실제 로그인 처리
+                currentUser = tempResult.User;
                 currentUserUID = currentUser.UserId;
                 CurrnetUserDisplayName = currentUser.DisplayName;
 
-                await UpdateIsOnline(true);
+                // 이전 상태 정리
+                auth.StateChanged -= AuthStateChanged;
+                RemoveAllListeners();
+                IsInitialized = false;
+                await Task.Delay(500);
+
+                // Firebase 초기화 및 완료 대기
+                initializationComplete = new TaskCompletionSource<bool>();
+                await InitializeAsync();
+                bool initResult = await initializationComplete.Task;
+
+                if (!initResult)
+                {
+                    Debug.LogError("[FirebaseManager] Firebase 초기화 실패");
+                    return false;
+                }
+
+                // 초기화 성공 후 이벤트 핸들러 다시 연결
+                auth.StateChanged += AuthStateChanged;
+
                 Debug.Log($"[FirebaseManager] 로그인 성공 - Email: {currentUser.Email}, UID: {currentUserUID}, DisplayName: {CurrnetUserDisplayName}");
-
-                // ChannelManager에 현재 사용자 UID 설정
-                if (ChannelManager.Instance != null)
-                {
-                    ChannelManager.Instance.SetCurrentUserUID(currentUserUID);
-                    await FriendManager.Instance.Initialize();
-                }
-                else
-                {
-                    Debug.LogError("[FirebaseManager] ChannelManager가 null입니다");
-                }
-
-                await ChannelManager.Instance.ExistRooms();
                 return true;
             }
             catch (FirebaseException ex)
@@ -591,11 +667,57 @@ namespace Salon.Firebase
             }
         }
 
-        public void SignOut()
+        private void RemoveAllListeners()
+        {
+            try
+            {
+                if (ChannelManager.Instance != null)
+                    ChannelManager.Instance.RemoveAllListeners();
+                if (ChatManager.Instance != null)
+                    ChatManager.Instance.RemoveAllListeners();
+                if (RoomManager.Instance != null)
+                    RoomManager.Instance.RemoveAllListeners();
+                if (FriendManager.Instance != null)
+                    FriendManager.Instance.RemoveAllListeners();
+                /*  if (GameRoomManager.Instance != null)
+                     GameRoomManager.Instance.RemoveAllListeners();
+  */
+                Debug.Log("[FirebaseManager] 모든 매니저의 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[FirebaseManager] 리스너 제거 중 오류: {ex.Message}");
+            }
+        }
+
+        public async void SignOut()
         {
             try
             {
                 auth.StateChanged -= AuthStateChanged;
+
+                if (currentUserUID != null)
+                {
+                    try
+                    {
+                        // 채널에서 나가기
+                        if (ChannelManager.Instance != null)
+                        {
+                            await ChannelManager.Instance.LeaveChannel();
+                        }
+
+                        // 로그아웃 전에 상태를 즉시 Offline으로 업데이트
+                        await dbReference.Child("Users").Child(currentUserUID).Child("Status").SetValueAsync((int)UserStatus.Offline);
+                        await Task.Delay(500); // 상태 업데이트를 위한 짧은 대기
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"[FirebaseManager] 상태 업데이트 실패: {ex.Message}");
+                    }
+                }
+
+                // 모든 매니저의 리스너 제거
+                RemoveAllListeners();
 
                 if (SceneManager.GetActiveScene().name != "MainScene")
                 {
@@ -607,17 +729,18 @@ namespace Salon.Firebase
                 auth.SignOut();
                 currentUser = null;
                 currentUserUID = null;
+                CurrnetUserDisplayName = null;
+                IsInitialized = false;
+
                 Debug.Log("[Firebase Manager] 로그아웃 처리 완료");
+                LogManager.Instance.ShowLog("[Firebase Manager] 로그아웃 완료");
 
                 auth.StateChanged += AuthStateChanged;
-
-                LogManager.Instance.ShowLog("[Firebase Manager] 로그아웃 완료");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[Firebase Manager] 로그아웃 중 오류 발생: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 LogManager.Instance.ShowLog("로그아웃 중 오류가 발생했습니다.");
-
                 auth.StateChanged += AuthStateChanged;
             }
         }
