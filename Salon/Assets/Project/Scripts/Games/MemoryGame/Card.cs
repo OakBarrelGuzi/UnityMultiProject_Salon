@@ -66,6 +66,7 @@ public struct InGameCard
 {
     public CARDTYPE cardType;
     public Sprite cardSprite;
+    public int cardIndex;
 }
 
 public enum CARDTYPE

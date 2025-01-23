@@ -259,20 +259,16 @@ namespace Salon.Firebase.Database
         public string RoomName { get; set; }
         public string HostPlayerId { get; set; }
         public bool IsActive { get; set; }
-        public Dictionary<string, GamePlayerData> Players { get; set; }
-
+        public Dictionary<string, PlayerData> Players { get; set; }
         public GameState GameState { get; set; }
-        public Dictionary<string, CardData> Board { get; set; }
 
         public GameRoomData(string roomName, string hostPlayerId)
         {
             RoomName = roomName;
             HostPlayerId = hostPlayerId;
             IsActive = true;
-            Players = new Dictionary<string, GamePlayerData>();
-
+            Players = new Dictionary<string, PlayerData>();
             GameState = new GameState();
-            Board = new Dictionary<string, CardData>();
         }
     }
 
@@ -311,12 +307,10 @@ namespace Salon.Firebase.Database
     public class CardData
     {
         public bool IsFlipped { get; set; }
-        public string Owner { get; set; }
 
         public CardData()
         {
             IsFlipped = false;
-            Owner = null;
         }
 
     }
