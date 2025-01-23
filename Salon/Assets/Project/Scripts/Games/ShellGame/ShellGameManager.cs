@@ -12,12 +12,11 @@ namespace Salon.ShellGame
     public class ShellGameManager : MonoBehaviour
     {
 
-
         [SerializeField]
         private List<Cup> cups = new List<Cup>();
         [Header("Controller")]
         [SerializeField]
-        private float spinSpeed = 5;//È¸Àü ¼Óµµ 
+        private float spinSpeed = 5;//íšŒì „ ì†ë„ 
         public Dictionary<SHELLDIFFICULTY, int> maxBetting { get; private set; } = new Dictionary<SHELLDIFFICULTY, int>();
         public Dictionary<SHELLDIFFICULTY, float> bettingReturn { get; private set; } = new Dictionary<SHELLDIFFICULTY, float>();
         public Dictionary<SHELLDIFFICULTY, float> shuffleSpeed { get; private set; } = new Dictionary<SHELLDIFFICULTY, float>();
@@ -30,17 +29,16 @@ namespace Salon.ShellGame
         public SHELLDIFFICULTY shellDifficulty { get; private set; }
 
         [Header("Anime")]
-        //ÃÊ¹İ ¾Ö´Ï¸ŞÀÌ¼Ç¿ë ÄÅ°ú ±¸½½
+        //ì´ˆë°˜ ì• ë‹ˆë©”ì´ì…˜ìš© ì»µê³¼ êµ¬ìŠ¬
         public GameObject anime_Cup;
         public GameObject anime_Ball;
 
-        private Vector3 anime_Cup_Pos; 
+        private Vector3 anime_Cup_Pos;
         private Vector3 anime_Ball_Pos;
 
-        private GameObject spinner;//ºó²®µ¥±â ½ºÇÇ³Ê
+        private GameObject spinner;//ë¹ˆê»ë°ê¸° ìŠ¤í”¼ë„ˆ
         [SerializeField]
         private Transform table_pos;
-
 
         public int round { get; private set; } = 1;
         public int TextRound { get; private set; } = 1;
@@ -62,9 +60,9 @@ namespace Salon.ShellGame
 
         public DatabaseReference currentUserRef { get; private set; }
 
-        //TODO:¼­¹ö ¼ÒÁö±İ ÇÒ´ç
+        //TODO:ì„œë²„ ì†Œì§€ê¸ˆ í• ë‹¹
         public int myGold { get; private set; } = 0;
-        //TODO: ÅõµÎ
+        //TODO: íˆ¬ë‘
         public int BettingGold { get; set; } = 0;
 
         private void Awake()
@@ -89,12 +87,17 @@ namespace Salon.ShellGame
             shuffleDuration[SHELLDIFFICULTY.Normal] = 7f + Duration;
             shuffleDuration[SHELLDIFFICULTY.Hard] = 10f + Duration;
 
-            difficultyText[SHELLDIFFICULTY.Easy] = "½¬¿ò";
-            difficultyText[SHELLDIFFICULTY.Normal] = "º¸Åë";
-            difficultyText[SHELLDIFFICULTY.Hard] = "¾î·Á¿ò";
+            difficultyText[SHELLDIFFICULTY.Easy] = "ì‰¬ì›€";
+            difficultyText[SHELLDIFFICULTY.Normal] = "ë³´í†µ";
+            difficultyText[SHELLDIFFICULTY.Hard] = "ì–´ë ¤ì›€";
 
             anime_Cup_Pos = anime_Cup.transform.position;
             anime_Ball_Pos = anime_Ball.transform.position;
+
+            if (spinSpeed < 0)
+            {
+                return;
+            }
         }
         private async void Start()
         {
@@ -108,16 +111,16 @@ namespace Salon.ShellGame
                 if (snapshot.Exists)
                 {
                     myGold = int.Parse(snapshot.Value.ToString());
-                    print($"µ·°¡Á®¿Ô´ç! {myGold}");
+                    print($"ëˆê°€ì ¸ì™”ë‹¹! {myGold}");
                 }
                 else
                 {
-                    Debug.Log("Á¡¼ö µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù");
+                    Debug.Log("ì ìˆ˜ ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Á¡¼ö °¡Á®¿À±â ½ÇÆĞ: {e.Message}");
+                Debug.LogError($"ì ìˆ˜ ê°€ì ¸ì˜¤ê¸° ì‹¤íŒ¨: {e.Message}");
             }
 
             UIManager.Instance.CloseAllPanels();
@@ -128,14 +131,12 @@ namespace Salon.ShellGame
 
             uiManager.gameInfo_Panel.round_Text.text = $"ROUND {TextRound}";
             uiManager.clear_Panel.clearRound_Text.text = $"ROUND{TextRound}";
-      
+
             uiManager.clear_Panel.go_Button.onClick.AddListener(() =>
             {
                 NextRound();
                 uiManager.clear_Panel.gameObject.SetActive(false);
             });
-            
-
 
         }
 
@@ -152,22 +153,22 @@ namespace Salon.ShellGame
             }
         }
         private void SpawnSpinner()
-        {//ÄÅ µÎ°³»Ì±â 
+        {//ì»µ ë‘ê°œë½‘ê¸° 
             int firstCup = Random.Range(0, cupCount);
             int secondCup = Random.Range(0, cupCount);
             while (firstCup == secondCup)
             {
                 firstCup = Random.Range(0, cupCount);
             }
-            //ÄÅ ¿òÁ÷ÀÌ±â
+            //ì»µ ì›€ì§ì´ê¸°
             Vector3 spinnerPos = (cups[firstCup].transform.position + cups[secondCup].transform.position) / 2f;
             cupDis = Vector3.Distance(cups[firstCup].transform.position, cups[secondCup].transform.position);
             cupDis = Mathf.Max(cupDis, 2.5f);
-            cupDis = Mathf.Min(cupDis,4.5f);
-            //½ºÇÇ³Ê °¡¿îµ¥¿¡ »ı¼º
+            cupDis = Mathf.Min(cupDis, 4.5f);
+            //ìŠ¤í”¼ë„ˆ ê°€ìš´ë°ì— ìƒì„±
             spinner = new GameObject("Spinner");
             spinner.transform.position = spinnerPos;
-            //ÀÚ½ÄÀ¸·Î ¼³Á¤
+            //ìì‹ìœ¼ë¡œ ì„¤ì •
             cups[firstCup].transform.SetParent(spinner.transform);
             cups[secondCup].transform.SetParent(spinner.transform);
         }
@@ -210,13 +211,12 @@ namespace Salon.ShellGame
             }
             if (time <= 0)
             {
-                //TODO: ½Ã°£ÃÊ°ú ÆĞ¹è
-                print("ÇöJ´Ô °³°°ÀÌ ÆĞ¹è");
+                //TODO: ì‹œê°„ì´ˆê³¼ íŒ¨ë°°
+                print("í˜„Jë‹˜ ê°œê°™ì´ íŒ¨ë°°");
                 isCanSelect = false;
                 uiManager.gameOver_Panel.gameObject.SetActive(true);
 
             }
-
 
         }
 
@@ -241,22 +241,22 @@ namespace Salon.ShellGame
                 cup.gameObject.SetActive(false);
             }
 
-            //³­ÀÌµµ¿¡ µû¸¥¸¸Å­ ÄÅ ÄÑ±â
+            //ë‚œì´ë„ì— ë”°ë¥¸ë§Œí¼ ì»µ ì¼œê¸°
             for (int i = 0; i < cupCount; i++)
             {
                 cups[i].gameObject.SetActive(true);
             }
-            cups[1].hasBall = true;//±¸½½ÀÌ ÀÖ´ÂÄÅÀº 3¹øÂ°ÄÅ(Áß¾Ó)
+            cups[1].hasBall = true;//êµ¬ìŠ¬ì´ ìˆëŠ”ì»µì€ 3ë²ˆì§¸ì»µ(ì¤‘ì•™)
 
         }
         private IEnumerator setAnime()
         {
-            print("¸ØÃç! ÄÅ³»·Á¿À´ÂÁß~~~~");
+            print("ë©ˆì¶°! ì»µë‚´ë ¤ì˜¤ëŠ”ì¤‘~~~~");
             yield return new WaitForSeconds(1.5f);
-            print("¿òÁ÷¿©! ÄÅ ´Ù³»·Á¿È~~");
+            print("ì›€ì§ì—¬! ì»µ ë‹¤ë‚´ë ¤ì˜´~~");
             StartCoroutine(uiManager.PlayCount());
             yield return new WaitForSeconds(4.5f);
-            print("ÀÌÁ¦ ÄÅ ´Ù³»·Á¿ÔÀ¸´Ï±î °ÔÀÓ ½ÃÀÛÇÒ°Ô~~~~");
+            print("ì´ì œ ì»µ ë‹¤ë‚´ë ¤ì™”ìœ¼ë‹ˆê¹Œ ê²Œì„ ì‹œì‘í• ê²Œ~~~~");
             cups[1].gameObject.SetActive(true);
             isStart = true;
             anime_Ball.gameObject.SetActive(false);
@@ -264,7 +264,7 @@ namespace Salon.ShellGame
             StartCoroutine(ShuffleStart());
             yield return new WaitForSeconds(5f);
         }
-        public void StartGame()//¿©±â°¡ °ÔÀÓ ½ÃÀÛÇÏ´Â ÃÊÀÔ ¾Ö´Ï µé¾î°¡¾ßÇÔ
+        public void StartGame()//ì—¬ê¸°ê°€ ê²Œì„ ì‹œì‘í•˜ëŠ” ì´ˆì… ì• ë‹ˆ ë“¤ì–´ê°€ì•¼í•¨
         {
             anime_Cup.gameObject.SetActive(true);
             anime_Cup.transform.position = anime_Cup_Pos;
@@ -278,18 +278,15 @@ namespace Salon.ShellGame
             StartCoroutine(StartAnime());
         }
 
-
-
         public void SetDifficulty(SHELLDIFFICULTY difficulty)
         {
             shellDifficulty = difficulty;
             cupCount = (int)shellDifficulty;
         }
 
-        private IEnumerator StartAnime() // ±¸½½ÀÌ¶û ÄÅÀÌ ³»·Á°¡´Â ÃÊ¹İ ¾Ö´Ï¸ŞÀÌ¼Ç 
+        private IEnumerator StartAnime() // êµ¬ìŠ¬ì´ë‘ ì»µì´ ë‚´ë ¤ê°€ëŠ” ì´ˆë°˜ ì• ë‹ˆë©”ì´ì…˜ 
 
-
-        {//¿¬ÃâÀ» À§ÇØ¼­ ÀÏ´ÜÀº °¡¿îµ¥²¨ ²¨³õ±â
+        {//ì—°ì¶œì„ ìœ„í•´ì„œ ì¼ë‹¨ì€ ê°€ìš´ë°êº¼ êº¼ë†“ê¸°
             cups[1].gameObject.SetActive(false);
             anime_Cup.gameObject.SetActive(true);
             anime_Ball.gameObject.SetActive(true);
@@ -307,13 +304,13 @@ namespace Salon.ShellGame
             {
                 anime_Cup.transform.position = Vector3.Lerp(
                     anime_Cup.transform.position,
-                    cups[1].transform.position,//³Ê¹« ¾Æ·¡·Î ³»·Á°¡´Ï±î yÃàÀ¸·Î Á» ´ú³»·Á°¡µµ·Ï Á¶Á¤
+                    cups[1].transform.position,//ë„ˆë¬´ ì•„ë˜ë¡œ ë‚´ë ¤ê°€ë‹ˆê¹Œ yì¶•ìœ¼ë¡œ ì¢€ ëœë‚´ë ¤ê°€ë„ë¡ ì¡°ì •
                     animaMoveSpeed * Time.deltaTime);
                 yield return null;
             }
         }
 
-        private  IEnumerator CheckCup(Cup cup)
+        private IEnumerator CheckCup(Cup cup)
         {
             if (cup.hasBall == true)
             {
@@ -335,7 +332,7 @@ namespace Salon.ShellGame
                 yield return null;
 
             }
-            yield return new WaitForSeconds(0.5f);//ÄÅ¿Ã¶ó¿À´Â°Å ´ë±â
+            yield return new WaitForSeconds(0.5f);//ì»µì˜¬ë¼ì˜¤ëŠ”ê±° ëŒ€ê¸°
 
             if (cup.hasBall == true)
             {
@@ -356,7 +353,7 @@ namespace Salon.ShellGame
             }
             isCanSelect = false;
             checkBall.y -= 2f;
-            while (Vector3.Distance(cup.transform.position,checkBall) > 0.01f)
+            while (Vector3.Distance(cup.transform.position, checkBall) > 0.01f)
             {
                 cup.transform.position = Vector3.Lerp(
                   cup.transform.position,
@@ -394,16 +391,16 @@ namespace Salon.ShellGame
                 if (snapshot.Exists)
                 {
                     myGold = int.Parse(snapshot.Value.ToString());
-                    print($"µ·°¡Á®¿Ô´ç! {myGold}");
+                    print($"ëˆê°€ì ¸ì™”ë‹¹! {myGold}");
                 }
                 else
                 {
-                    Debug.Log("Á¡¼ö µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù");
+                    Debug.Log("ì ìˆ˜ ë°ì´í„°ê°€ ì—†ìŠµë‹ˆë‹¤");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Á¡¼ö °¡Á®¿À±â ½ÇÆĞ: {e.Message}");
+                Debug.LogError($"ì ìˆ˜ ê°€ì ¸ì˜¤ê¸° ì‹¤íŒ¨: {e.Message}");
             }
         }
 
@@ -411,7 +408,7 @@ namespace Salon.ShellGame
         {
             if (myGold <= 0)
             {
-                LogManager.Instance.ShowLog("µ·.ÀÌ.ºÎ.Á·.ÇÏ.½Ã.³×.¿ä.!^^!");
+                LogManager.Instance.ShowLog("ëˆ.ì´.ë¶€.ì¡±.í•˜.ì‹œ.ë„¤.ìš”.!^^!");
                 ScenesManager.Instance.ChanageScene("LobbyScene");
                 return false;
             }

@@ -5,6 +5,7 @@ using Salon.Firebase;
 using System;
 using Firebase.Database;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Salon.Character
 {
@@ -12,6 +13,7 @@ namespace Salon.Character
     {
         private DatabaseReference posRef;
         private DatabaseReference AnimRef;
+        private DatabaseReference EmojiRef;
         private float positionUpdateInterval = 0.5f;
         private float lastPositionUpdateTime;
         private InputController inputController;
@@ -32,10 +34,12 @@ namespace Salon.Character
             lastSentPositionData = NetworkPositionCompressor.CompressVector3(transform.position, transform.forward, true);
             posRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Position");
             AnimRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Animation");
+            EmojiRef = RoomManager.Instance.CurrentChannelPlayersRef.Child(displayName).Child("Emoji");
 
             if (animController != null)
             {
                 animController.OnAnimationStateChanged += HandleAnimationStateChanged;
+                animController.OnEmojiChanged += HandleEmojiChanged;
             }
 
             StartCoroutine(SetupCamera());
@@ -165,11 +169,45 @@ namespace Salon.Character
             }
         }
 
-        private void HandleAnimationStateChanged(bool isPlaying)
+        private async void HandleEmojiChanged(string emojiName)
+        {
+            try
+            {
+                var emojiData = new Dictionary<string, object>
+                {
+                    { "name", emojiName },
+                    { "timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }
+                };
+                await EmojiRef.SetValueAsync(emojiData);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[LocalPlayer] 이모지 업데이트 실패: {ex.Message}");
+            }
+        }
+
+        private async void HandleAnimationStateChanged(bool isPlaying)
         {
             if (inputController != null)
             {
                 inputController.enabled = !isPlaying;
+            }
+
+            try
+            {
+                if (isPlaying && animController != null)
+                {
+                    var animData = new Dictionary<string, object>
+                    {
+                        { "name", animController.CurrentAnimationName },
+                        { "timestamp", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() }
+                    };
+                    await AnimRef.SetValueAsync(animData);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[LocalPlayer] 애니메이션 업데이트 실패: {ex.Message}");
             }
         }
 
@@ -178,6 +216,7 @@ namespace Salon.Character
             if (animController != null)
             {
                 animController.OnAnimationStateChanged -= HandleAnimationStateChanged;
+                animController.OnEmojiChanged -= HandleEmojiChanged;
             }
         }
     }
