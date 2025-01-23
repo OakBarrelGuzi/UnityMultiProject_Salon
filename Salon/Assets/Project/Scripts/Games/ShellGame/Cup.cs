@@ -1,3 +1,4 @@
+using Salon.ShellGame;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,14 +6,9 @@ using UnityEngine;
 public class Cup : MonoBehaviour
 {//컵의 상태
     public bool hasBall = false;
-    public bool isMoving = false;
-    public bool isSelectable = false;
 
-    private ShuffleManager manager;
-    //컵의 이동
-    private float moveSpeed;
-    private Vector3 targetPosition;
-    private Vector3 startPosition;
+    private ShellGameManager manager;
+
     public void OnMouseDown()
     {
         if (manager != null)
@@ -21,7 +17,7 @@ public class Cup : MonoBehaviour
         }
     }
 
-    public void Initialize(ShuffleManager shuffleManager)
+    public void Initialize(ShellGameManager shuffleManager)
     {
         manager = shuffleManager;
     }

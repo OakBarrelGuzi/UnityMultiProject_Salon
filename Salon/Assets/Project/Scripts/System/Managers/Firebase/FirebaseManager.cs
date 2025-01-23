@@ -29,11 +29,6 @@ namespace Salon.Firebase
         public bool IsInitialized { get; private set; }
         private TaskCompletionSource<bool> initializationComplete;
 
-        private bool isChannelManagerInitialized;
-        private bool isChatManagerInitialized;
-        private bool isRoomManagerInitialized;
-        private bool isFriendManagerInitialized;
-
         private bool isInitializing = false;
 
         void Start()
@@ -201,11 +196,6 @@ namespace Salon.Firebase
                     currentUserUID = null;
                     CurrnetUserDisplayName = null;
 
-                    // 각 매니저의 초기화 상태 리셋
-                    isChannelManagerInitialized = false;
-                    isChatManagerInitialized = false;
-                    isRoomManagerInitialized = false;
-                    isFriendManagerInitialized = false;
                 }
             }
         }
@@ -339,11 +329,6 @@ namespace Salon.Firebase
 
                 SceneManager.sceneLoaded -= OnSceneLoaded;
 
-                isChannelManagerInitialized = false;
-                isChatManagerInitialized = false;
-                isRoomManagerInitialized = false;
-                isFriendManagerInitialized = false;
-
                 dbReference = null;
                 auth = null;
                 currentUser = null;
@@ -469,6 +454,8 @@ namespace Salon.Firebase
                         GameStats = new Dictionary<GameType, UserStats>(),
                         Invites = new Dictionary<string, InviteData>(),
                         Gold = 50000,
+                        Inventory = new UserInventory(),
+                        ActivatedItems = new ActivatedItems(),
                     };
 
                     Debug.Log("[FirebaseManager] 데이터베이스에 사용자 데이터 저장 시도...");

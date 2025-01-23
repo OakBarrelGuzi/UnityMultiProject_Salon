@@ -1,45 +1,107 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
+using System.Collections.Generic;
+using Salon.System;
+using Salon.Firebase.Database;
 using Salon.Firebase;
 using System.Threading.Tasks;
-using Salon.Firebase.Database;
-public class ShopPanel : MonoBehaviour
+using System.Linq;
+
+public class ShopPanel : Panel
 {
-    public Transform itemParent;
-    public List<Item> itemList;
-    public Item itemPrefab;
+    [SerializeField]
+    private Button closeButton;
+    [SerializeField]
+    private Button emojiTabButton;
+    [SerializeField]
+    private Button animTabButton;
 
-    public void Initialize()
+    public Transform emojiParent;
+    public Transform animParent;
+    public GameObject emojiPanel;
+    public GameObject animPanel;
+    public ShopItem shopItemPrefab;
+
+    private List<ShopItem> spawnedItems = new List<ShopItem>();
+
+    public override void Open()
     {
-        itemList = ItemManager.Instance.GetAllItem();
-        foreach (var item in itemList)
-        {
-            Item itemObj = Instantiate(itemPrefab, itemParent);
-            itemObj.Initialize(item.itemData);
-            Button button = itemObj.GetComponent<Button>();
-            button.onClick.AddListener(() => BuyItem(itemObj));
+        base.Open();
+        Initialize();
+    }
 
+    public override async void Initialize()
+    {
+        closeButton.onClick.AddListener(Close);
+        emojiTabButton.onClick.AddListener(() => SwitchTab(true));
+        animTabButton.onClick.AddListener(() => SwitchTab(false));
+
+        // 기본값으로 이모지 탭 활성화
+        SwitchTab(true);
+
+        await RefreshShopItems();
+    }
+
+    private void SwitchTab(bool showEmoji)
+    {
+        emojiPanel.SetActive(showEmoji);
+        animPanel.SetActive(!showEmoji);
+        RefreshShopItems().ConfigureAwait(false);
+    }
+
+    private async Task RefreshShopItems()
+    {
+        foreach (var item in spawnedItems)
+        {
+            if (item != null)
+            {
+                Destroy(item.gameObject);
+            }
+        }
+        spawnedItems.Clear();
+
+        var inventory = await ItemManager.Instance.LoadPlayerInventory();
+        var activatedItems = await ItemManager.Instance.LoadPlayerActivatedItems();
+
+        var ownedItems = new List<ItemData>();
+        ownedItems.AddRange(inventory.Items);
+        ownedItems.AddRange(activatedItems.Items);
+
+        var allItems = ItemManager.Instance.GetAllItem();
+
+        foreach (var itemData in allItems)
+        {
+            if (ownedItems.Any(item =>
+                item.itemName == itemData.itemName &&
+                item.itemType == itemData.itemType))
+            {
+                continue;
+            }
+
+            Transform parent = (itemData.itemType == ItemType.Emoji) ? emojiParent : animParent;
+            if (!parent.gameObject.activeSelf) continue;
+
+            ShopItem shopItem = Instantiate(shopItemPrefab, parent);
+            shopItem.Initialize(itemData, this);
+            spawnedItems.Add(shopItem);
         }
     }
 
-    public async void AddItemToPlayerInventory(Item item)
+    public async Task BuyItem(ItemData itemData)
     {
-        if (ItemManager.Instance.AddItem(item.itemData.itemName))
+        int currentGold = await GetPlayerGold();
+        if (currentGold >= itemData.itemCost)
         {
-            await ItemManager.Instance.SavePlayerInventory(await ItemManager.Instance.LoadPlayerInventory());
+            await UpdatePlayerGold(currentGold - itemData.itemCost);
+            await AddItemToPlayerInventory(itemData);
         }
     }
 
-    public async void BuyItem(Item item)
+    private async Task AddItemToPlayerInventory(ItemData itemData)
     {
-        if (await GetPlayerGold() >= item.itemData.itemCost)
-        {
-            UpdatePlayerGold(await GetPlayerGold() - item.itemData.itemCost);
-            AddItemToPlayerInventory(item);
-        }
+        var inventory = await ItemManager.Instance.LoadPlayerInventory();
+        inventory.Items.Add(itemData);
+        await ItemManager.Instance.SavePlayerInventory(inventory);
     }
 
     public async Task<int> GetPlayerGold()
@@ -49,7 +111,7 @@ public class ShopPanel : MonoBehaviour
         return int.Parse(snapshot.GetRawJsonValue());
     }
 
-    public async void UpdatePlayerGold(int gold)
+    private async Task UpdatePlayerGold(int gold)
     {
         var Ref = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Gold");
         await Ref.SetValueAsync(gold);
