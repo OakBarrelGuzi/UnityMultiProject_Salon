@@ -57,16 +57,18 @@ public class UIManager : Singleton<UIManager>, IInitializable
                         // 이미 온라인 상태라면 강제 로그아웃
                         FirebaseManager.Instance.SignOut();
                         LogManager.Instance.ShowLog("다른 기기에서 로그인된 상태여서 로그아웃되었습니다.");
+                        OpenPanel(PanelType.MainDisplay);
                         OpenPanel(PanelType.SignIn);
                     }
                     else
                     {
                         // 오프라인 상태라면 채널 패널 열기
-                        OpenPanel(PanelType.Channel);
+                        OpenPanel(PanelType.MainDisplay);
                     }
                 }
                 else
                 {
+                    OpenPanel(PanelType.MainDisplay);
                     OpenPanel(PanelType.SignIn);
                 }
             }

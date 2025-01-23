@@ -8,6 +8,7 @@ using Salon.Firebase.Database;
 using System.Threading.Tasks;
 using Salon.Character;
 using Salon.System;
+using Character;
 
 namespace Salon.Firebase
 {
@@ -518,6 +519,30 @@ namespace Salon.Firebase
                     localPlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = localPlayer.gameObject;
                     GameManager.Instance.player = localPlayer;
+
+                    // 로컬 플레이어의 커스터마이제이션 데이터 로드 및 적용
+                    try
+                    {
+                        var userData = await FirebaseManager.Instance.GetUserData();
+                        if (userData != null && userData.CharacterCustomization != null &&
+                            userData.CharacterCustomization.selectedOptions != null)
+                        {
+                            var customizationManager = localPlayer.GetComponent<CharacterCustomizationManager>();
+                            if (customizationManager != null)
+                            {
+                                customizationManager.ApplyCustomizationData(userData.CharacterCustomization.selectedOptions);
+                                Debug.Log($"[RoomManager] 로컬 플레이어의 커스터마이제이션 데이터 적용 완료");
+                            }
+                        }
+                        else
+                        {
+                            Debug.Log("[RoomManager] 로컬 플레이어의 커스터마이제이션 데이터가 없습니다.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[RoomManager] 로컬 플레이어의 커스터마이제이션 데이터 로드 실패: {ex.Message}");
+                    }
                 }
                 else
                 {
@@ -548,6 +573,30 @@ namespace Salon.Firebase
                     RemotePlayer remotePlayer = Instantiate(remotePlayerPrefab.gameObject, spawnPosition, Quaternion.identity).GetComponent<RemotePlayer>();
                     remotePlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = remotePlayer.gameObject;
+
+                    // 커스터마이제이션 데이터 로드 및 적용
+                    try
+                    {
+                        var userSnapshot = await dbReference.Child("Users").Child(displayName).Child("CharacterCustomization").GetValueAsync();
+                        if (userSnapshot.Exists)
+                        {
+                            var customizationData = JsonConvert.DeserializeObject<CharacterCustomizationData>(userSnapshot.GetRawJsonValue());
+                            if (customizationData != null && customizationData.selectedOptions != null)
+                            {
+                                remotePlayer.UpdateCustomization(customizationData.selectedOptions);
+                                Debug.Log($"[RoomManager] {displayName}의 초기 커스터마이제이션 데이터 적용 완료");
+                            }
+                        }
+                        else
+                        {
+                            Debug.Log($"[RoomManager] {displayName}의 커스터마이제이션 데이터가 없습니다.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[RoomManager] {displayName}의 커스터마이제이션 데이터 로드 실패: {ex.Message}");
+                    }
+
                     SubscribeToPlayerPosition(displayName);
                 }
 
