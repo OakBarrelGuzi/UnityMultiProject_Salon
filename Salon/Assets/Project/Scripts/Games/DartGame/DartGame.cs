@@ -477,7 +477,7 @@ namespace Salon.DartGame
             //리워드 점수 같은지 체크
             for (int i = 0; i < RewardScore.Length; i++)
             {
-                if (RewardScore[i] <= totalScore)
+                if (RewardScore[i] == totalScore)
                 {
                     Reward(totalScore);
                 }
@@ -524,7 +524,7 @@ namespace Salon.DartGame
 
             for (int i = 0; i < RewardScore.Length; i++)
             {
-                if (RewardScore[i] <= TotalDratSocre)
+                if (RewardScore[i] == TotalDratSocre)
                 {
                     var inventory = await ItemManager.Instance.LoadPlayerInventory();
                     //TODO: 다른보상 추가로 줘야할수도도
