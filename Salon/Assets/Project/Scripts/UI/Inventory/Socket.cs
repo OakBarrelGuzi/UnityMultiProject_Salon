@@ -43,7 +43,8 @@ public class Socket : MonoBehaviour, IDropHandler, IPointerClickHandler
             {
                 itemType = item.itemData.itemType,
                 itemName = item.itemData.itemName,
-                itemCost = item.itemData.itemCost
+                itemCost = item.itemData.itemCost,
+                socketIndex = transform.GetSiblingIndex()
             };
             Sprite itemSprite = item.itemIcon.sprite;
 
