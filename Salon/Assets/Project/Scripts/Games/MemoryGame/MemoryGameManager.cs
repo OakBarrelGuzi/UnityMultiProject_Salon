@@ -94,15 +94,12 @@ public class MemoryGameManager : MonoBehaviour
             card.Initialize(this);
             tableCardList.Add(card);
 
-            if (GameRoomManager.Instance.IsHost(GameRoomManager.Instance.currentPlayerId))
+            string cardId = card.cardData.cardType.ToString();
+            await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
             {
-                string cardId = card.cardData.cardType.ToString();
-                await roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonUtility.ToJson(new CardData
-                {
-                    IsFlipped = false,
-                    Owner = null
-                }));
-            }
+                IsFlipped = false,
+                Owner = null
+            }));
             cardnum++;
             if (cardnum > 6) cardnum = 0;
         }
