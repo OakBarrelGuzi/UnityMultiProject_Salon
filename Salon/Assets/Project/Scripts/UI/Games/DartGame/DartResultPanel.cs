@@ -14,8 +14,8 @@ namespace Salon.DartGame
 
         public void OnPointerClick(PointerEventData eventData)
         {
+            UIManager.Instance.CloseAllPanels();
             ScenesManager.Instance.ChanageScene("LobbyScene");
-            gameObject.SetActive(false);
         }
 
         public void Textset(int score)

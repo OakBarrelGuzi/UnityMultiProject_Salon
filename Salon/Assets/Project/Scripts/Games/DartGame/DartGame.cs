@@ -482,6 +482,7 @@ namespace Salon.DartGame
             }
             else
             {
+                UIManager.Instance.CloseAllPanels();
                 ScenesManager.Instance.ChanageScene("LobbyScene");
             }
         }
@@ -504,12 +505,12 @@ namespace Salon.DartGame
                 }
                 else
                 {
-                    Debug.Log("골드드 데이터가 없습니다");
+                    Debug.Log("골드 데이터가 없습니다");
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"골드드 가져오기 실패: {e.Message}");
+                Debug.LogError($"골드 가져오기 실패: {e.Message}");
             }
 
             for (int i = 0; i < RewardScore.Length; i++)
