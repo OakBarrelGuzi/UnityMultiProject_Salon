@@ -7,6 +7,7 @@ using Salon.Firebase;
 using Firebase.Database;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using System;
 
 public class ItemManager : Singleton<ItemManager>
 {
@@ -161,5 +162,18 @@ public class ItemManager : Singleton<ItemManager>
     public AnimationClip GetAnimClip(string animName)
     {
         return Resources.Load<AnimationClip>("Animations/" + animName);
+    }
+
+    public void RemoveAllListeners()
+    {
+        try
+        {
+            OnInventoryChanged = null;
+            Debug.Log("[ItemManager] 모든 리스너 제거 완료");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[ItemManager] 리스너 제거 중 오류 발생: {ex.Message}");
+        }
     }
 }

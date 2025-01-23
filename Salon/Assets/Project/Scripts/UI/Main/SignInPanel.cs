@@ -4,6 +4,7 @@ using UnityEngine.UI;
 using Salon.Firebase;
 using Firebase;
 using System;
+using System.Threading.Tasks;
 
 public class SignInPanel : Panel
 {
@@ -58,18 +59,33 @@ public class SignInPanel : Panel
         ValidateInput();
         try
         {
-            bool result = await FirebaseManager.Instance.SignInWithEmailAsync(idInputField.text, passwordInputField.text);
-            if (result)
+            signInButton.interactable = false; // 버튼 비활성화
+
+            try
             {
-                Close();
-                UIManager.Instance.OpenPanel(PanelType.Channel);
+                // 로그인 시도 전에 3초 정도 대기하여 이전 상태가 업데이트되도록 함
+                await Task.Delay(3000);
+
+                bool result = await FirebaseManager.Instance.SignInWithEmailAsync(idInputField.text, passwordInputField.text);
+                if (result)
+                {
+                    Close();
+                    UIManager.Instance.OpenPanel(PanelType.Channel);
+                }
+                else
+                {
+                    LogManager.Instance.ShowLog("로그인에 실패했습니다.");
+                }
             }
-            else
-                LogManager.Instance.ShowLog("로그인에 실패했습니다.");
+            finally
+            {
+                signInButton.interactable = true; // 버튼 다시 활성화
+            }
         }
         catch (Exception ex)
         {
             LogManager.Instance.ShowLog($"예외 발생: {ex.Message}");
+            signInButton.interactable = true; // 예외 발생 시에도 버튼 활성화
         }
     }
 

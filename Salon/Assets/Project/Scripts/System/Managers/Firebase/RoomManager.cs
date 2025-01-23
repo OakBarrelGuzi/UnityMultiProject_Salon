@@ -562,5 +562,43 @@ namespace Salon.Firebase
                 throw;
             }
         }
+
+        public void RemoveAllListeners()
+        {
+            try
+            {
+                Debug.Log("[RoomManager] 모든 리스너 제거 시작");
+
+                // 플레이어 추가/제거 리스너 제거
+                if (CurrentChannelPlayersRef != null)
+                {
+                    CurrentChannelPlayersRef.ChildAdded -= OnPlayerAdded;
+                    CurrentChannelPlayersRef.ChildRemoved -= OnPlayerRemoved;
+                }
+
+                // 위치 변경 리스너 제거
+                foreach (var query in playerPositionQueries.Values)
+                {
+                    query.ValueChanged -= OnPositionChanged;
+                }
+                playerPositionQueries.Clear();
+
+                // 애니메이션 변경 리스너 제거
+                foreach (var query in playerAnimationQueries.Values)
+                {
+                    query.ValueChanged -= OnAnimationChanged;
+                }
+                playerAnimationQueries.Clear();
+
+                // 레퍼런스 초기화
+                ClearChannelReferences();
+
+                Debug.Log("[RoomManager] 모든 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[RoomManager] 리스너 제거 중 오류 발생: {ex.Message}");
+            }
+        }
     }
 }

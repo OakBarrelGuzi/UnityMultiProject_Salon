@@ -214,5 +214,19 @@ namespace Salon.Firebase
         {
             StopListeningToMessages();
         }
+
+        public void RemoveAllListeners()
+        {
+            try
+            {
+                StopListeningToMessages();
+                OnReceiveChat = null;
+                Debug.Log("[ChatManager] 모든 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ChatManager] 리스너 제거 중 오류 발생: {ex.Message}");
+            }
+        }
     }
 }
