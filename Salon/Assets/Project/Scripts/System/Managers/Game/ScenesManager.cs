@@ -32,6 +32,7 @@ public class ScenesManager : Singleton<ScenesManager>
         }
 
         SceneManager.LoadScene(nextScene, LoadSceneMode.Single);
+        UIManager.Instance.OpenPanel(PanelType.Loading);
     }
 
     private async void OnSceneLoaded(Scene scene, LoadSceneMode mode)

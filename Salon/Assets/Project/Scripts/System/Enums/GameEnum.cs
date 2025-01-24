@@ -21,7 +21,8 @@ public enum PanelType
     Animation,
     Inventory,
     Shop,
-    DartRanking
+    DartRanking,
+    Loading
 }
 public enum InviteStatus
 {

@@ -144,6 +144,7 @@ public class ChannelPanel : Panel
             UIManager.Instance.CloseAllPanels();
             Debug.Log(UIManager.Instance);
             UIManager.Instance.OpenPanel(PanelType.Lobby);
+            UIManager.Instance.OpenPanel(PanelType.Loading);
             Debug.Log("ChannelManager : " + ChannelManager.Instance);
             await ChannelManager.Instance.JoinChannel(channelName);
         }

@@ -21,6 +21,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
     public async void Start()
     {
+        OpenPanel(PanelType.Loading);
         Initialize();
         if (!isTesting)
         {
@@ -235,6 +236,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
             var newPanel = GetPanel(panelType);
             panels.Add(newPanel);
             newPanel.Open();
+            newPanel.transform.SetAsLastSibling();
         }
         else
         {
@@ -242,6 +244,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
             if (!existingPanel.isOpen)
             {
                 existingPanel.Open();
+                existingPanel.transform.SetAsLastSibling();
             }
         }
     }

@@ -120,6 +120,7 @@ public class LogManager : MonoBehaviour
 
                 GameObject logPanelObj = Instantiate(logPanelPrefab, canvas.transform);
                 currentLogPanel = logPanelObj.GetComponent<LogPanel>();
+                currentLogPanel.transform.SetAsLastSibling();
 
                 if (currentLogPanel == null)
                 {

@@ -80,6 +80,7 @@ namespace Salon.UI
             }
 
             currentPopUp = Instantiate(popUpPanelPrefab, popUpParent);
+            currentPopUp.transform.SetAsLastSibling();
             if (currentPopUp != null)
             {
                 currentPopUp.Initialize(
