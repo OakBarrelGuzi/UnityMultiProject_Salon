@@ -59,7 +59,6 @@ public class CSVManager : DataManager
         TextAsset csvFile = Resources.Load<TextAsset>(resourcePath);
         if (csvFile == null)
         {
-            Debug.LogError($"CSV 파일을 찾을 수 없습니다. 경로: {fullPath}");
             return csvData;
         }
 

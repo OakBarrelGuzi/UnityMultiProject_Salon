@@ -356,10 +356,8 @@ namespace Character
                 {
                     if (option.model == null && !string.IsNullOrEmpty(option.name))
                     {
-                        // 공백을 _로 치환
                         string searchName = option.name.Replace(" ", "_");
 
-                        // 자식 오브젝트에서 해당 이름을 가진 오브젝트 찾기
                         Transform foundChild = transform.Find(searchName);
                         if (foundChild != null)
                         {
