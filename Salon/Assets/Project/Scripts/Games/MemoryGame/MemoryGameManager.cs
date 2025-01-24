@@ -12,6 +12,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Salon.Character;
 using Character;
+using System.IO;
 
 public class MemoryGameManager : MonoBehaviour
 {
@@ -34,8 +35,7 @@ public class MemoryGameManager : MonoBehaviour
 
     private int cardnum = 0;
 
-    private int localPlayerScore;
-    private int remotePlayerScore;
+    private bool isAnimating = false;
 
     private List<Card> openCardList = new List<Card>();
 
@@ -55,7 +55,7 @@ public class MemoryGameManager : MonoBehaviour
     private void Start()
     {
         roomId = GameRoomManager.Instance.currentRoomId;
-        roomRef = GameRoomManager.Instance.roomRef; 
+        roomRef = GameRoomManager.Instance.roomRef;
         UserUID = FirebaseManager.Instance.CurrentUserUID;
         currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("Gold");
 
@@ -102,7 +102,6 @@ public class MemoryGameManager : MonoBehaviour
         myGold += Gold;
         await currentUserRef.SetValueAsync(myGold);
     }
-
 
     public async void GetCustomizationData()
     {
@@ -264,6 +263,23 @@ public class MemoryGameManager : MonoBehaviour
         }
 
     }
+    private void GameEnd()
+    {
+        foreach (var card in tableCardList)
+        {
+            if (card.cardOpen == false)
+            {
+                return;
+            }
+            memoryGamePanelUi.cardResultUi.gameObject.SetActive(true);
+            if (int.Parse(memoryGamePanelUi.cardPanel.localPlayerScore.text)
+            > int.Parse(memoryGamePanelUi.cardPanel.remotePlayerScore.text))
+            {
+                MyGoldWrite(20);
+            }
+            memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
+        }
+    }
     private IEnumerator CardCheckRoutine()
     {
         yield return new WaitUntil(() => !openCardList[1].isTurning);
@@ -293,35 +309,27 @@ public class MemoryGameManager : MonoBehaviour
     }
     public IEnumerator FailRoutine()
     {
+        isAnimating = true;
+
         foreach (var card in openCardList)
         {
             string cardId = card.cardData.cardIndex.ToString();
-
-            if (!board[cardId].IsFlipped)
-            {
-                continue;
-            }
+            if (!board[cardId].IsFlipped) continue;
 
             board[cardId].IsFlipped = false;
             card.cardOpen = false;
 
-            try
-            {
-                roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonConvert.SerializeObject(board[cardId]));
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[FailRoutine] Board 업데이트 실패: {ex.Message}");
-            }
+            roomRef.Child("Board").Child(cardId).SetRawJsonValueAsync(JsonConvert.SerializeObject(board[cardId]));
         }
 
+        // 카드 뒤집기 애니메이션 실행
         yield return StartCoroutine(TurnRoutine(openCardList[1]));
-
         yield return StartCoroutine(TurnRoutine(openCardList[0]));
 
         openCardList.Clear();
         isCardFull = false;
 
+        isAnimating = false;
         UpdateTurnToNextPlayer();
     }
 
@@ -376,29 +384,32 @@ public class MemoryGameManager : MonoBehaviour
     }
     private void OnBoardChanged(object sender, ValueChangedEventArgs e)
     {
-        if (e.Snapshot.Exists)
+        if (isAnimating || !e.Snapshot.Exists)
         {
-            foreach (var child in e.Snapshot.Children)
+
+            return;
+        }
+
+        foreach (var child in e.Snapshot.Children)
+        {
+            var cardData = JsonConvert.DeserializeObject<CardData>(child.GetRawJsonValue());
+            string cardId = child.Key;
+            board[cardId] = cardData;
+
+            var card = tableCardList.Find(c => c.cardData.cardIndex.ToString() == cardId);
+            if (card != null && !card.isTurning)
             {
-                var cardData = JsonConvert.DeserializeObject<CardData>(child.GetRawJsonValue());
-                string cardId = child.Key;
-
-                board[cardId] = cardData;
-
-                var card = tableCardList.Find(c => c.cardData.cardIndex.ToString() == cardId);
-                if (card != null)
+                if (cardData.IsFlipped && !card.cardOpen)
                 {
-                    if (cardData.IsFlipped && !card.cardOpen)
-                    {
-                        card.cardOpen = true;
-                        StartCoroutine(TurnRoutine(card));
-                    }
-                    else if (!cardData.IsFlipped && card.cardOpen)
-                    {
-                        card.cardOpen = false;
-                        StartCoroutine(TurnRoutine(card));
-                    }
+                    card.cardOpen = true;
+                    StartCoroutine(TurnRoutine(card));
                 }
+                else if (!cardData.IsFlipped && card.cardOpen)
+                {
+                    card.cardOpen = false;
+                    StartCoroutine(TurnRoutine(card));
+                }
+                GameEnd();
             }
         }
     }
