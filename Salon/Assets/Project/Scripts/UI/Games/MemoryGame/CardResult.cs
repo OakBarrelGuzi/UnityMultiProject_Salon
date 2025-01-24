@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class CardResultUi : MonoBehaviour, IPointerClickHandler
+public class CardResultUi : MonoBehaviour
 {
 
     public TextMeshProUGUI localPlayerScore;
@@ -12,9 +13,15 @@ public class CardResultUi : MonoBehaviour, IPointerClickHandler
     public TextMeshProUGUI localPlayerName;
     public TextMeshProUGUI remotePlayerName;
 
-    public void OnPointerClick(PointerEventData eventData)
+    public Button ExitButton;
+
+    private void Start()
     {
-        UIManager.Instance.CloseAllPanels();
-        ScenesManager.Instance.ChanageScene("LobbyScene");
+        ExitButton.onClick.AddListener(() =>
+        {
+            UIManager.Instance.CloseAllPanels();
+            ScenesManager.Instance.ChanageScene("LobbyScene");
+        });
     }
+
 }
