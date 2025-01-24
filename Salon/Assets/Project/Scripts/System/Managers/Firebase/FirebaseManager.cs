@@ -65,22 +65,6 @@ namespace Salon.Firebase
 
                     if (auth.CurrentUser != null)
                     {
-                        // 현재 사용자의 상태 확인
-                        var userRef = dbReference.Child("Users").Child(auth.CurrentUser.UserId);
-                        var statusSnapshot = await userRef.Child("Status").GetValueAsync();
-
-                        if (statusSnapshot.Exists)
-                        {
-                            int status = Convert.ToInt32(statusSnapshot.Value);
-                            if (status == (int)UserStatus.Online)
-                            {
-                                Debug.Log("[FirebaseManager] 이미 다른 기기에서 로그인되어 있습니다.");
-                                LogManager.Instance.ShowLog("이미 다른 기기에서 로그인되어 있습니다.");
-                                UIManager.Instance.OpenPanel(PanelType.SignIn);
-                                initializationComplete?.SetResult(false);
-                                return;
-                            }
-                        }
 
                         currentUser = auth.CurrentUser;
                         currentUserUID = currentUser.UserId;
@@ -220,7 +204,6 @@ namespace Salon.Firebase
                             int status = Convert.ToInt32(statusSnapshot.Value);
                             if (status == (int)UserStatus.Online)
                             {
-                                Debug.Log("[FirebaseManager] 이미 다른 기기에서 로그인되어 있습니다.");
                                 LogManager.Instance.ShowLog("이미 다른 기기에서 로그인되어 있습니다.");
                                 UIManager.Instance.OpenPanel(PanelType.SignIn);
                                 return;
@@ -550,13 +533,14 @@ namespace Salon.Firebase
                 // 임시 로그인하여 UID 얻기
                 var tempResult = await auth.SignInWithEmailAndPasswordAsync(email, password);
                 string userUID = tempResult.User.UserId;
+                Debug.Log($"[FirebaseManager] 임시 로그인 완료: {userUID}");
 
                 // 사용자의 온라인 상태 확인
                 var userSnapshot = await dbReference.Child("Users").Child(userUID).Child("Status").GetValueAsync();
                 if (userSnapshot.Exists)
                 {
                     int status = Convert.ToInt32(userSnapshot.Value);
-                    if (status == (int)UserStatus.Online)
+                    if (status == 0)
                     {
                         LogManager.Instance.ShowLog("이미 다른 기기에서 로그인되어 있습니다.");
                         auth.SignOut(); // 임시 로그인 해제
@@ -597,11 +581,8 @@ namespace Salon.Firebase
                 Debug.Log($"[FirebaseManager] 오류 코드: {ex.ErrorCode}");
                 switch (ex.ErrorCode)
                 {
-                    case 17011:
-                        LogManager.Instance.ShowLog("존재하지 않는 이메일입니다.");
-                        break;
-                    case 17009:
-                        LogManager.Instance.ShowLog("비밀번호가 올바르지 않습니다.");
+                    case 1:
+                        LogManager.Instance.ShowLog("존재하지 않는 이메일이거나 비밀번호가 올바르지 않습니다");
                         break;
                     case 17020:
                         LogManager.Instance.ShowLog("네트워크 연결을 확인해주세요.");
@@ -706,9 +687,8 @@ namespace Salon.Firebase
                             await ChannelManager.Instance.LeaveChannel();
                         }
 
-                        // 로그아웃 전에 상태를 즉시 Offline으로 업데이트
-                        await dbReference.Child("Users").Child(currentUserUID).Child("Status").SetValueAsync((int)UserStatus.Offline);
-                        await Task.Delay(500); // 상태 업데이트를 위한 짧은 대기
+                        await dbReference.Child("Users").Child(currentUserUID).Child("Status").SetValueAsync(3);
+                        await Task.Delay(500);
                     }
                     catch (Exception ex)
                     {
@@ -733,7 +713,6 @@ namespace Salon.Firebase
                 IsInitialized = false;
 
                 Debug.Log("[Firebase Manager] 로그아웃 처리 완료");
-                LogManager.Instance.ShowLog("[Firebase Manager] 로그아웃 완료");
 
                 auth.StateChanged += AuthStateChanged;
             }

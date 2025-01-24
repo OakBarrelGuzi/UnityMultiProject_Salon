@@ -14,6 +14,10 @@ public class ChatBox : MonoBehaviour
         {
             messageText.text = $"<color=#7BFF75>{DisplayNameUtils.RemoveTag(sender)}</color> : <color=#7BFF75>{message}</color>";
         }
+        else if (sender == "System")
+        {
+            messageText.text = $"<align=center>{message}</align>";
+        }
         else
         {
             messageText.text = $"{DisplayNameUtils.RemoveTag(sender)} : {message}";

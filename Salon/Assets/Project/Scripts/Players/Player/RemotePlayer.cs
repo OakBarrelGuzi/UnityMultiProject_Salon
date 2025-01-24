@@ -2,6 +2,7 @@ using UnityEngine;
 using Salon.Firebase.Database;
 using Character;
 using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 namespace Salon.Character
 {
@@ -24,6 +25,7 @@ namespace Salon.Character
 
         public override void Initialize(string displayName)
         {
+
             base.Initialize(displayName);
             animator = GetComponent<Animator>();
             animController = GetComponent<AnimController>();
@@ -38,6 +40,7 @@ namespace Salon.Character
             {
                 Debug.LogError($"[RemotePlayer] AnimController를 찾을 수 없습니다: {displayName}");
             }
+
             targetPosition = transform.position;
             previousPosition = transform.position;
             targetDirection = transform.forward;
@@ -53,13 +56,14 @@ namespace Salon.Character
             }
             else
             {
-                Debug.LogError($"[RemotePlayer] {displayName}의 커스터마이제이션 업데이트 실패: customizationManager 또는 데이터가 null입니다.");
+                customizationManager.SetDefault();
             }
         }
 
         private void Update()
         {
-            if (isTesting) return;
+            if (SceneManager.GetActiveScene().name != "LobbyScene")
+                return;
 
             previousPosition = transform.position;
 

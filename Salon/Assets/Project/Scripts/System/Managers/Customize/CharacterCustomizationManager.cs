@@ -95,11 +95,16 @@ namespace Character
         // 채널/룸 씬에서 사용할 메서드
         public void ApplyCustomizationData(Dictionary<string, string> customizationData)
         {
-            if (customizationData == null) return;
-
-            customization.selectedOptions = new Dictionary<string, string>(customizationData);
-            ApplyCustomization();
-            Debug.Log("커스터마이제이션 데이터가 적용되었습니다.");
+            if (customizationData.Count == 0)
+            {
+                SetDefault();
+            }
+            else
+            {
+                customization.selectedOptions = new Dictionary<string, string>(customizationData);
+                ApplyCustomization();
+                Debug.Log("커스터마이제이션 데이터가 적용되었습니다.");
+            }
         }
 
         private async Task LoadCustomizationFromFirebase()
@@ -136,12 +141,6 @@ namespace Character
 
         private async void SaveCustomizationToFirebase()
         {
-            // CustomizeScene에서만 저장 가능하도록 체크
-            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "CustomizeScene")
-            {
-                return;
-            }
-
             try
             {
                 if (!FirebaseManager.Instance.IsInitialized)
@@ -229,7 +228,7 @@ namespace Character
             }
         }
 
-        void SetDefault()
+        public void SetDefault()
         {
             foreach (var category in categories)
             {
