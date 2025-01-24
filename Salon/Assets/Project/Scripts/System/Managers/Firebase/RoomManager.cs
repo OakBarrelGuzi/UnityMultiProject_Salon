@@ -574,10 +574,9 @@ namespace Salon.Firebase
                     remotePlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = remotePlayer.gameObject;
 
-                    // 커스터마이제이션 데이터 로드 및 적용
                     try
                     {
-                        var userSnapshot = await dbReference.Child("Users").Child(displayName).Child("CharacterCustomization").GetValueAsync();
+                        var userSnapshot = await dbReference.Child("Users").Child(await FirebaseManager.Instance.GetUIDByDisplayName(displayName)).Child("CharacterCustomization").GetValueAsync();
                         if (userSnapshot.Exists)
                         {
                             var customizationData = JsonConvert.DeserializeObject<CharacterCustomizationData>(userSnapshot.GetRawJsonValue());

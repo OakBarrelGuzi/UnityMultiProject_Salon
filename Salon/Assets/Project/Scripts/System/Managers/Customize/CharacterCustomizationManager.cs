@@ -229,7 +229,7 @@ namespace Character
             }
         }
 
-        void SetDefault()
+        public void SetDefault()
         {
             foreach (var category in categories)
             {
