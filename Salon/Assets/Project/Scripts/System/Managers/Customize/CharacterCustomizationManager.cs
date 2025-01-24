@@ -87,7 +87,7 @@ namespace Character
                     option.model.SetActive(false);
                 }
             }
-
+            await Task.Delay(1000);
             ApplyCustomization();
             UI_CusomizationManager.Instance.Initialize(this);
         }
