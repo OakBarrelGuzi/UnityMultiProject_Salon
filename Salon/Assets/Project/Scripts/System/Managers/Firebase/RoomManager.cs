@@ -415,17 +415,14 @@ namespace Salon.Firebase
             {
                 Debug.Log($"[RoomManager] OnPlayerAdded: 새로운 플레이어 감지 - {displayName}");
 
-                // 이미 해당 플레이어가 존재하는지 확인
                 if (instantiatedPlayers.ContainsKey(displayName))
                 {
                     Debug.Log($"[RoomManager] 플레이어 {displayName}는 이미 존재합니다. 중복 생성을 건너뜁니다.");
                     return;
                 }
 
-                // 잠시 대기하여 SubscribeToPlayerChanges에서의 생성과 충돌하지 않도록 함
                 await Task.Delay(100);
 
-                // 다시 한번 중복 체크
                 if (instantiatedPlayers.ContainsKey(displayName))
                 {
                     Debug.Log($"[RoomManager] 플레이어 {displayName}는 대기 후 이미 존재합니다. 중복 생성을 건너뜁니다.");
@@ -450,17 +447,14 @@ namespace Salon.Firebase
             {
                 Debug.Log($"[RoomManager] OnPlayerRemoved: 플레이어 제거 시작 - {displayName}");
 
-                // 플레이어 위치 구독 해제
                 UnsubscribeFromPlayerPosition(displayName);
 
-                // 플레이어 애니메이션 구독 해제
                 if (playerAnimationQueries.TryGetValue(displayName, out var animQuery))
                 {
                     animQuery.ValueChanged -= OnAnimationChanged;
                     playerAnimationQueries.Remove(displayName);
                 }
 
-                // 플레이어 오브젝트 제거
                 if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
                 {
                     Debug.Log($"[RoomManager] 플레이어 오브젝트 제거 시도 - {displayName}, GameObject: {playerObject.name}");
