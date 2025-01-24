@@ -511,6 +511,26 @@ public class MemoryGameManager : MonoBehaviour
         if (!e.Snapshot.Exists)
         {
             ScenesManager.Instance.ChanageScene("LobbyScene");
+            return;
+        }
+        var playersSnapshot = e.Snapshot.Child("Players");
+        if (playersSnapshot.Exists)
+        {
+            int playerCount = 0;
+
+            foreach (var player in playersSnapshot.Children)
+            {
+                playerCount++;
+            }
+
+            if (playerCount < 2)
+            {
+                ScenesManager.Instance.ChanageScene("LobbyScene");
+            }
+        }
+        else
+        {
+            ScenesManager.Instance.ChanageScene("LobbyScene");
         }
     }
 }
