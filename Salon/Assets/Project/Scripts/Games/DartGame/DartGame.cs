@@ -455,7 +455,7 @@ namespace Salon.DartGame
 
             var UserUID = FirebaseManager.Instance.CurrentUserUID;
 
-            var currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("bestDartScore");
+            var currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("BestDartScore");
 
             try
             {
