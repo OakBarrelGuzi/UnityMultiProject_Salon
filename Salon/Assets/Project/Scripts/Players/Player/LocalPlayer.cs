@@ -7,6 +7,7 @@ using Firebase.Database;
 using System.Collections;
 using System.Collections.Generic;
 using Character;
+using UnityEngine.SceneManagement;
 
 namespace Salon.Character
 {
@@ -33,7 +34,6 @@ namespace Salon.Character
             {
                 customizationManager = gameObject.AddComponent<CharacterCustomizationManager>();
             }
-
             inputController = GetComponent<InputController>();
             if (inputController != null)
             {
@@ -103,7 +103,7 @@ namespace Salon.Character
 
         private void Update()
         {
-            if (!isTesting)
+            if (SceneManager.GetActiveScene().name == "LobbyScene")
             {
                 if (Time.time - lastPositionUpdateTime >= positionUpdateInterval)
                 {

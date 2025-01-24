@@ -9,6 +9,9 @@ using Newtonsoft.Json;
 using Random = UnityEngine.Random;
 using System.Threading.Tasks;
 using System;
+using System.Runtime.CompilerServices;
+using Salon.Character;
+using Character;
 
 public class MemoryGameManager : MonoBehaviour
 {
@@ -41,6 +44,9 @@ public class MemoryGameManager : MonoBehaviour
     private string roomId;
     private DatabaseReference roomRef;
 
+    public LocalPlayer localPlayer;
+    public RemotePlayer remotePlayer;
+
     private float turnStartTime;
     private void Start()
     {
@@ -54,12 +60,68 @@ public class MemoryGameManager : MonoBehaviour
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
 
+        GetCustomizationData();
+
         UIManager.Instance.CloseAllPanels();
         UIManager.Instance.OpenPanel(PanelType.MemoryGame);
         memoryGamePanelUi = UIManager.Instance.GetComponentInChildren<MemoryGamePanelUi>();
         memoryGamePanelUi.gameObject.SetActive(true);
 
         turnTimeUiRoutine = StartCoroutine(TurnCountRoutine());
+    }
+
+    public async void GetCustomizationData()
+    {
+        try
+        {
+            // 로컬 플레이어의 커스터마이제이션 데이터 불러오기
+            var localCustomRef = FirebaseManager.Instance.DbReference
+                .Child("Users")
+                .Child(FirebaseManager.Instance.CurrentUserUID)
+                .Child("CharacterCustomization");
+
+            var localSnapshot = await localCustomRef.GetValueAsync();
+            if (localSnapshot.Exists)
+            {
+                var localCustomData = JsonConvert.DeserializeObject<CharacterCustomizationData>(localSnapshot.GetRawJsonValue());
+                var localCM = localPlayer.GetComponent<CharacterCustomizationManager>();
+                localCM.ApplyCustomizationData(localCustomData.selectedOptions);
+            }
+
+            // 원격 플레이어의 UID 가져오기
+            var playersSnapshot = await roomRef.Child("Players").GetValueAsync();
+            string remotePlayerUID = null;
+
+            foreach (var player in playersSnapshot.Children)
+            {
+                if (player.Key != GameRoomManager.Instance.currentPlayerId)
+                {
+                    remotePlayerUID = await FirebaseManager.Instance.GetUIDByDisplayName(player.Key);
+                    break;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(remotePlayerUID))
+            {
+                // 원격 플레이어의 커스터마이제이션 데이터 불러오기
+                var remoteCustomRef = FirebaseManager.Instance.DbReference
+                    .Child("Users")
+                    .Child(remotePlayerUID)
+                    .Child("CharacterCustomization");
+
+                var remoteSnapshot = await remoteCustomRef.GetValueAsync();
+                if (remoteSnapshot.Exists)
+                {
+                    var remoteCustomData = JsonConvert.DeserializeObject<CharacterCustomizationData>(remoteSnapshot.GetRawJsonValue());
+                    var remoteCM = remotePlayer.GetComponent<CharacterCustomizationManager>();
+                    remoteCM.ApplyCustomizationData(remoteCustomData.selectedOptions);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"커스터마이제이션 데이터 로드 중 오류 발생: {ex.Message}");
+        }
     }
     private void OnDestroy()
     {
