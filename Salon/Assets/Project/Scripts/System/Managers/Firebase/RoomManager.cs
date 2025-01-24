@@ -514,7 +514,6 @@ namespace Salon.Firebase
                     instantiatedPlayers[displayName] = localPlayer.gameObject;
                     GameManager.Instance.player = localPlayer;
 
-                    // 로컬 플레이어의 커스터마이제이션 데이터 로드 및 적용
                     try
                     {
                         var userData = await FirebaseManager.Instance.GetUserData();
@@ -525,12 +524,11 @@ namespace Salon.Firebase
                             if (customizationManager != null)
                             {
                                 customizationManager.ApplyCustomizationData(userData.CharacterCustomization.selectedOptions);
-                                Debug.Log($"[RoomManager] 로컬 플레이어의 커스터마이제이션 데이터 적용 완료");
                             }
                         }
                         else
                         {
-                            Debug.Log("[RoomManager] 로컬 플레이어의 커스터마이제이션 데이터가 없습니다.");
+                            Debug.Log("커스터마이제이션 데이터가 없습니다.");
                         }
                     }
                     catch (Exception ex)
@@ -557,7 +555,6 @@ namespace Salon.Firebase
                         }
                     }
 
-                    // 생성 직전 마지막 중복 체크
                     if (instantiatedPlayers.ContainsKey(displayName))
                     {
                         Debug.Log($"[RoomManager] 위치 가져온 후 체크: 플레이어 {displayName}는 이미 존재합니다.");
@@ -582,7 +579,7 @@ namespace Salon.Firebase
                         }
                         else
                         {
-                            Debug.Log($"[RoomManager] {displayName}의 커스터마이제이션 데이터가 없습니다.");
+                            remotePlayer.UpdateCustomization(null);
                         }
                     }
                     catch (Exception ex)

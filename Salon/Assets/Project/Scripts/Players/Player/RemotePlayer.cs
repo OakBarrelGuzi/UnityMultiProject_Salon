@@ -53,7 +53,7 @@ namespace Salon.Character
             }
             else
             {
-                Debug.LogError($"[RemotePlayer] {displayName}의 커스터마이제이션 업데이트 실패: customizationManager 또는 데이터가 null입니다.");
+                customizationManager.SetDefault();
             }
         }
 

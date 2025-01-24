@@ -71,6 +71,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
             }
             else
             {
+                OpenPanel(PanelType.MainDisplay);
                 OpenPanel(PanelType.SignIn);
             }
         }
