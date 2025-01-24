@@ -68,6 +68,8 @@ public class MemoryGameManager : MonoBehaviour
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
         roomRef.Child("Players").ValueChanged += OnPlayersDataChanged;
 
+        FirebaseManager.Instance.DbReference.Child("GameRooms").Child(roomId).ValueChanged += OnRoomDeleted;
+
         GetCustomizationData();
 
         UIManager.Instance.CloseAllPanels();
@@ -162,6 +164,7 @@ public class MemoryGameManager : MonoBehaviour
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
         roomRef.Child("Board").ValueChanged -= OnBoardChanged;
         roomRef.Child("Players").ValueChanged -= OnPlayersDataChanged;
+        FirebaseManager.Instance.DbReference.Child("GameRooms").Child(roomId).ValueChanged -= OnRoomDeleted;
     }
 
     private void Update()
@@ -263,22 +266,28 @@ public class MemoryGameManager : MonoBehaviour
         }
 
     }
-    private void GameEnd()
+    private bool AreAllCardsOpen()
     {
         foreach (var card in tableCardList)
         {
-            if (card.cardOpen == false)
+            if (!card.cardOpen)
             {
-                return;
+                return false;
             }
-            memoryGamePanelUi.cardResultUi.gameObject.SetActive(true);
-            if (int.Parse(memoryGamePanelUi.cardPanel.localPlayerScore.text)
-            > int.Parse(memoryGamePanelUi.cardPanel.remotePlayerScore.text))
-            {
-                MyGoldWrite(20);
-            }
-            memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
         }
+        return true;
+    }
+    private void GameEnd()
+    {
+        memoryGamePanelUi.cardResultUi.gameObject.SetActive(true);
+        int localScore = int.Parse(memoryGamePanelUi.cardPanel.localPlayerScore.text);
+        int remoteScore = int.Parse(memoryGamePanelUi.cardPanel.remotePlayerScore.text);
+
+        if (localScore > remoteScore)
+        {
+            MyGoldWrite(20);
+        }
+        memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
     }
     private IEnumerator CardCheckRoutine()
     {
@@ -299,6 +308,11 @@ public class MemoryGameManager : MonoBehaviour
             Task updateTask = UpdatePlayerScoreAsync(GameRoomManager.Instance.currentPlayerId, 1);
             MyGoldWrite(5);
             yield return new WaitUntil(() => updateTask.IsCompleted);
+
+            if (AreAllCardsOpen())
+            {
+                GameEnd();
+            }
         }
         //뽑은 2개의 카드가 다를경우
         else
@@ -386,7 +400,6 @@ public class MemoryGameManager : MonoBehaviour
     {
         if (isAnimating || !e.Snapshot.Exists)
         {
-
             return;
         }
 
@@ -409,8 +422,12 @@ public class MemoryGameManager : MonoBehaviour
                     card.cardOpen = false;
                     StartCoroutine(TurnRoutine(card));
                 }
-                GameEnd();
             }
+        }
+
+        if (AreAllCardsOpen())
+        {
+            GameEnd();
         }
     }
 
@@ -487,6 +504,13 @@ public class MemoryGameManager : MonoBehaviour
                     memoryGamePanelUi.cardPanel.remotePlayerScore.text = playerData.Score.ToString();
                 }
             }
+        }
+    }
+    private void OnRoomDeleted(object sender, ValueChangedEventArgs e)
+    {
+        if (!e.Snapshot.Exists)
+        {
+            ScenesManager.Instance.ChanageScene("LobbyScene");
         }
     }
 }
