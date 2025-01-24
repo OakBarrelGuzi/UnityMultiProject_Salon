@@ -44,6 +44,10 @@ public class MemoryGameManager : MonoBehaviour
     private string roomId;
     private DatabaseReference roomRef;
 
+    public string UserUID { get; private set; }
+    public DatabaseReference currentUserRef { get; private set; }
+    public int myGold { get; private set; } = 0;
+
     public LocalPlayer localPlayer;
     public RemotePlayer remotePlayer;
 
@@ -51,14 +55,18 @@ public class MemoryGameManager : MonoBehaviour
     private void Start()
     {
         roomId = GameRoomManager.Instance.currentRoomId;
-        roomRef = GameRoomManager.Instance.roomRef;
+        roomRef = GameRoomManager.Instance.roomRef; 
+        UserUID = FirebaseManager.Instance.CurrentUserUID;
+        currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("Gold");
 
         turnStartTime = Time.time;
 
         CardRandomSet();
+        MyGoldLoad();
 
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
+        roomRef.Child("Players").ValueChanged += OnPlayersDataChanged;
 
         GetCustomizationData();
 
@@ -69,6 +77,32 @@ public class MemoryGameManager : MonoBehaviour
 
         turnTimeUiRoutine = StartCoroutine(TurnCountRoutine());
     }
+    private async void MyGoldLoad()
+    {
+        try
+        {
+            var snapshot = await currentUserRef.GetValueAsync();
+            if (snapshot.Exists)
+            {
+                myGold = int.Parse(snapshot.Value.ToString());
+                print($"돈가져왔당! {myGold}");
+            }
+            else
+            {
+                Debug.Log("점수 데이터가 없습니다");
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"점수 가져오기 실패: {e.Message}");
+        }
+    }
+    public async void MyGoldWrite(int Gold)
+    {
+        myGold += Gold;
+        await currentUserRef.SetValueAsync(myGold);
+    }
+
 
     public async void GetCustomizationData()
     {
@@ -128,6 +162,7 @@ public class MemoryGameManager : MonoBehaviour
         // Firebase 리스너 해제
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
         roomRef.Child("Board").ValueChanged -= OnBoardChanged;
+        roomRef.Child("Players").ValueChanged -= OnPlayersDataChanged;
     }
 
     private void Update()
@@ -244,6 +279,10 @@ public class MemoryGameManager : MonoBehaviour
             print("카드가 같음!");
             openCardList.Clear();
             isCardFull = false;
+
+            Task updateTask = UpdatePlayerScoreAsync(GameRoomManager.Instance.currentPlayerId, 1);
+            MyGoldWrite(5);
+            yield return new WaitUntil(() => updateTask.IsCompleted);
         }
         //뽑은 2개의 카드가 다를경우
         else
@@ -399,5 +438,44 @@ public class MemoryGameManager : MonoBehaviour
         }
         Debug.LogWarning("호스트 여부를 확인할 수 없습니다.");
         return false;
+    }
+    private async Task UpdatePlayerScoreAsync(string playerId, int scoreToAdd)
+    {
+        try
+        {
+            var playerRef = roomRef.Child("Players").Child(playerId).Child("Score");
+            var snapshot = await playerRef.GetValueAsync();
+
+            int currentScore = snapshot.Exists ? int.Parse(snapshot.Value.ToString()) : 0;
+            int newScore = currentScore + scoreToAdd;
+
+            await playerRef.SetValueAsync(newScore);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"플레이어 점수 업데이트 중 오류 발생: {ex.Message}");
+        }
+    }
+    private void OnPlayersDataChanged(object sender, ValueChangedEventArgs e)
+    {
+        if (e.Snapshot.Exists)
+        {
+            foreach (var child in e.Snapshot.Children)
+            {
+                string playerId = child.Key;
+                var playerData = JsonConvert.DeserializeObject<PlayerData>(child.GetRawJsonValue());
+
+                if (playerId == GameRoomManager.Instance.currentPlayerId)
+                {
+                    memoryGamePanelUi.cardPanel.localPlayerName.text = playerData.DisplayName;
+                    memoryGamePanelUi.cardPanel.localPlayerScore.text = playerData.Score.ToString();
+                }
+                else
+                {
+                    memoryGamePanelUi.cardPanel.remotePlayerName.text = playerData.DisplayName;
+                    memoryGamePanelUi.cardPanel.remotePlayerScore.text = playerData.Score.ToString();
+                }
+            }
+        }
     }
 }
