@@ -21,7 +21,7 @@ public class DartRanking : Panel
 
     private void Awake()
     {
-        dbRef = FirebaseDatabase.DefaultInstance.RootReference;
+        dbRef = FirebaseDatabase.DefaultInstance.RootReference.Child("Users");
     }
 
     public override void Open()
@@ -47,7 +47,7 @@ public class DartRanking : Panel
     {
         try
         {
-            var snapshot = await dbRef.Child("Users").GetValueAsync();
+            var snapshot = await dbRef.GetValueAsync();
 
             if (snapshot.Exists)
             {
@@ -56,23 +56,24 @@ public class DartRanking : Panel
 
                 foreach (var child in snapshot.Children)
                 {
-                    string userId = child.Key;
-                    var data = JsonUtility.FromJson<UserData>(child.GetRawJsonValue());
-                    userList.Add(new RankingData()
-                    {
-                        DisplayName = data.DisplayName,
-                        BestDartScore = data.BestDartScore
-                    });
-                }
+                    var displayNameSnapshot = child.Child("DisplayName");
+                    var bestDartScoreSnapshot = child.Child("BestDartScore");
 
-                //���� ���� �������� ����
+                    if (displayNameSnapshot.Exists && bestDartScoreSnapshot.Exists)
+                    {
+                        userList.Add(new RankingData()
+                        {
+                            DisplayName = displayNameSnapshot.Value.ToString(),
+                            BestDartScore = int.Parse(bestDartScoreSnapshot.Value.ToString())
+                        });
+                    }
+                }
                 userList = userList.OrderByDescending(user => user.BestDartScore).ToList();
 
-                //��ŷ UI�� ���� 5�� ǥ��
                 DisplayTopRanking(userList);
 
                 string currentUserId = FirebaseManager.Instance.CurrentUserUID;
-                var currentUserName = await dbRef.Child(currentUserId).GetValueAsync();
+                DataSnapshot currentUserName = await dbRef.Child(currentUserId).GetValueAsync();
                 DisplayPlayerRank(userList, currentUserName);
             }
             else
@@ -82,7 +83,7 @@ public class DartRanking : Panel
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"��ŷ �����͸� �������� �� ���� �߻�: {ex.Message}");
+            Debug.LogError($"데이터 가져오기 실패: {ex.Message}");
         }
     }
     private void DisplayTopRanking(List<RankingData> userList)
@@ -93,12 +94,16 @@ public class DartRanking : Panel
             rankerScoreText[i].text = userList[i].BestDartScore.ToString();
         }
     }
-    private void DisplayPlayerRank(List<RankingData> userList, DataSnapshot currentUserName)
+    private void DisplayPlayerRank(List<RankingData> userList, DataSnapshot currentUserSnapshot)
     {
-        playerRank.text = (userList.FindIndex(user => user.DisplayName == currentUserName.Child("DisplayName").GetRawJsonValue()) + 1).ToString();
+        string currentUserDisplayName = currentUserSnapshot.Child("DisplayName").Value.ToString();
+        string currentUserBestScore = currentUserSnapshot.Child("BestDartScore").Value.ToString();
 
-        playerIdText.text = currentUserName.Child("DisplayName").GetRawJsonValue();
-        playerScoreText.text = currentUserName.Child("BestDartScore").GetRawJsonValue();
+        int rankIndex = userList.FindIndex(user => user.DisplayName == currentUserDisplayName);
+        playerRank.text = (rankIndex + 1).ToString();
+
+        playerIdText.text = currentUserDisplayName;
+        playerScoreText.text = currentUserBestScore;
     }
 }
 
