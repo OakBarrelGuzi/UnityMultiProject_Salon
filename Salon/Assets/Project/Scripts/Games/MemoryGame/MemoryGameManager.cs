@@ -68,8 +68,6 @@ public class MemoryGameManager : MonoBehaviour
         roomRef.Child("Board").ValueChanged += OnBoardChanged;
         roomRef.Child("Players").ValueChanged += OnPlayersDataChanged;
 
-        FirebaseManager.Instance.DbReference.Child("GameRooms").Child(roomId).ValueChanged += OnRoomDeleted;
-
         GetCustomizationData();
 
         UIManager.Instance.CloseAllPanels();
@@ -164,7 +162,6 @@ public class MemoryGameManager : MonoBehaviour
         roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
         roomRef.Child("Board").ValueChanged -= OnBoardChanged;
         roomRef.Child("Players").ValueChanged -= OnPlayersDataChanged;
-        FirebaseManager.Instance.DbReference.Child("GameRooms").Child(roomId).ValueChanged -= OnRoomDeleted;
     }
 
     private void Update()
@@ -504,33 +501,6 @@ public class MemoryGameManager : MonoBehaviour
                     memoryGamePanelUi.cardPanel.remotePlayerScore.text = playerData.Score.ToString();
                 }
             }
-        }
-    }
-    private void OnRoomDeleted(object sender, ValueChangedEventArgs e)
-    {
-        if (!e.Snapshot.Exists)
-        {
-            ScenesManager.Instance.ChanageScene("LobbyScene");
-            return;
-        }
-        var playersSnapshot = e.Snapshot.Child("Players");
-        if (playersSnapshot.Exists)
-        {
-            int playerCount = 0;
-
-            foreach (var player in playersSnapshot.Children)
-            {
-                playerCount++;
-            }
-
-            if (playerCount < 2)
-            {
-                ScenesManager.Instance.ChanageScene("LobbyScene");
-            }
-        }
-        else
-        {
-            ScenesManager.Instance.ChanageScene("LobbyScene");
         }
     }
 }
