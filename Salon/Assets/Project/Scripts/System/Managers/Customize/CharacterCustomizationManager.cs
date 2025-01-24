@@ -241,6 +241,111 @@ namespace Character
         {
             animator.SetTrigger("Play");
         }
+
+        [ContextMenu("Save Current Setup To SO")]
+        private void SaveCurrentSetupToSO()
+        {
+#if UNITY_EDITOR
+            var so = ScriptableObject.CreateInstance<CharacterCustomizationSO>();
+            so.categories = new CharacterCustomizationSO.CharacterCustomizationCategory[categories.Length];
+
+            // 현재 설정을 SO 형식으로 변환
+            for (int i = 0; i < categories.Length; i++)
+            {
+                var currentCategory = categories[i];
+                var newCategory = new CharacterCustomizationSO.CharacterCustomizationCategory
+                {
+                    name = currentCategory.name,
+                    id = currentCategory.id,
+                    description = currentCategory.description,
+                    options = new CharacterCustomizationSO.CharacterCustomizationOption[currentCategory.options.Length]
+                };
+
+                for (int j = 0; j < currentCategory.options.Length; j++)
+                {
+                    var currentOption = currentCategory.options[j];
+                    newCategory.options[j] = new CharacterCustomizationSO.CharacterCustomizationOption
+                    {
+                        name = currentOption.name,
+                        id = currentOption.id,
+                        description = currentOption.description,
+                        icon = currentOption.icon,
+                        model = currentOption.model
+                    };
+                }
+
+                so.categories[i] = newCategory;
+            }
+
+            string path = UnityEditor.EditorUtility.SaveFilePanelInProject(
+                "Save Current Setup",
+                "CustomizationSetup",
+                "asset",
+                "Save current customization setup to a ScriptableObject"
+            );
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                UnityEditor.AssetDatabase.CreateAsset(so, path);
+                UnityEditor.AssetDatabase.SaveAssets();
+                UnityEditor.AssetDatabase.Refresh();
+                Debug.Log($"현재 커스터마이제이션 설정이 저장되었습니다: {path}");
+            }
+#endif
+        }
+
+        [ContextMenu("Load Setup From SO")]
+        private void LoadSetupFromSO()
+        {
+#if UNITY_EDITOR
+            string path = UnityEditor.EditorUtility.OpenFilePanel(
+                "Load Customization Setup",
+                "Assets",
+                "asset"
+            );
+
+            if (!string.IsNullOrEmpty(path))
+            {
+                string projectPath = System.IO.Path.GetFullPath("Assets").Replace("\\", "/");
+                string relativePath = "Assets" + path.Replace(projectPath, "");
+
+                var so = UnityEditor.AssetDatabase.LoadAssetAtPath<CharacterCustomizationSO>(relativePath);
+                if (so != null)
+                {
+                    categories = new CharacterCustomizationCategory[so.categories.Length];
+                    for (int i = 0; i < so.categories.Length; i++)
+                    {
+                        var soCategory = so.categories[i];
+                        var newCategory = new CharacterCustomizationCategory
+                        {
+                            name = soCategory.name,
+                            id = soCategory.id,
+                            description = soCategory.description,
+                            options = new CharacterCustomizationOption[soCategory.options.Length]
+                        };
+
+                        for (int j = 0; j < soCategory.options.Length; j++)
+                        {
+                            var soOption = soCategory.options[j];
+                            newCategory.options[j] = new CharacterCustomizationOption
+                            {
+                                name = soOption.name,
+                                id = soOption.id,
+                                description = soOption.description,
+                                icon = soOption.icon,
+                                model = soOption.model
+                            };
+                        }
+
+                        categories[i] = newCategory;
+                    }
+
+                    Debug.Log($"커스터마이제이션 설정을 불러왔습니다: {relativePath}");
+                    SetDefault();
+                }
+            }
+#endif
+        }
     }
 
     [Serializable]
