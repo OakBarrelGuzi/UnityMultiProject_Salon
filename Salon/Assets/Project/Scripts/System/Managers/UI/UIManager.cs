@@ -37,7 +37,6 @@ public class UIManager : Singleton<UIManager>, IInitializable
 
         try
         {
-            // Firebase 초기화 후 추가 대기 시간
             await Task.Delay(2000);
 
             if (FirebaseManager.Instance.CurrentUserUID != null)
@@ -54,7 +53,6 @@ public class UIManager : Singleton<UIManager>, IInitializable
                     int status = Convert.ToInt32(snapshot.Value);
                     if (status == 1) // UserStatus.Online = 1
                     {
-                        // 이미 온라인 상태라면 강제 로그아웃
                         FirebaseManager.Instance.SignOut();
                         LogManager.Instance.ShowLog("다른 기기에서 로그인된 상태여서 로그아웃되었습니다.");
                         OpenPanel(PanelType.MainDisplay);
@@ -62,7 +60,6 @@ public class UIManager : Singleton<UIManager>, IInitializable
                     }
                     else
                     {
-                        // 오프라인 상태라면 채널 패널 열기
                         OpenPanel(PanelType.MainDisplay);
                     }
                 }

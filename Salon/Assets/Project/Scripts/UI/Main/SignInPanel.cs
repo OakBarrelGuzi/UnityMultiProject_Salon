@@ -59,18 +59,16 @@ public class SignInPanel : Panel
         ValidateInput();
         try
         {
-            signInButton.interactable = false; // 버튼 비활성화
+            signInButton.interactable = false;
 
             try
             {
-                // 로그인 시도 전에 3초 정도 대기하여 이전 상태가 업데이트되도록 함
-                await Task.Delay(3000);
+                await Task.Delay(1000);
 
                 bool result = await FirebaseManager.Instance.SignInWithEmailAsync(idInputField.text, passwordInputField.text);
                 if (result)
                 {
                     Close();
-                    UIManager.Instance.OpenPanel(PanelType.Channel);
                 }
                 else
                 {
@@ -79,13 +77,13 @@ public class SignInPanel : Panel
             }
             finally
             {
-                signInButton.interactable = true; // 버튼 다시 활성화
+                signInButton.interactable = true;
             }
         }
         catch (Exception ex)
         {
             LogManager.Instance.ShowLog($"예외 발생: {ex.Message}");
-            signInButton.interactable = true; // 예외 발생 시에도 버튼 활성화
+            signInButton.interactable = true;
         }
     }
 
