@@ -50,6 +50,28 @@ namespace Character
         {
             customization = new CharacterCustomization();
 
+            // 현재 씬 이름 가져오기
+            string currentSceneName = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+            if (currentSceneName == "CustomizeScene")
+            {
+                await InitializeForCustomizeScene();
+            }
+            else
+            {
+                // 채널/룸 씬에서는 RoomManager가 데이터를 전달할 때까지 대기
+                foreach (CharacterCustomizationCategory category in categories)
+                {
+                    foreach (CharacterCustomizationOption option in category.options)
+                    {
+                        option.model.SetActive(false);
+                    }
+                }
+            }
+        }
+
+        private async Task InitializeForCustomizeScene()
+        {
             // FirebaseManager가 초기화될 때까지 대기
             while (!FirebaseManager.Instance.IsInitialized)
             {
@@ -68,6 +90,16 @@ namespace Character
 
             ApplyCustomization();
             UI_CusomizationManager.Instance.Initialize(this);
+        }
+
+        // 채널/룸 씬에서 사용할 메서드
+        public void ApplyCustomizationData(Dictionary<string, string> customizationData)
+        {
+            if (customizationData == null) return;
+
+            customization.selectedOptions = new Dictionary<string, string>(customizationData);
+            ApplyCustomization();
+            Debug.Log("커스터마이제이션 데이터가 적용되었습니다.");
         }
 
         private async Task LoadCustomizationFromFirebase()
@@ -104,6 +136,12 @@ namespace Character
 
         private async void SaveCustomizationToFirebase()
         {
+            // CustomizeScene에서만 저장 가능하도록 체크
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "CustomizeScene")
+            {
+                return;
+            }
+
             try
             {
                 if (!FirebaseManager.Instance.IsInitialized)
@@ -112,16 +150,34 @@ namespace Character
                     return;
                 }
 
-                var userData = await FirebaseManager.Instance.GetUserData();
-                if (userData != null)
+                if (string.IsNullOrEmpty(FirebaseManager.Instance.CurrentUserUID))
                 {
-                    if (userData.CharacterCustomization == null)
-                    {
-                        userData.CharacterCustomization = new CharacterCustomizationData();
-                    }
-                    userData.CharacterCustomization.selectedOptions = customization.selectedOptions;
+                    Debug.LogWarning("현재 로그인된 사용자가 없어 커스터마이제이션을 저장할 수 없습니다.");
+                    return;
+                }
+
+                var userData = await FirebaseManager.Instance.GetUserData();
+                if (userData == null)
+                {
+                    Debug.LogWarning("사용자 데이터를 가져올 수 없어 커스터마이제이션을 저장할 수 없습니다.");
+                    return;
+                }
+
+                if (userData.CharacterCustomization == null)
+                {
+                    userData.CharacterCustomization = new CharacterCustomizationData();
+                }
+                userData.CharacterCustomization.selectedOptions = customization.selectedOptions;
+
+                // 한 번 더 UID 체크
+                if (!string.IsNullOrEmpty(FirebaseManager.Instance.CurrentUserUID))
+                {
                     await FirebaseManager.Instance.UpdateUserData(userData);
                     Debug.Log("커스터마이제이션 데이터를 Firebase에 저장했습니다.");
+                }
+                else
+                {
+                    Debug.LogWarning("저장 직전 사용자 연결이 끊어져 커스터마이제이션을 저장할 수 없습니다.");
                 }
             }
             catch (Exception e)
@@ -143,19 +199,6 @@ namespace Character
 
             ApplyCustomization();
             OnCustomizationChanged?.Invoke(customization.selectedOptions);
-            SaveCustomizationToFirebase();
-        }
-
-        public void ApplyCustomizationData(Dictionary<string, string> customizationData)
-        {
-            if (customizationData == null) return;
-
-            customization.selectedOptions = new Dictionary<string, string>(customizationData);
-            ApplyCustomization();
-        }
-
-        private void OnDisable()
-        {
             SaveCustomizationToFirebase();
         }
 

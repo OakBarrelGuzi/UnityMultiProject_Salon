@@ -6,7 +6,11 @@ public class MainDisplayPanel : Panel
     [SerializeField] private Button startButton;
     [SerializeField] private Button optionButton;
     [SerializeField] private Button customizeButton;
-
+    public override void Open()
+    {
+        base.Open();
+        Initialize();
+    }
     public override void Initialize()
     {
         this.panelType = PanelType.MainDisplay;
@@ -47,7 +51,7 @@ public class MainDisplayPanel : Panel
             LogManager.Instance.ShowLog("StartButton 이 할당되지 않았습니다.");
             return;
         }
-        UIManager.Instance.OpenPanel(PanelType.Lobby);
+        UIManager.Instance.OpenPanel(PanelType.Channel);
     }
 
     public void OnOptionButtonClick()
@@ -66,6 +70,8 @@ public class MainDisplayPanel : Panel
             LogManager.Instance.ShowLog("CustomizeButton 이 할당되지 않았습니다.");
             return;
         }
+        UIManager.Instance.CloseAllPanels();
         UIManager.Instance.OpenPanel(PanelType.Customize);
+        ScenesManager.Instance.ChanageScene("CustomizeScene");
     }
 }

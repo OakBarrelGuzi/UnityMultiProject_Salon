@@ -8,6 +8,33 @@ public class CustomizationPanel : Panel
 {
     public TMP_InputField nicknameInputField;
     public Button saveButton;
+    public Button mainMenuButton;
+
+    public override void Open()
+    {
+        base.Open();
+        Initialize();
+    }
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        if (saveButton != null)
+        {
+            saveButton.onClick.AddListener(OnSaveButtonClicked);
+        }
+
+        // 현재 사용자의 닉네임을 입력 필드에 표시
+        if (nicknameInputField != null)
+        {
+            nicknameInputField.text = FirebaseManager.Instance.CurrnetUserDisplayName;
+        }
+
+        if (mainMenuButton != null)
+        {
+            mainMenuButton.onClick.AddListener(OnMainMenuButtonClicked);
+        }
+    }
 
     private void Start()
     {
@@ -46,6 +73,13 @@ public class CustomizationPanel : Panel
         }
 
         saveButton.interactable = true;
+    }
+
+    public void OnMainMenuButtonClicked()
+    {
+        UIManager.Instance.CloseAllPanels();
+        UIManager.Instance.OpenPanel(PanelType.MainDisplay);
+        ScenesManager.Instance.ChanageScene("MainScene");
     }
 
     private void OnDestroy()
