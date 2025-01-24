@@ -19,7 +19,7 @@ public class CardPanel : MonoBehaviour
     public TextMeshProUGUI remotePlayerName;
     public Slider localPlayerTime;
     public Slider remotePlayerTime;
-
+    public MemoryExit MemoryExit;
     private DatabaseReference roomRef;
     private string currentPlayerId;
 
@@ -27,6 +27,11 @@ public class CardPanel : MonoBehaviour
     {
         roomRef = GameRoomManager.Instance.roomRef;
         currentPlayerId = GameRoomManager.Instance.currentPlayerId;
+        option_Button.onClick.AddListener(() => MemoryExit.gameObject.SetActive(true));
+    }
+    void OnEnable()
+    {
+        MemoryExit.gameObject.SetActive(false);
     }
     private async void Start()
     {
@@ -36,7 +41,7 @@ public class CardPanel : MonoBehaviour
     {
         try
         {
-            // ·ÎÄÃ ÇÃ·¹ÀÌ¾î µ¥ÀÌÅÍ °¡Á®¿À±â
+            // ï¿½ï¿½ï¿½ï¿½ ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             var localPlayerRef = roomRef.Child("Players").Child(GameRoomManager.Instance.currentPlayerId);
             var localSnapshot = await localPlayerRef.GetValueAsync();
 
@@ -61,7 +66,7 @@ public class CardPanel : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.LogError($"ÇÃ·¹ÀÌ¾î µ¥ÀÌÅÍ ·Îµå Áß ¿À·ù ¹ß»ý: {ex.Message}");
+            Debug.LogError($"ï¿½Ã·ï¿½ï¿½Ì¾ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Îµï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½: {ex.Message}");
         }
     }
 

@@ -6,7 +6,6 @@ public class MemoryGamePanelUi : Panel
 {
     public CardPanel cardPanel;
     public CardResultUi cardResultUi;
-
     private void Start()
     {
         cardPanel.gameObject.SetActive(true);
