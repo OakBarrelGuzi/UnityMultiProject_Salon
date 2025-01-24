@@ -346,6 +346,34 @@ namespace Character
             }
 #endif
         }
+
+        [ContextMenu("Auto Set Model References")]
+        private void AutoSetModelReferences()
+        {
+            foreach (var category in categories)
+            {
+                foreach (var option in category.options)
+                {
+                    if (option.model == null && !string.IsNullOrEmpty(option.name))
+                    {
+                        // 공백을 _로 치환
+                        string searchName = option.name.Replace(" ", "_");
+
+                        // 자식 오브젝트에서 해당 이름을 가진 오브젝트 찾기
+                        Transform foundChild = transform.Find(searchName);
+                        if (foundChild != null)
+                        {
+                            option.model = foundChild.gameObject;
+                            Debug.Log($"모델 참조 설정 완료: {option.name} -> {foundChild.name}");
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"모델을 찾을 수 없습니다: {searchName}");
+                        }
+                    }
+                }
+            }
+        }
     }
 
     [Serializable]
