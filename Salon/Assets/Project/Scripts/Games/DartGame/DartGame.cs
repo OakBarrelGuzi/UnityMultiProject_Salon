@@ -455,7 +455,7 @@ namespace Salon.DartGame
 
             var UserUID = FirebaseManager.Instance.CurrentUserUID;
 
-            var currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("bestDartScore");
+            var currentUserRef = FirebaseManager.Instance.DbReference.Child("Users").Child(UserUID).Child("BestDartScore");
 
             try
             {
@@ -491,8 +491,8 @@ namespace Salon.DartGame
             }
             else
             {
-                UIManager.Instance.CloseAllPanels();
-                ScenesManager.Instance.ChanageScene("LobbyScene");
+                gameUi.dartResultPanel.gameObject.SetActive(true);
+                gameUi.dartResultPanel.Textset(myTopSocre, totalScore);
             }
         }
 

@@ -12,6 +12,13 @@ namespace Salon.DartGame
         public TextMeshProUGUI bestScoreText;
         public TextMeshProUGUI scoreText;
 
+        public Image recordImage;
+
+        public TextMeshProUGUI newRecordText;
+
+        public Sprite[] recordsprite;
+
+        public ParticleSystem recordParticle;
         public void OnPointerClick(PointerEventData eventData)
         {
             gameObject.SetActive(false);
@@ -21,14 +28,21 @@ namespace Salon.DartGame
 
         public void Textset(int score)
         {
+            recordParticle.gameObject.SetActive(true);
+            recordParticle.Play();
             bestScoreText.text = score.ToString();
             scoreText.text = score.ToString();
+            newRecordText.text = "NEW RECORD";
+            recordImage.sprite = recordsprite[0];
 
         }
         public void Textset(int bestscore, int score)
         {
+            recordParticle.gameObject.SetActive(false);
             bestScoreText.text = bestscore.ToString();
-            scoreText.text = scoreText.ToString();
+            scoreText.text = score.ToString();
+            newRecordText.text = "";
+            recordImage.sprite = recordsprite[1];
         }
     }
 }
