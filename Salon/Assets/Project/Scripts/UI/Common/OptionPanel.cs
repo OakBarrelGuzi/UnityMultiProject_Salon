@@ -5,9 +5,6 @@ using Salon.Firebase;
 public class OptionPanel : Panel
 {
     [SerializeField] private Button closeButton;
-    [SerializeField] private Button soundButton;
-    [SerializeField] private Button bgmButton;
-    [SerializeField] private Button saveButton;
     [SerializeField] private Button signOutButton;
     public override void Initialize()
     {
