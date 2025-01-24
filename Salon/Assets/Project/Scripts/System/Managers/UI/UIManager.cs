@@ -124,7 +124,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
         }
         else
         {
-            Debug.LogError($"기본 언어 파일을 로드하는데 실패했습니다: {DefaultLangFile}");
+            return;
         }
     }
 
