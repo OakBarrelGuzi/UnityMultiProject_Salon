@@ -39,6 +39,7 @@ public class OptionPanel : Panel
     public void OnSignOut()
     {
         UIManager.Instance.CloseAllPanels();
+        UIManager.Instance.OpenPanel(PanelType.MainDisplay);
         UIManager.Instance.OpenPanel(PanelType.SignIn);
         FirebaseManager.Instance.SignOut();
     }

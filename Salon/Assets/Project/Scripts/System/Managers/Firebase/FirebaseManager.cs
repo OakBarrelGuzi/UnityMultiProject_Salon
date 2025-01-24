@@ -948,15 +948,13 @@ namespace Salon.Firebase
 
             try
             {
-                // 현재 사용자의 프로필 업데이트
-                var profile = new UserProfile { DisplayName = newUsername };
+                string uniqueDisplayName = await GenerateUniqueTagAsync(newUsername);
+                var profile = new UserProfile { DisplayName = uniqueDisplayName };
                 await currentUser.UpdateUserProfileAsync(profile);
 
-                // 데이터베이스의 사용자 데이터 업데이트
                 var userRef = dbReference.Child("Users").Child(currentUserUID);
-                await userRef.Child("DisplayName").SetValueAsync(newUsername);
+                await userRef.Child("DisplayName").SetValueAsync(uniqueDisplayName);
 
-                // 현재 인스턴스의 DisplayName 업데이트
                 CurrnetUserDisplayName = newUsername;
 
                 Debug.Log($"[FirebaseManager] 사용자 이름이 성공적으로 업데이트되었습니다: {newUsername}");
