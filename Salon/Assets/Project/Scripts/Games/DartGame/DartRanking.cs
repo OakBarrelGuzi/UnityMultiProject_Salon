@@ -6,46 +6,69 @@ using UnityEngine;
 using Salon.Firebase;
 using Salon.Firebase.Database;
 using System.Linq;
+using UnityEngine.UI;
 
-public class DartRanking : MonoBehaviour
+public class DartRanking : Panel
 {
     [SerializeField] private TextMeshProUGUI[] rankerIdText;
     [SerializeField] private TextMeshProUGUI[] rankerScoreText;
     [SerializeField] private TextMeshProUGUI playerRank;
     [SerializeField] private TextMeshProUGUI playerIdText;
     [SerializeField] private TextMeshProUGUI playerScoreText;
+    [SerializeField] private Button closeButton;
 
     private DatabaseReference dbRef;
-    void Start()
+
+    private void Awake()
     {
-        dbRef = FirebaseDatabase.DefaultInstance.RootReference.Child("Users");
+        dbRef = FirebaseDatabase.DefaultInstance.RootReference;
+    }
+
+    public override void Open()
+    {
+        base.Open();
+        closeButton.onClick.AddListener(CloseButtonClick);
         LoadRankingData();
     }
+
+    public override void Close()
+    {
+        closeButton.onClick.RemoveAllListeners();
+        base.Close();
+    }
+
+    private void CloseButtonClick()
+    {
+        UIManager.Instance.ClosePanel(PanelType.DartRanking);
+        UIManager.Instance.OpenPanel(PanelType.DartGame);
+    }
+
     private async void LoadRankingData()
     {
         try
         {
-            var snapshot = await dbRef.GetValueAsync();
+            var snapshot = await dbRef.Child("Users").GetValueAsync();
 
             if (snapshot.Exists)
             {
-                //¸ðµç À¯Àú ÀúÀå
+                //ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 List<RankingData> userList = new List<RankingData>();
 
                 foreach (var child in snapshot.Children)
                 {
                     string userId = child.Key;
                     var data = JsonUtility.FromJson<UserData>(child.GetRawJsonValue());
-                    userList.Add(new RankingData() { 
+                    userList.Add(new RankingData()
+                    {
                         DisplayName = data.DisplayName,
                         BestDartScore = data.BestDartScore
                     });
                 }
 
-                //Á¡¼ö ±âÁØ ³»¸²Â÷¼ø Á¤·Ä
+                //ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
                 userList = userList.OrderByDescending(user => user.BestDartScore).ToList();
 
-                //·©Å· UI¿¡ »óÀ§ 5¸í Ç¥½Ã
+                //ï¿½ï¿½Å· UIï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ 5ï¿½ï¿½ Ç¥ï¿½ï¿½
                 DisplayTopRanking(userList);
 
                 string currentUserId = FirebaseManager.Instance.CurrentUserUID;
@@ -54,12 +77,12 @@ public class DartRanking : MonoBehaviour
             }
             else
             {
-                Debug.Log("·©Å· µ¥ÀÌÅÍ¸¦ °¡Á®¿Ã ¼ö ¾ø½À´Ï´Ù.");
+                Debug.Log("ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
             }
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"·©Å· µ¥ÀÌÅÍ¸¦ °¡Á®¿À´Â Áß ¿À·ù ¹ß»ý: {ex.Message}");
+            Debug.LogError($"ï¿½ï¿½Å· ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ß»ï¿½: {ex.Message}");
         }
     }
     private void DisplayTopRanking(List<RankingData> userList)

@@ -20,7 +20,8 @@ public enum PanelType
     Emoji,
     Animation,
     Inventory,
-    Shop
+    Shop,
+    DartRanking
 }
 public enum InviteStatus
 {

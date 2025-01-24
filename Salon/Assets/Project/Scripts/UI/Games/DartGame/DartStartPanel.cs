@@ -19,7 +19,7 @@ public class DartStartPanel : Panel
     public override void Initialize()
     {
         startButton.onClick.AddListener(StartButtonClick);
-        //rankingButton.onClick.AddListener();
+        rankingButton.onClick.AddListener(RankingButtonClick);
         closeButton.onClick.AddListener(Close);
     }
 
@@ -28,12 +28,18 @@ public class DartStartPanel : Panel
         UIManager.Instance.ClosePanel(PanelType.DartGame);
         ScenesManager.Instance.ChanageScene("Jindarts");
     }
+    private void RankingButtonClick()
+    {
+        UIManager.Instance.ClosePanel(PanelType.DartGame);
+        UIManager.Instance.OpenPanel(PanelType.DartRanking);
+    }
 
     public override void Close()
     {
         startButton.onClick.RemoveAllListeners();
-        //rankingButton.onClick.RemoveAllListeners();
+        rankingButton.onClick.RemoveAllListeners();
         closeButton.onClick.RemoveAllListeners();
         base.Close();
     }
+
 }
