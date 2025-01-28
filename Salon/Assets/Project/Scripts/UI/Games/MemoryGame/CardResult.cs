@@ -12,7 +12,8 @@ public class CardResultUi : MonoBehaviour
     public TextMeshProUGUI remotePlayerScore;
     public TextMeshProUGUI localPlayerName;
     public TextMeshProUGUI remotePlayerName;
-    public TextMeshProUGUI MyGold;
+    public TextMeshProUGUI myGoldText;
+    public TextMeshProUGUI getGoldText;
     public Button ExitButton;
 
     private void Start()

@@ -286,10 +286,12 @@ public class MemoryGameManager : MonoBehaviour
         memoryGamePanelUi.cardResultUi.localPlayerName.text = localName;
         memoryGamePanelUi.cardResultUi.remotePlayerScore.text = remoteScore.ToString();
         memoryGamePanelUi.cardResultUi.remotePlayerName.text = remoteName;
-        memoryGamePanelUi.cardResultUi.MyGold.text = this.myGold.ToString();
+        memoryGamePanelUi.cardResultUi.myGoldText.text = this.myGold.ToString();
+        memoryGamePanelUi.cardResultUi.getGoldText.text = "0";
 
         if (localScore > remoteScore)
         {
+            memoryGamePanelUi.cardResultUi.getGoldText.text = "20";
             MyGoldWrite(20);
         }
         memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
