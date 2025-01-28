@@ -274,7 +274,7 @@ public class MemoryGameManager : MonoBehaviour
         }
         return true;
     }
-    private void GameEnd()
+    private async void GameEnd()
     {
         memoryGamePanelUi.cardResultUi.gameObject.SetActive(true);
         int localScore = int.Parse(memoryGamePanelUi.cardPanel.localPlayerScore.text);
@@ -293,6 +293,24 @@ public class MemoryGameManager : MonoBehaviour
             MyGoldWrite(20);
         }
         memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
+
+        // 게임 종료 시 방 삭제
+        if (await IsHost())
+        {
+            try
+            {
+                await GameRoomManager.Instance.DeleteRoom(
+                    GameRoomManager.Instance.currentChannelId,
+                    GameRoomManager.Instance.currentRoomId,
+                    GameRoomManager.Instance.currentPlayerId
+                );
+                Debug.Log("게임 종료 후 방 삭제 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"게임 종료 시 방 삭제 실패: {ex.Message}");
+            }
+        }
     }
     private IEnumerator CardCheckRoutine()
     {
