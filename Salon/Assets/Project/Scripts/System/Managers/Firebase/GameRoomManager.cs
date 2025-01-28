@@ -19,10 +19,6 @@ namespace Salon.Firebase
         public string currentChannelId;
         public string currentPlayerId;
 
-        private async void Start()
-        {
-            await Initialize();
-        }
         public async Task Initialize()
         {
             dbReference = await GetDbReference();
@@ -55,33 +51,81 @@ namespace Salon.Firebase
         /// </summary>
         public async Task JoinOrCreateRandomRoom(string channelId, string playerInfo)
         {
-            currentChannelId = channelId;
-            currentPlayerId = playerInfo;
-
-            // 1. 방 목록 가져오기
-            var roomList = await GetRoomList(channelId);
-            UIManager.Instance.OpenPanel(PanelType.PartyRoom);
-            roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
-            // 2. 빈 방 찾기
-            foreach (string roomId in roomList)
+            try
             {
-                var roomData = await GetRoomData(channelId, roomId);
-                if (roomData != null && roomData.Players.Count < 2 && roomData.IsActive)
+                if (string.IsNullOrEmpty(channelId) || string.IsNullOrEmpty(playerInfo))
                 {
-                    await JoinRoom(channelId, roomId, playerInfo);
+                    Debug.LogError("[GameRoomManager] 채널 ID 또는 플레이어 정보가 없습니다.");
                     return;
                 }
-            }
 
-            // 3. 빈 방이 없으면 새 방 생성
-            string newRoomId = await CreateRoom(channelId, playerInfo);
-            if (!string.IsNullOrEmpty(newRoomId))
-            {
-                await SetHostAsFirstTurn(channelId, newRoomId, playerInfo);
-                Debug.Log($"[GameRoomManager] 새로운 방 생성 및 참가: {newRoomId}");
+                currentChannelId = channelId;
+                currentPlayerId = playerInfo;
+
+                Debug.Log($"[GameRoomManager] 방 참가/생성 시도 - 채널: {channelId}, 플레이어: {playerInfo}");
+
+                // 1. 방 목록 가져오기
+                var roomList = await GetRoomList(channelId);
+                UIManager.Instance.OpenPanel(PanelType.PartyRoom);
+                roomCreationUI = UIManager.Instance.GetComponentInChildren<RoomCreationUI>();
+
+                // 2. 빈 방 찾기 (활성화된 방 중에서)
+                foreach (string roomId in roomList)
+                {
+                    try
+                    {
+                        var roomData = await GetRoomData(channelId, roomId);
+                        if (roomData == null) continue;
+
+                        // 방이 유효한지 확인
+                        if (!roomData.IsActive)
+                        {
+                            Debug.Log($"[GameRoomManager] 방 {roomId}이 비활성 상태입니다.");
+                            continue;
+                        }
+
+                        // 플레이어가 이미 방에 있는지 확인
+                        if (roomData.Players.ContainsKey(playerInfo))
+                        {
+                            Debug.Log($"[GameRoomManager] 플레이어 {playerInfo}는 이미 방 {roomId}에 있습니다.");
+                            continue;
+                        }
+
+                        // 방이 가득 찼는지 확인
+                        if (roomData.Players.Count >= 2)
+                        {
+                            Debug.Log($"[GameRoomManager] 방 {roomId}이 가득 찼습니다.");
+                            continue;
+                        }
+
+                        Debug.Log($"[GameRoomManager] 참가 가능한 방 발견: {roomId}");
+                        await JoinRoom(channelId, roomId, playerInfo);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[GameRoomManager] 방 {roomId} 확인 중 오류 발생: {ex.Message}");
+                        continue;
+                    }
+                }
+
+                // 3. 참가 가능한 방이 없으면 새 방 생성
+                Debug.Log("[GameRoomManager] 참가 가능한 방이 없어 새로운 방을 생성합니다.");
+                string newRoomId = await CreateRoom(channelId, playerInfo);
+                if (!string.IsNullOrEmpty(newRoomId))
+                {
+                    await SetHostAsFirstTurn(channelId, newRoomId, playerInfo);
+                    Debug.Log($"[GameRoomManager] 새로운 방 생성 및 참가 완료: {newRoomId}");
+                }
+                else
+                {
+                    Debug.LogError("[GameRoomManager] 방 생성 실패");
+                }
             }
-            else
-                Debug.LogError("[GameRoomManager] 방 생성 실패");
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GameRoomManager] JoinOrCreateRandomRoom 실행 중 오류 발생: {ex.Message}\n{ex.StackTrace}");
+            }
         }
 
         /// <summary>
@@ -286,4 +330,3 @@ namespace Salon.Firebase
         }
     }
 }
- 
