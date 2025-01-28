@@ -13,6 +13,7 @@ using System.Runtime.CompilerServices;
 using Salon.Character;
 using Character;
 using System.IO;
+using System.Linq;
 
 public class MemoryGameManager : MonoBehaviour
 {
@@ -21,6 +22,8 @@ public class MemoryGameManager : MonoBehaviour
 
     private MemoryGamePanelUi memoryGamePanelUi;
     public bool isCardFull { get; private set; } = false;
+    private bool isGameStarted = false;
+    private bool isGameEnded = false;
 
     [SerializeField]
     private Transform[] cardSpawnPos;
@@ -52,7 +55,7 @@ public class MemoryGameManager : MonoBehaviour
     public RemotePlayer remotePlayer;
 
     private float turnStartTime;
-    private void Start()
+    private async void Start()
     {
         roomId = GameRoomManager.Instance.currentRoomId;
         roomRef = GameRoomManager.Instance.roomRef;
@@ -61,14 +64,7 @@ public class MemoryGameManager : MonoBehaviour
 
         turnStartTime = Time.time;
 
-        CardRandomSet();
-        MyGoldLoad();
-
-        roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
-        roomRef.Child("Board").ValueChanged += OnBoardChanged;
-        roomRef.Child("Players").ValueChanged += OnPlayersDataChanged;
-
-        GetCustomizationData();
+        await InitializeGame();
 
         UIManager.Instance.CloseAllPanels();
         UIManager.Instance.OpenPanel(PanelType.MemoryGame);
@@ -77,7 +73,51 @@ public class MemoryGameManager : MonoBehaviour
 
         turnTimeUiRoutine = StartCoroutine(TurnCountRoutine());
     }
-    private async void MyGoldLoad()
+
+    private async Task InitializeGame()
+    {
+        try
+        {
+            // 게임 상태 초기화
+            isGameStarted = false;
+            isGameEnded = false;
+            isCardFull = false;
+            isAnimating = false;
+            cardnum = 0;
+            tableCardList.Clear();
+            board.Clear();
+            openCardList.Clear();
+
+            // Firebase 게임 상태 초기화
+            if (await IsHost())
+            {
+                await roomRef.Child("GameState").Child("IsEnded").RemoveValueAsync();
+                await roomRef.Child("Board").RemoveValueAsync();
+                await roomRef.Child("Players").Child(GameRoomManager.Instance.currentPlayerId).Child("Score").SetValueAsync(0);
+                var otherPlayer = (await roomRef.Child("Players").GetValueAsync()).Children.First(p => p.Key != GameRoomManager.Instance.currentPlayerId);
+                await roomRef.Child("Players").Child(otherPlayer.Key).Child("Score").SetValueAsync(0);
+            }
+
+            await MyGoldLoad();
+            await GetCustomizationData();
+            CardRandomSet();
+
+            // Firebase 이벤트 핸들러 등록
+            roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
+            roomRef.Child("Board").ValueChanged += OnBoardChanged;
+            roomRef.Child("Players").ValueChanged += OnPlayersDataChanged;
+
+            // 모든 초기화가 완료되면 게임 시작
+            isGameStarted = true;
+            Debug.Log("게임 초기화 완료 및 시작");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"게임 초기화 중 오류 발생: {ex.Message}");
+        }
+    }
+
+    private async Task MyGoldLoad()
     {
         try
         {
@@ -97,13 +137,20 @@ public class MemoryGameManager : MonoBehaviour
             Debug.LogError($"점수 가져오기 실패: {e.Message}");
         }
     }
-    public async void MyGoldWrite(int Gold)
+    public async Task MyGoldWrite(int Gold)
     {
-        myGold += Gold;
-        await currentUserRef.SetValueAsync(myGold);
+        try
+        {
+            myGold += Gold;
+            await currentUserRef.SetValueAsync(myGold);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"골드 업데이트 실패: {ex.Message}");
+        }
     }
 
-    public async void GetCustomizationData()
+    private async Task GetCustomizationData()
     {
         try
         {
@@ -158,10 +205,12 @@ public class MemoryGameManager : MonoBehaviour
     }
     private void OnDestroy()
     {
-        // Firebase 리스너 해제
-        roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
-        roomRef.Child("Board").ValueChanged -= OnBoardChanged;
-        roomRef.Child("Players").ValueChanged -= OnPlayersDataChanged;
+        if (roomRef != null)
+        {
+            roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
+            roomRef.Child("Board").ValueChanged -= OnBoardChanged;
+            roomRef.Child("Players").ValueChanged -= OnPlayersDataChanged;
+        }
     }
 
     private void Update()
@@ -276,41 +325,86 @@ public class MemoryGameManager : MonoBehaviour
     }
     private async void GameEnd()
     {
-        memoryGamePanelUi.cardResultUi.gameObject.SetActive(true);
-        int localScore = int.Parse(memoryGamePanelUi.cardPanel.localPlayerScore.text);
-        int remoteScore = int.Parse(memoryGamePanelUi.cardPanel.remotePlayerScore.text);
-        string localName = memoryGamePanelUi.cardPanel.localPlayerName.text;
-        string remoteName = memoryGamePanelUi.cardPanel.remotePlayerName.text;
-
-        memoryGamePanelUi.cardResultUi.localPlayerScore.text = localScore.ToString();
-        memoryGamePanelUi.cardResultUi.localPlayerName.text = localName;
-        memoryGamePanelUi.cardResultUi.remotePlayerScore.text = remoteScore.ToString();
-        memoryGamePanelUi.cardResultUi.remotePlayerName.text = remoteName;
-        memoryGamePanelUi.cardResultUi.myGoldText.text = this.myGold.ToString();
-        memoryGamePanelUi.cardResultUi.getGoldText.text = "0";
-
-        if (localScore > remoteScore)
-        {
-            memoryGamePanelUi.cardResultUi.getGoldText.text = "20";
-            MyGoldWrite(20);
-        }
-        memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
-
-        // 게임 종료 시 방 삭제
-        if (await IsHost())
+        if (isGameEnded)
         {
             try
             {
-                await GameRoomManager.Instance.DeleteRoom(
-                    GameRoomManager.Instance.currentChannelId,
-                    GameRoomManager.Instance.currentRoomId,
-                    GameRoomManager.Instance.currentPlayerId
-                );
-                Debug.Log("게임 종료 후 방 삭제 완료");
+                // 게임 종료 상태를 Firebase에 기록
+                await roomRef.Child("GameState").Child("IsEnded").SetValueAsync(true);
+
+                memoryGamePanelUi.cardResultUi.gameObject.SetActive(true);
+                int localScore = int.Parse(memoryGamePanelUi.cardPanel.localPlayerScore.text);
+                int remoteScore = int.Parse(memoryGamePanelUi.cardPanel.remotePlayerScore.text);
+                string localName = memoryGamePanelUi.cardPanel.localPlayerName.text;
+                string remoteName = memoryGamePanelUi.cardPanel.remotePlayerName.text;
+
+                memoryGamePanelUi.cardResultUi.localPlayerScore.text = localScore.ToString();
+                memoryGamePanelUi.cardResultUi.localPlayerName.text = localName;
+                memoryGamePanelUi.cardResultUi.remotePlayerScore.text = remoteScore.ToString();
+                memoryGamePanelUi.cardResultUi.remotePlayerName.text = remoteName;
+                memoryGamePanelUi.cardResultUi.myGoldText.text = this.myGold.ToString();
+                memoryGamePanelUi.cardResultUi.getGoldText.text = "0";
+
+                if (localScore > remoteScore)
+                {
+                    memoryGamePanelUi.cardResultUi.getGoldText.text = "20";
+                    await MyGoldWrite(20);
+                }
+                memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
+
+                // 리소스 정리
+                if (turnTimeUiRoutine != null)
+                {
+                    StopCoroutine(turnTimeUiRoutine);
+                    turnTimeUiRoutine = null;
+                }
+
+                // Firebase 이벤트 핸들러 해제
+                if (roomRef != null)
+                {
+                    roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged -= OnTurnChanged;
+                    roomRef.Child("Board").ValueChanged -= OnBoardChanged;
+                    roomRef.Child("Players").ValueChanged -= OnPlayersDataChanged;
+                }
+
+                // 호스트만 방 삭제 수행
+                if (await IsHost())
+                {
+                    try
+                    {
+                        // 방 데이터 완전 삭제
+                        var gameRoomsRef = FirebaseManager.Instance.DbReference
+                            .Child("Channels")
+                            .Child(GameRoomManager.Instance.currentChannelId)
+                            .Child("GameRooms")
+                            .Child(GameRoomManager.Instance.currentRoomId);
+
+                        await gameRoomsRef.RemoveValueAsync();
+                        Debug.Log("게임 종료 후 방 삭제 완료");
+
+                        // 호스트는 방 삭제 후 씬 전환
+                        await Task.Delay(3000);
+                        UIManager.Instance.CloseAllPanels();
+                        ScenesManager.Instance.ChanageScene("LobbyScene");
+                        UIManager.Instance.OpenPanel(PanelType.Lobby);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"게임 종료 시 방 삭제 실패: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    // 게스트는 바로 씬 전환
+                    await Task.Delay(3000);
+                    UIManager.Instance.CloseAllPanels();
+                    ScenesManager.Instance.ChanageScene("LobbyScene");
+                    UIManager.Instance.OpenPanel(PanelType.Lobby);
+                }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"게임 종료 시 방 삭제 실패: {ex.Message}");
+                Debug.LogError($"게임 종료 처리 중 오류 발생: {ex.Message}");
             }
         }
     }
@@ -331,8 +425,8 @@ public class MemoryGameManager : MonoBehaviour
             isCardFull = false;
 
             Task updateTask = UpdatePlayerScoreAsync(GameRoomManager.Instance.currentPlayerId, 1);
-            MyGoldWrite(5);
-            yield return new WaitUntil(() => updateTask.IsCompleted);
+            Task goldTask = MyGoldWrite(5);
+            yield return new WaitUntil(() => updateTask.IsCompleted && goldTask.IsCompleted);
 
             if (AreAllCardsOpen())
             {
@@ -423,12 +517,12 @@ public class MemoryGameManager : MonoBehaviour
     }
     private void OnBoardChanged(object sender, ValueChangedEventArgs e)
     {
-        if (isAnimating || !e.Snapshot.Exists)
+        if (isAnimating || !e.Snapshot.Exists || !isGameStarted || isGameEnded)
         {
             return;
         }
 
-        if (tableCardList.Count == 0) return; // 카드가 아직 초기화되지 않은 경우 리턴
+        if (tableCardList.Count == 0) return;
 
         foreach (var child in e.Snapshot.Children)
         {
@@ -452,9 +546,9 @@ public class MemoryGameManager : MonoBehaviour
             }
         }
 
-        // 모든 카드가 초기화되었고, 보드의 카드 수가 일치할 때만 게임 종료 체크
-        if (tableCardList.Count == CARDCOUNT && board.Count == CARDCOUNT && AreAllCardsOpen())
+        if (!isGameEnded && tableCardList.Count == CARDCOUNT && board.Count == CARDCOUNT && AreAllCardsOpen())
         {
+            isGameEnded = true;
             GameEnd();
         }
     }
