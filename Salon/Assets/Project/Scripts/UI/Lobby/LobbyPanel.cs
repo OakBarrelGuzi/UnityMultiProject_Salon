@@ -17,17 +17,46 @@ public class LobbyPanel : Panel
     public TextMeshProUGUI goldText;
     public DatabaseReference goldRef;
 
-    private void OnEnable()
+    public override void Open()
     {
+        base.Open();
         Initialize();
+    }
+
+    public override void Close()
+    {
+        base.Close();
     }
 
     public override void Initialize()
     {
+        RemoveAllListeners();
         chatPopUp.Initialize();
         ChatManager.Instance.OnReceiveChat += HandleChat;
-        friendsButton.onClick.AddListener(OnFriendsButtonClick);
+        SetupButtonListeners();
         UpdateGoldText();
+
+        goldRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Gold");
+        goldRef.ValueChanged += OnGoldChanged;
+    }
+
+    private void RemoveAllListeners()
+    {
+        friendsButton.onClick.RemoveAllListeners();
+        inventoryButton.onClick.RemoveAllListeners();
+        animButton.onClick.RemoveAllListeners();
+        emojiButton.onClick.RemoveAllListeners();
+        if (goldRef != null)
+        {
+            goldRef.ValueChanged -= OnGoldChanged;
+        }
+        ChatManager.Instance.OnReceiveChat -= HandleChat;
+    }
+
+    private void SetupButtonListeners()
+    {
+        friendsButton.onClick.AddListener(OnFriendsButtonClick);
+
         animButton.onClick.AddListener(() =>
         {
             var panel = UIManager.Instance.GetPanelByType(PanelType.Animation);
@@ -41,6 +70,7 @@ public class LobbyPanel : Panel
                 UIManager.Instance.OpenPanel(PanelType.Animation);
             }
         });
+
         emojiButton.onClick.AddListener(() =>
         {
             var panel = UIManager.Instance.GetPanelByType(PanelType.Emoji);
@@ -54,6 +84,7 @@ public class LobbyPanel : Panel
                 UIManager.Instance.OpenPanel(PanelType.Emoji);
             }
         });
+
         inventoryButton.onClick.AddListener(() =>
         {
             bool isOpen = UIManager.Instance.GetPanelByType(PanelType.Inventory)?.isOpen ?? false;
@@ -64,9 +95,6 @@ public class LobbyPanel : Panel
                 UIManager.Instance.OpenPanel(PanelType.Inventory);
             }
         });
-
-        goldRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Gold");
-        goldRef.ValueChanged += OnGoldChanged;
     }
 
     private void OnGoldChanged(object sender, ValueChangedEventArgs e)
@@ -85,14 +113,6 @@ public class LobbyPanel : Panel
     private void OnFriendsButtonClick()
     {
         UIManager.Instance.OpenPanel(PanelType.Friends);
-    }
-
-    public override void Close()
-    {
-        ChatManager.Instance.OnReceiveChat -= HandleChat;
-        chatPopUp.ClearChat();
-        goldRef.ValueChanged -= OnGoldChanged;
-        base.Close();
     }
 
     private void HandleChat(string sender, string message, Sprite emoji)

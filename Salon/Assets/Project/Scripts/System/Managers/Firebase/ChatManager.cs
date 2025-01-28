@@ -104,7 +104,10 @@ namespace Salon.Firebase
                 currentMessagesQuery.ChildAdded += HandleMessageReceived;
                 Debug.Log($"[ChatManager] 채널 {channelName}의 메시지 구독 시작 (Timestamp: {lastMessageTimestamp})");
 
-                await SendChat($"{FirebaseManager.Instance.GetCurrentDisplayName()}님이 입장하셨습니다.", channelName, "System");
+                string displayName = DisplayNameUtils.ToDisplayFormat(FirebaseManager.Instance.GetCurrentDisplayName());
+                string finalName = DisplayNameUtils.RemoveTag(displayName);
+
+                await SendChat($"{finalName}님이 입장하셨습니다.", channelName, "System");
             }
             catch (Exception ex)
             {
@@ -158,7 +161,10 @@ namespace Salon.Firebase
                     // 2. 퇴장 메시지 전송
                     try
                     {
-                        await SendChat($"{FirebaseManager.Instance.GetCurrentDisplayName()}님이 퇴장하셨습니다.", channelName, "System");
+                        string displayName = DisplayNameUtils.ToDisplayFormat(FirebaseManager.Instance.GetCurrentDisplayName());
+                        string finalName = DisplayNameUtils.RemoveTag(displayName);
+
+                        await SendChat($"{finalName}님이 퇴장하셨습니다.", channelName, "System");
                     }
                     catch (Exception ex)
                     {
@@ -213,6 +219,20 @@ namespace Salon.Firebase
         private void OnDestroy()
         {
             StopListeningToMessages();
+        }
+
+        public void RemoveAllListeners()
+        {
+            try
+            {
+                StopListeningToMessages();
+                OnReceiveChat = null;
+                Debug.Log("[ChatManager] 모든 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ChatManager] 리스너 제거 중 오류 발생: {ex.Message}");
+            }
         }
     }
 }

@@ -438,6 +438,20 @@ namespace Salon.Firebase
 
         #endregion
 
+        public void RemoveAllListeners()
+        {
+            try
+            {
+                StopListening();
+                OnFriendRequestReceived.RemoveAllListeners();
+                Debug.Log("[FriendManager] 모든 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[FriendManager] 리스너 제거 중 오류 발생: {ex.Message}");
+            }
+        }
+
         private void OnApplicationQuit()
         {
             StopListening();

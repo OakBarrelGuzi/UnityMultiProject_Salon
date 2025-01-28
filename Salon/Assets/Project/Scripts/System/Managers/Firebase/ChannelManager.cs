@@ -229,14 +229,14 @@ namespace Salon.Firebase
 
                 await SetupPlayerData();
 
+                await ItemManager.Instance.Initialize();
+
                 UIManager.Instance.OpenPanel(PanelType.Lobby);
 
                 await Task.WhenAll(
                     ChatManager.Instance.StartListeningToMessages(channelName),
                     RoomManager.Instance.JoinChannel(channelName)
                 );
-
-                await ItemManager.Instance.Initialize();
 
                 Debug.Log($"[ChannelManager] {channelName} 채널 입장 완료");
             }
@@ -476,6 +476,25 @@ namespace Salon.Firebase
             {
                 Debug.LogError($"[ChannelManager] 플레이어 추가 실패: {ex.Message}");
                 throw;
+            }
+        }
+
+        public void RemoveAllListeners()
+        {
+            try
+            {
+                if (connectedRef != null && disconnectHandler != null)
+                {
+                    connectedRef.ValueChanged -= disconnectHandler;
+                    connectedRef = null;
+                }
+
+                ClearChannelReferences();
+                Debug.Log("[ChannelManager] 모든 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[ChannelManager] 리스너 제거 중 오류 발생: {ex.Message}");
             }
         }
     }

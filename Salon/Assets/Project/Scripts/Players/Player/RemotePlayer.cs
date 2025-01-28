@@ -1,5 +1,8 @@
 using UnityEngine;
 using Salon.Firebase.Database;
+using Character;
+using System.Collections.Generic;
+using UnityEngine.SceneManagement;
 
 namespace Salon.Character
 {
@@ -10,6 +13,7 @@ namespace Salon.Character
         private Vector3 targetDirection;
         private Vector3 currentVelocity;
         private Vector3 previousPosition;
+        private CharacterCustomizationManager customizationManager;
 
         [SerializeField] private float positionSmoothTime = 0.15f;
         [SerializeField] private float maxSpeed = 20f;
@@ -21,22 +25,45 @@ namespace Salon.Character
 
         public override void Initialize(string displayName)
         {
+
             base.Initialize(displayName);
             animator = GetComponent<Animator>();
             animController = GetComponent<AnimController>();
+
+            customizationManager = GetComponent<CharacterCustomizationManager>();
+            if (customizationManager == null)
+            {
+                customizationManager = gameObject.AddComponent<CharacterCustomizationManager>();
+            }
+
             if (animController == null)
             {
                 Debug.LogError($"[RemotePlayer] AnimController를 찾을 수 없습니다: {displayName}");
             }
+
             targetPosition = transform.position;
             previousPosition = transform.position;
             targetDirection = transform.forward;
             currentVelocity = Vector3.zero;
         }
 
+        public void UpdateCustomization(Dictionary<string, string> customizationData)
+        {
+            if (customizationManager != null && customizationData != null)
+            {
+                customizationManager.ApplyCustomizationData(customizationData);
+                Debug.Log($"[RemotePlayer] {displayName}의 커스터마이제이션 업데이트 완료");
+            }
+            else
+            {
+                customizationManager.SetDefault();
+            }
+        }
+
         private void Update()
         {
-            if (isTesting) return;
+            if (SceneManager.GetActiveScene().name != "LobbyScene")
+                return;
 
             previousPosition = transform.position;
 
@@ -78,9 +105,25 @@ namespace Salon.Character
 
         public void PlayAnimation(string animName)
         {
+            if (string.IsNullOrEmpty(animName)) return;
+
             if (animController != null)
             {
                 animController.SetAnime(animName);
+            }
+            else
+            {
+                Debug.LogError($"[RemotePlayer] {displayName}의 AnimController가 null입니다.");
+            }
+        }
+
+        public void PlayEmoji(string emojiName)
+        {
+            if (string.IsNullOrEmpty(emojiName)) return;
+
+            if (animController != null)
+            {
+                animController.SetEmoji(emojiName);
             }
             else
             {

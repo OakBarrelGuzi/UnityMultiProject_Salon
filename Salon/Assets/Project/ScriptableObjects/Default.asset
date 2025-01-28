@@ -1,0 +1,797 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2eaa72f770ee2ae4dbf24e1cf872e35d, type: 3}
+  m_Name: Default
+  m_EditorClassIdentifier: 
+  categories:
+  - name: HAIR
+    id: HAIR
+    description: HAIR
+    options:
+    - name: M C3FC EmptyHair
+      id: HAIR_1
+      description: M C3FC EmptyHair
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 01 1
+      id: HAIR_2
+      description: M C3FC HAIR 01 1
+      icon: {fileID: 21300000, guid: 0006d9aca376e564cac71d194df803e9, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 02 1
+      id: HAIR_3
+      description: M C3FC HAIR 02 1
+      icon: {fileID: 21300000, guid: e7d0888828751764f81fcbb7a348f9ea, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 03 1
+      id: HAIR_4
+      description: M C3FC HAIR 03 1
+      icon: {fileID: 21300000, guid: f6337cccd2eeca043bd146ba610e1dbb, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 04 1
+      id: HAIR_5
+      description: M C3FC HAIR 04 1
+      icon: {fileID: 21300000, guid: ad3929288ca8171498c312287883197f, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 01 2
+      id: HAIR_6
+      description: M C3FC HAIR 01 2
+      icon: {fileID: 21300000, guid: 2b8cd0480c95c2b4898dfbe923142646, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 02 2
+      id: HAIR_7
+      description: M C3FC HAIR 02 2
+      icon: {fileID: 21300000, guid: f8e78623bbdadfe45ae8239564dfe99a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 03 2
+      id: HAIR_8
+      description: M C3FC HAIR 03 2
+      icon: {fileID: 21300000, guid: 1df6d448b7f5594498a6a3abfdc69c60, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 04 2
+      id: HAIR_9
+      description: M C3FC HAIR 04 2
+      icon: {fileID: 21300000, guid: b510039e387731940a7f38a17395e00b, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 01 3
+      id: HAIR_10
+      description: M C3FC HAIR 01 3
+      icon: {fileID: 21300000, guid: 18983df0c86805745b65804ba7304fbd, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 02 3
+      id: HAIR_11
+      description: M C3FC HAIR 02 3
+      icon: {fileID: 21300000, guid: ea7d30e7cbb15fa448986e3c39ff409f, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 03 3
+      id: HAIR_12
+      description: M C3FC HAIR 03 3
+      icon: {fileID: 21300000, guid: 58b59921055f0f64397e2ca389dfac29, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAIR 04 3
+      id: HAIR_13
+      description: M C3FC HAIR 04 3
+      icon: {fileID: 21300000, guid: 48b4e34a9bbc25044a40016f30d3e7d6, type: 3}
+      model: {fileID: 0}
+  - name: BEARD
+    id: BEARD
+    description: BEARD
+    options:
+    - name: M C3FC EmptyBeard
+      id: BEARD_1
+      description: M C3FC EmptyBeard
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 01 1
+      id: BEARD_2
+      description: M C3FC BEARD 01 1
+      icon: {fileID: 21300000, guid: ba600c18dc8654f4e88c9729794f50ab, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 02 1
+      id: BEARD_3
+      description: M C3FC BEARD 02 1
+      icon: {fileID: 21300000, guid: 4944eee0fadf8af489af49ef0180d839, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 03 1
+      id: BEARD_4
+      description: M C3FC BEARD 03 1
+      icon: {fileID: 21300000, guid: c08bc1cc35714ae44b0ecbe82e3bd991, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 01 2
+      id: BEARD_5
+      description: M C3FC BEARD 01 2
+      icon: {fileID: 21300000, guid: f203e020b04ac944190ed1969e435509, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 02 2
+      id: BEARD_6
+      description: M C3FC BEARD 02 2
+      icon: {fileID: 21300000, guid: 70a07d633de54aa4ea0c694afe452061, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 03 2
+      id: BEARD_7
+      description: M C3FC BEARD 03 2
+      icon: {fileID: 21300000, guid: 529cff9f92192ef4ba00141ff2b1b26e, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 01 3
+      id: BEARD_8
+      description: M C3FC BEARD 01 3
+      icon: {fileID: 21300000, guid: fcd41e8557e208d42b0d7ce74a23811e, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 02 3
+      id: BEARD_9
+      description: M C3FC BEARD 02 3
+      icon: {fileID: 21300000, guid: 1e782d5514d18aa4e82ebbf7c82123f8, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC BEARD 03 3
+      id: BEARD_10
+      description: M C3FC BEARD 03 3
+      icon: {fileID: 21300000, guid: 738ea4ea696c8b44fbedd9022f75708a, type: 3}
+      model: {fileID: 0}
+  - name: BROWS
+    id: BROWS
+    description: BROWS
+    options:
+    - name: M C3FC EmptyEyebrows
+      id: BROWS_1
+      description: M C3FC EmptyEyebrows
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 01 1
+      id: BROWS_2
+      description: M C3FC EYEBROWS 01 1
+      icon: {fileID: 21300000, guid: fb411b5577c4ab8468796e06b7aa1980, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 02 1
+      id: BROWS_3
+      description: M C3FC EYEBROWS 02 1
+      icon: {fileID: 21300000, guid: e3471b288fa108d4db5cb981268a057d, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 03 1
+      id: BROWS_4
+      description: M C3FC EYEBROWS 03 1
+      icon: {fileID: 21300000, guid: ea98c0410c615e1449fc692d5f962af6, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 04 1
+      id: BROWS_5
+      description: M C3FC EYEBROWS 04 1
+      icon: {fileID: 21300000, guid: 8d347793b7a52b4439441d2f66aac2b1, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 05 1
+      id: BROWS_6
+      description: M C3FC EYEBROWS 05 1
+      icon: {fileID: 21300000, guid: 55c9066665439654aa1c2572b9c9e2d6, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 06 1
+      id: BROWS_7
+      description: M C3FC EYEBROWS 06 1
+      icon: {fileID: 21300000, guid: 89ea749061c05e94ea0a44f62836282c, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 07 1
+      id: BROWS_8
+      description: M C3FC EYEBROWS 07 1
+      icon: {fileID: 21300000, guid: bfa222f5ed3277e4bb62cb12dec8fda8, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 08 1
+      id: BROWS_9
+      description: M C3FC EYEBROWS 08 1
+      icon: {fileID: 21300000, guid: 633b04c801242844e805b4f678baeba5, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 09 1
+      id: BROWS_10
+      description: M C3FC EYEBROWS 09 1
+      icon: {fileID: 21300000, guid: 0e8a518e3e443ba49a350b1a14925203, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 10 1
+      id: BROWS_11
+      description: M C3FC EYEBROWS 10 1
+      icon: {fileID: 21300000, guid: f1df68b26fb214041b0f6ac9b4747d25, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 11 1
+      id: BROWS_12
+      description: M C3FC EYEBROWS 11 1
+      icon: {fileID: 21300000, guid: 9c2b136a78005504eb314f0bc108f7ce, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 12 1
+      id: BROWS_13
+      description: M C3FC EYEBROWS 12 1
+      icon: {fileID: 21300000, guid: 9f0c416c3a8f8c44ca529abab90a7016, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 13 1
+      id: BROWS_14
+      description: M C3FC EYEBROWS 13 1
+      icon: {fileID: 21300000, guid: bfee32bf90126bd41ae7e8ea6d7184f0, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 14 1
+      id: BROWS_15
+      description: M C3FC EYEBROWS 14 1
+      icon: {fileID: 21300000, guid: 09d3b0c72bcc39c44bb3e4768dbd8563, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 15 1
+      id: BROWS_16
+      description: M C3FC EYEBROWS 15 1
+      icon: {fileID: 21300000, guid: 5ccf2bde429ab5d489199b310707a0d9, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC EYEBROWS 16 1
+      id: BROWS_17
+      description: M C3FC EYEBROWS 16 1
+      icon: {fileID: 21300000, guid: 5df5ac9d0c35bbb4381fee74093a7ee7, type: 3}
+      model: {fileID: 0}
+  - name: HATS
+    id: HATS
+    description: HATS
+    options:
+    - name: M C3FC EmptyHats
+      id: HATS_1
+      description: M C3FC EmptyHats
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 01 1
+      id: HATS_2
+      description: M C3FC HAT 01 1
+      icon: {fileID: 21300000, guid: 7a286534fb92c0f4abe707ff36ee08a1, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 02 1
+      id: HATS_3
+      description: M C3FC HAT 02 1
+      icon: {fileID: 21300000, guid: 1cc1d5866a256864682d691d6e777a95, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 03 1
+      id: HATS_4
+      description: M C3FC HAT 03 1
+      icon: {fileID: 21300000, guid: b7df8c9a22721084d986cc7507af3630, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 04 1
+      id: HATS_5
+      description: M C3FC HAT 04 1
+      icon: {fileID: 21300000, guid: 09b1d7515ccffa545b0a7be725f2f26e, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 05 1
+      id: HATS_6
+      description: M C3FC HAT 05 1
+      icon: {fileID: 21300000, guid: ec232456b6b6c2343947cd438f97559b, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 06 1
+      id: HATS_7
+      description: M C3FC HAT 06 1
+      icon: {fileID: 21300000, guid: 23829d84d0d34384294a643a5b0cae27, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 07 1
+      id: HATS_8
+      description: M C3FC HAT 07 1
+      icon: {fileID: 21300000, guid: 5947f89738d173d4898fd2a1f71d6907, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 01 2
+      id: HATS_9
+      description: M C3FC HAT 01 2
+      icon: {fileID: 21300000, guid: 49931987bd228ab41a6796d3d58b4d13, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 02 2
+      id: HATS_10
+      description: M C3FC HAT 02 2
+      icon: {fileID: 21300000, guid: 4e4c49ae1687c494db8de7bbafc2a310, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 03 2
+      id: HATS_11
+      description: M C3FC HAT 03 2
+      icon: {fileID: 21300000, guid: d58146302ba38c646b15746f98008ae8, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 04 2
+      id: HATS_12
+      description: M C3FC HAT 04 2
+      icon: {fileID: 21300000, guid: 7ec2543a8eae0474eacd6bd35452d5ac, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 05 2
+      id: HATS_13
+      description: M C3FC HAT 05 2
+      icon: {fileID: 21300000, guid: bce83fca6b0d2f341a8817d313776cfa, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 06 2
+      id: HATS_14
+      description: M C3FC HAT 06 2
+      icon: {fileID: 21300000, guid: 321ac68af85cb7846b927fa9395edb97, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 07 2
+      id: HATS_15
+      description: M C3FC HAT 07 2
+      icon: {fileID: 21300000, guid: 099dab8ddcc543a44aa22cdfd74bc61a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 01 3
+      id: HATS_16
+      description: M C3FC HAT 01 3
+      icon: {fileID: 21300000, guid: 5e03a826d57ab8041957d46f2dc63c5d, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 02 3
+      id: HATS_17
+      description: M C3FC HAT 02 3
+      icon: {fileID: 21300000, guid: 7b6ab0e50ece4f643a4a3bafab4215f1, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 03 3
+      id: HATS_18
+      description: M C3FC HAT 03 3
+      icon: {fileID: 21300000, guid: 599fbcd2b6be35c4dbfe2145515b882a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 04 3
+      id: HATS_19
+      description: M C3FC HAT 04 3
+      icon: {fileID: 21300000, guid: 5e29e2b02060a174da8f8fb752ac72c7, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 05 3
+      id: HATS_20
+      description: M C3FC HAT 05 3
+      icon: {fileID: 21300000, guid: d48ee59995566324cbaf5291dc930cc9, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 06 3
+      id: HATS_21
+      description: M C3FC HAT 06 3
+      icon: {fileID: 21300000, guid: 08b855775c3910a4bb3de516c3fc8b2f, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAT 07 3
+      id: HATS_22
+      description: M C3FC HAT 07 3
+      icon: {fileID: 21300000, guid: 43b3eae5c8376bd41aac17b594a6427a, type: 3}
+      model: {fileID: 0}
+  - name: MASKS
+    id: MASKS
+    description: MASKS
+    options:
+    - name: M C3FC EmptyMasks
+      id: MASKS_1
+      description: M C3FC EmptyMasks
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC MASK 01 1
+      id: MASKS_2
+      description: M C3FC MASK 01 1
+      icon: {fileID: 21300000, guid: 7755eb14f840ea44f94747ad82ea3cfe, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC MASK 02 1
+      id: MASKS_3
+      description: M C3FC MASK 02 1
+      icon: {fileID: 21300000, guid: d0b40b981f4814844863b52888ac8545, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC MASK 01 2
+      id: MASKS_4
+      description: M C3FC MASK 01 2
+      icon: {fileID: 21300000, guid: 25877319d86db2749877b1275e60061b, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC MASK 02 2
+      id: MASKS_5
+      description: M C3FC MASK 02 2
+      icon: {fileID: 21300000, guid: 557ad52b729b71f4eadbfc749b8a8fd9, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC MASK 01 3
+      id: MASKS_6
+      description: M C3FC MASK 01 3
+      icon: {fileID: 21300000, guid: c869d2f74a273f949a5f3c5e18a9cbb0, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC MASK 02 3
+      id: MASKS_7
+      description: M C3FC MASK 02 3
+      icon: {fileID: 21300000, guid: 93ab8e2115bb5e8468dd4be805c539cd, type: 3}
+      model: {fileID: 0}
+  - name: HELMET
+    id: HELMET
+    description: HELMET
+    options:
+    - name: M C3FC EmptyHelmet
+      id: HELMET_1
+      description: M C3FC EmptyHelmet
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 01 1
+      id: HELMET_2
+      description: M C3FC HELMET 01 1
+      icon: {fileID: 21300000, guid: 9bbb87b43fbb56243a11cffb224a2e73, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 02 1
+      id: HELMET_3
+      description: M C3FC HELMET 02 1
+      icon: {fileID: 21300000, guid: 2f8c53a1025170346900416b618f17b1, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 03 1
+      id: HELMET_4
+      description: M C3FC HELMET 03 1
+      icon: {fileID: 21300000, guid: 4f94c149a384d114a9fe9c6182b8e240, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 01 2
+      id: HELMET_5
+      description: M C3FC HELMET 01 2
+      icon: {fileID: 21300000, guid: d01e61a4375954446ac4025512b95177, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 02 2
+      id: HELMET_6
+      description: M C3FC HELMET 02 2
+      icon: {fileID: 21300000, guid: 9cac09799dbab9d4a97c105c6c90f437, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 03 2
+      id: HELMET_7
+      description: M C3FC HELMET 03 2
+      icon: {fileID: 21300000, guid: a8f83bfa6bc59bc4b9b4135490d93cb5, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 01 3
+      id: HELMET_8
+      description: M C3FC HELMET 01 3
+      icon: {fileID: 21300000, guid: 601715faf2d71e14ea2b0b5d7858d9e3, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 02 3
+      id: HELMET_9
+      description: M C3FC HELMET 02 3
+      icon: {fileID: 21300000, guid: 1b3316524ca07344bbe155899b9060a3, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HELMET 03 3
+      id: HELMET_10
+      description: M C3FC HELMET 03 3
+      icon: {fileID: 21300000, guid: f1e70d8d9bf286545948009a448f1590, type: 3}
+      model: {fileID: 0}
+  - name: L HAND
+    id: L HAND
+    description: L HAND
+    options:
+    - name: M C3FC HAND 01 LEFT
+      id: L HAND_1
+      description: M C3FC HAND 01 LEFT
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 02 1 LEFT
+      id: L HAND_2
+      description: M C3FC HAND 02 1 LEFT
+      icon: {fileID: 21300000, guid: aeb2198781ef74c438aa104af9a35ef1, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 03 1 LEFT
+      id: L HAND_3
+      description: M C3FC HAND 03 1 LEFT
+      icon: {fileID: 21300000, guid: d06db308b8ab5e8449ef57c56e9617b4, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 02 2 LEFT
+      id: L HAND_4
+      description: M C3FC HAND 02 2 LEFT
+      icon: {fileID: 21300000, guid: 8a69282d88a24c342bb1ee301cd2de08, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 03 2 LEFT
+      id: L HAND_5
+      description: M C3FC HAND 03 2 LEFT
+      icon: {fileID: 21300000, guid: 00e6450c5c6f7cb43b9543614074f4fe, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 02 3 LEFT
+      id: L HAND_6
+      description: M C3FC HAND 02 3 LEFT
+      icon: {fileID: 21300000, guid: cf12021101aa10c4fbf91b10ded8349b, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 03 3 LEFT
+      id: L HAND_7
+      description: M C3FC HAND 03 3 LEFT
+      icon: {fileID: 21300000, guid: 2efafd93409f2d24781ccdbd613a7e37, type: 3}
+      model: {fileID: 0}
+  - name: R HAND
+    id: R HAND
+    description: R HAND
+    options:
+    - name: M C3FC HAND 01 RIGHT
+      id: R HAND_1
+      description: M C3FC HAND 01 RIGHT
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 02 1 RIGHT
+      id: R HAND_2
+      description: M C3FC HAND 02 1 RIGHT
+      icon: {fileID: 21300000, guid: aeb2198781ef74c438aa104af9a35ef1, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 03 1 RIGHT
+      id: R HAND_3
+      description: M C3FC HAND 03 1 RIGHT
+      icon: {fileID: 21300000, guid: d06db308b8ab5e8449ef57c56e9617b4, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 02 2 RIGHT
+      id: R HAND_4
+      description: M C3FC HAND 02 2 RIGHT
+      icon: {fileID: 21300000, guid: 8a69282d88a24c342bb1ee301cd2de08, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 03 2 RIGHT
+      id: R HAND_5
+      description: M C3FC HAND 03 2 RIGHT
+      icon: {fileID: 21300000, guid: 00e6450c5c6f7cb43b9543614074f4fe, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 02 3 RIGHT
+      id: R HAND_6
+      description: M C3FC HAND 02 3 RIGHT
+      icon: {fileID: 21300000, guid: cf12021101aa10c4fbf91b10ded8349b, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC HAND 03 3 RIGHT
+      id: R HAND_7
+      description: M C3FC HAND 03 3 RIGHT
+      icon: {fileID: 21300000, guid: 2efafd93409f2d24781ccdbd613a7e37, type: 3}
+      model: {fileID: 0}
+  - name: TORSO
+    id: TORSO
+    description: TORSO
+    options:
+    - name: M C3FC TORSO 01
+      id: TORSO_1
+      description: M C3FC TORSO 01
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 02 1
+      id: TORSO_2
+      description: M C3FC TORSO 02 1
+      icon: {fileID: 21300000, guid: 6082a2e29e6fb5e439f8fa23aed2fd61, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 03 1
+      id: TORSO_3
+      description: M C3FC TORSO 03 1
+      icon: {fileID: 21300000, guid: ffaaef0c70fb6fb4aaefe998c44bfcf2, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 04 1
+      id: TORSO_4
+      description: M C3FC TORSO 04 1
+      icon: {fileID: 21300000, guid: 555039cf57142074c9e2f54c37107c38, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 05 1
+      id: TORSO_5
+      description: M C3FC TORSO 05 1
+      icon: {fileID: 21300000, guid: 71f059772a9911e44899e0c93092ac70, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 06 1
+      id: TORSO_6
+      description: M C3FC TORSO 06 1
+      icon: {fileID: 21300000, guid: c7533aad77f9e7d4e8dce58342758a0b, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 07 1
+      id: TORSO_7
+      description: M C3FC TORSO 07 1
+      icon: {fileID: 21300000, guid: 118ffe389c7d75c40972f9087a9889a5, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 02 2
+      id: TORSO_8
+      description: M C3FC TORSO 02 2
+      icon: {fileID: 21300000, guid: 431619d943888b64d94531ccc96e15af, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 03 2
+      id: TORSO_9
+      description: M C3FC TORSO 03 2
+      icon: {fileID: 21300000, guid: 78acf6d1b9b2e344d91f9b90697d6679, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 04 2
+      id: TORSO_10
+      description: M C3FC TORSO 04 2
+      icon: {fileID: 21300000, guid: 6cfc509ac75e10d418c6f9ce62785181, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 05 2
+      id: TORSO_11
+      description: M C3FC TORSO 05 2
+      icon: {fileID: 21300000, guid: 7eedd52e251322844893000584e60454, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 06 2
+      id: TORSO_12
+      description: M C3FC TORSO 06 2
+      icon: {fileID: 21300000, guid: ba5f30e3d5ac6ce4e85cdc421cc446e7, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 07 2
+      id: TORSO_13
+      description: M C3FC TORSO 07 2
+      icon: {fileID: 21300000, guid: f04c0c20fcee7d74397707fdb088eab9, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 02 3
+      id: TORSO_14
+      description: M C3FC TORSO 02 3
+      icon: {fileID: 21300000, guid: 1e1fb7fbf9a430d45bc8c20ad1ca5051, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 03 3
+      id: TORSO_15
+      description: M C3FC TORSO 03 3
+      icon: {fileID: 21300000, guid: 6a10f4d657fe248429687c53c5136994, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 04 3
+      id: TORSO_16
+      description: M C3FC TORSO 04 3
+      icon: {fileID: 21300000, guid: e36419c5a039fff44ac57f32220b24e3, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 05 3
+      id: TORSO_17
+      description: M C3FC TORSO 05 3
+      icon: {fileID: 21300000, guid: 2ccf3a2b4f07845459494d33aa246b54, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 06 3
+      id: TORSO_18
+      description: M C3FC TORSO 06 3
+      icon: {fileID: 21300000, guid: b3378ddba56ff294690f17290a2b6dec, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC TORSO 07 3
+      id: TORSO_19
+      description: M C3FC TORSO 07 3
+      icon: {fileID: 21300000, guid: dac4775baea75af49bc8af529ca60bf1, type: 3}
+      model: {fileID: 0}
+  - name: PANTS
+    id: PANTS
+    description: PANTS
+    options:
+    - name: M C3FC PANTS 01
+      id: PANTS_1
+      description: M C3FC PANTS 01
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 02 1
+      id: PANTS_2
+      description: M C3FC PANTS 02 1
+      icon: {fileID: 21300000, guid: b1e578da1347a9940bd0eee2144c1bfa, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 03 1
+      id: PANTS_3
+      description: M C3FC PANTS 03 1
+      icon: {fileID: 21300000, guid: 4b388419d8a428946a7d5eb1430cbf97, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 04 1
+      id: PANTS_4
+      description: M C3FC PANTS 04 1
+      icon: {fileID: 21300000, guid: b9ddbce997bd9864a9c4adc8f1ed09f6, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 05 1
+      id: PANTS_5
+      description: M C3FC PANTS 05 1
+      icon: {fileID: 21300000, guid: ce562a4c19b92e84f99918dc01c19524, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 02 2
+      id: PANTS_6
+      description: M C3FC PANTS 02 2
+      icon: {fileID: 21300000, guid: 6ecb2b2b75fc91e4696d15dc44bb7ceb, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 03 2
+      id: PANTS_7
+      description: M C3FC PANTS 03 2
+      icon: {fileID: 21300000, guid: 25efe1d80207d954a9a14fe2472573cc, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 04 2
+      id: PANTS_8
+      description: M C3FC PANTS 04 2
+      icon: {fileID: 21300000, guid: 2d63d1af187848446b5e9b12661c502f, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 05 2
+      id: PANTS_9
+      description: M C3FC PANTS 05 2
+      icon: {fileID: 21300000, guid: 9a63b1f2249606e4ba505bb0b52ad3dd, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 02 3
+      id: PANTS_10
+      description: M C3FC PANTS 02 3
+      icon: {fileID: 21300000, guid: b183ff2c24232af42bd217d5b353e393, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 03 3
+      id: PANTS_11
+      description: M C3FC PANTS 03 3
+      icon: {fileID: 21300000, guid: ea7f4fc66b6dd6145bd3a9071e94fbcd, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 04 3
+      id: PANTS_12
+      description: M C3FC PANTS 04 3
+      icon: {fileID: 21300000, guid: 40648fa64704a8a418d72f288e071f2c, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC PANTS 05 3
+      id: PANTS_13
+      description: M C3FC PANTS 05 3
+      icon: {fileID: 21300000, guid: fb27fbae992776b47b7c8f44458846d7, type: 3}
+      model: {fileID: 0}
+  - name: SHOES
+    id: SHOES
+    description: SHOES
+    options:
+    - name: M C3FC SHOES 01
+      id: SHOES_1
+      description: M C3FC SHOES 01
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 02 1
+      id: SHOES_2
+      description: M C3FC SHOES 02 1
+      icon: {fileID: 21300000, guid: 03520431e811d5a4ba54e273b0aa330e, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 03 1
+      id: SHOES_3
+      description: M C3FC SHOES 03 1
+      icon: {fileID: 21300000, guid: bcea2a29249d5414091c7a9e8d28e059, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 04 1
+      id: SHOES_4
+      description: M C3FC SHOES 04 1
+      icon: {fileID: 21300000, guid: c4664ce37fb126c4ba5be348e10d7843, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 05 1
+      id: SHOES_5
+      description: M C3FC SHOES 05 1
+      icon: {fileID: 21300000, guid: 57ad6f4fbae8b2d4d92c823dedc98e64, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 06 1
+      id: SHOES_6
+      description: M C3FC SHOES 06 1
+      icon: {fileID: 21300000, guid: 77515029ee975d146bcbc21d8779afc0, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 02 2
+      id: SHOES_7
+      description: M C3FC SHOES 02 2
+      icon: {fileID: 21300000, guid: 8a2b7b48839f32746b8792e5dcbe2f37, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 03 2
+      id: SHOES_8
+      description: M C3FC SHOES 03 2
+      icon: {fileID: 21300000, guid: 9920bb8ea26ceff4d89044c814f183c4, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 04 2
+      id: SHOES_9
+      description: M C3FC SHOES 04 2
+      icon: {fileID: 21300000, guid: 406cee7c712ab494390a9baff8cad8ca, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 05 2
+      id: SHOES_10
+      description: M C3FC SHOES 05 2
+      icon: {fileID: 21300000, guid: e92ccb67bdad3b34583effd579788fad, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 06 2
+      id: SHOES_11
+      description: M C3FC SHOES 06 2
+      icon: {fileID: 21300000, guid: 3cd9b5d5f974d59439542b39be074edc, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 02 3
+      id: SHOES_12
+      description: M C3FC SHOES 02 3
+      icon: {fileID: 21300000, guid: 9c9d481232a4c6144b0650ebbbbbc225, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 03 3
+      id: SHOES_13
+      description: M C3FC SHOES 03 3
+      icon: {fileID: 21300000, guid: 6baec58f315ad394b9a8ac397b78f3b6, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 04 3
+      id: SHOES_14
+      description: M C3FC SHOES 04 3
+      icon: {fileID: 21300000, guid: 27c8f7c4d6ed0d246899ba32aa01511d, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 05 3
+      id: SHOES_15
+      description: M C3FC SHOES 05 3
+      icon: {fileID: 21300000, guid: 7469e010c02acfd46b722725a498a8f5, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC SHOES 06 3
+      id: SHOES_16
+      description: M C3FC SHOES 06 3
+      icon: {fileID: 21300000, guid: d90cec6ad81053a43aeaab46a55cf11b, type: 3}
+      model: {fileID: 0}
+  - name: FULL BODY
+    id: FULL BODY
+    description: FULL BODY
+    options:
+    - name: M C3FC EmptyFullBody
+      id: FULL BODY_1
+      description: M C3FC EmptyFullBody
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC FULL BODY 01 1
+      id: FULL BODY_2
+      description: M C3FC FULL BODY 01 1
+      icon: {fileID: 21300000, guid: 2400b782d0090ac42b235a4ae6887bb9, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC FULL BODY 01 2
+      id: FULL BODY_3
+      description: M C3FC FULL BODY 01 2
+      icon: {fileID: 21300000, guid: 5e45b258b04d03e4c97c8bd2743ae468, type: 3}
+      model: {fileID: 0}
+    - name: M C3FC FULL BODY 01 3
+      id: FULL BODY_4
+      description: M C3FC FULL BODY 01 3
+      icon: {fileID: 21300000, guid: 51012078fe10fbc43a5478bfbd503a61, type: 3}
+      model: {fileID: 0}
+  - name: HEAD
+    id: HEAD
+    description: HEAD
+    options:
+    - name: M C3FC HEAD 01
+      id: HEAD_1
+      description: M C3FC HEAD 01
+      icon: {fileID: 21300000, guid: 7d4064624ca60ed438f5fdaa5b4c099a, type: 3}
+      model: {fileID: 0}

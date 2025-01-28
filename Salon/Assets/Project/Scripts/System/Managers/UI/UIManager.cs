@@ -6,6 +6,8 @@ using Salon.Interfaces;
 using Salon.Firebase;
 using System;
 using Salon.System;
+using System.Threading.Tasks;
+using Firebase.Database;
 
 public class UIManager : Singleton<UIManager>, IInitializable
 {
@@ -17,25 +19,67 @@ public class UIManager : Singleton<UIManager>, IInitializable
     public bool IsInitialized { get; private set; }
     public bool isTesting;
 
-    public IEnumerator InitializeRoutine()
+    public async void Start()
     {
-        yield return new WaitUntil(() => FirebaseManager.Instance.IsInitialized);
-        //if (FirebaseManager.Instance.CurrentUserName != null)
-        //{
-        //     OpenPanel(PanelType.Channel);
-        // }
-        // else
-        // {
-        //     OpenPanel(PanelType.SignIn);
-        // }
-        OpenPanel(PanelType.SignIn);
-    }
-    private void Start()
-    {
+        OpenPanel(PanelType.Loading);
         Initialize();
         if (!isTesting)
         {
-            StartCoroutine(InitializeRoutine());
+            await InitializeAsync();
+        }
+    }
+
+    private async Task InitializeAsync()
+    {
+        while (!FirebaseManager.Instance.IsInitialized)
+        {
+            await Task.Delay(100);
+        }
+
+        try
+        {
+            await Task.Delay(2000);
+
+            if (FirebaseManager.Instance.CurrentUserUID != null)
+            {
+                // 현재 로그인된 사용자의 상태 확인
+                DatabaseReference userRef = FirebaseManager.Instance.DbReference.Child("Users")
+                    .Child(FirebaseManager.Instance.CurrentUserUID)
+                    .Child("Status");
+
+                DataSnapshot snapshot = await userRef.GetValueAsync();
+
+                if (snapshot.Exists)
+                {
+                    int status = Convert.ToInt32(snapshot.Value);
+                    if (status == 1) // UserStatus.Online = 1
+                    {
+                        FirebaseManager.Instance.SignOut();
+                        LogManager.Instance.ShowLog("다른 기기에서 로그인된 상태여서 로그아웃되었습니다.");
+                        OpenPanel(PanelType.MainDisplay);
+                        OpenPanel(PanelType.SignIn);
+                    }
+                    else
+                    {
+                        OpenPanel(PanelType.MainDisplay);
+                    }
+                }
+                else
+                {
+                    OpenPanel(PanelType.MainDisplay);
+                    OpenPanel(PanelType.SignIn);
+                }
+            }
+            else
+            {
+                OpenPanel(PanelType.MainDisplay);
+                OpenPanel(PanelType.SignIn);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[UIManager] 초기화 중 오류 발생: {ex.Message}");
+            OpenPanel(PanelType.SignIn);
         }
     }
 
@@ -82,7 +126,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
         }
         else
         {
-            Debug.LogError($"기본 언어 파일을 로드하는데 실패했습니다: {DefaultLangFile}");
+            return;
         }
     }
 
@@ -192,6 +236,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
             var newPanel = GetPanel(panelType);
             panels.Add(newPanel);
             newPanel.Open();
+            newPanel.transform.SetAsLastSibling();
         }
         else
         {
@@ -199,6 +244,7 @@ public class UIManager : Singleton<UIManager>, IInitializable
             if (!existingPanel.isOpen)
             {
                 existingPanel.Open();
+                existingPanel.transform.SetAsLastSibling();
             }
         }
     }

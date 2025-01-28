@@ -8,6 +8,7 @@ using Salon.Firebase.Database;
 using System.Threading.Tasks;
 using Salon.Character;
 using Salon.System;
+using Character;
 
 namespace Salon.Firebase
 {
@@ -193,13 +194,13 @@ namespace Salon.Firebase
         {
             try
             {
-                print("[RoomManager] 플레이어 위치/애니메이션/이모지 변경 구독 시작: " + displayName);
+                print("[RoomManager] 플레이어 위치/애니메이션/이모지/커스터마이제이션 변경 구독 시작: " + displayName);
                 if (playerPositionQueries.ContainsKey(displayName))
                 {
                     print($"[RoomManager] 플레이어 위치 변경 구독 중복: {displayName}");
                     playerPositionQueries[displayName].ValueChanged -= OnPositionChanged;
                 }
-                print("[RoomManager] 플레이어 위치/애니메이션/이모지 변경 구독 중복 해제 완료: " + displayName);
+                print("[RoomManager] 플레이어 위치/애니메이션/이모지/커스터마이제이션 변경 구독 중복 해제 완료: " + displayName);
 
                 var positionQuery = CurrentChannelPlayersRef.Child(displayName).Child("Position");
                 positionQuery.ValueChanged += OnPositionChanged;
@@ -210,14 +211,17 @@ namespace Salon.Firebase
                 var emojiQuery = CurrentChannelPlayersRef.Child(displayName).Child("Emoji");
                 emojiQuery.ValueChanged += OnEmojiChanged;
 
-                print("[RoomManager] 플레이어 위치/애니메이션/이모지 변경 구독 완료: " + displayName);
+                var customizationQuery = CurrentChannelPlayersRef.Child(displayName).Child("CharacterCustomization");
+                customizationQuery.ValueChanged += OnCustomizationChanged;
+
+                print("[RoomManager] 플레이어 위치/애니메이션/이모지/커스터마이제이션 변경 구독 완료: " + displayName);
                 playerPositionQueries[displayName] = positionQuery;
                 playerAnimationQueries[displayName] = animationQuery;
-                Debug.Log($"[RoomManager] {displayName}의 위치/애니메이션/이모지 변경 구독 완료");
+                Debug.Log($"[RoomManager] {displayName}의 위치/애니메이션/이모지/커스터마이제이션 변경 구독 완료");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[RoomManager] 플레이어 위치/애니메이션/이모지 구독 실패: {ex.Message}");
+                Debug.LogError($"[RoomManager] 플레이어 위치/애니메이션/이모지/커스터마이제이션 구독 실패: {ex.Message}");
             }
         }
 
@@ -319,6 +323,36 @@ namespace Salon.Firebase
             }
         }
 
+        private void OnCustomizationChanged(object sender, ValueChangedEventArgs args)
+        {
+            if (!args.Snapshot.Exists)
+            {
+                Debug.Log("[RoomManager] OnCustomizationChanged : 스냅샷이 존재하지 않음");
+                return;
+            }
+            var displayName = args.Snapshot.Reference.Parent.Key;
+
+            if (displayName == FirebaseManager.Instance.GetCurrentDisplayName())
+            {
+                Debug.Log("나 본인 OnCustomizationChanged가 바뀜");
+                return;
+            }
+
+            if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
+            {
+                var customizationData = JsonConvert.DeserializeObject<Dictionary<string, string>>(args.Snapshot.GetRawJsonValue());
+                var remotePlayer = playerObject.GetComponent<RemotePlayer>();
+                if (remotePlayer != null)
+                {
+                    remotePlayer.UpdateCustomization(customizationData);
+                }
+                else
+                {
+                    Debug.LogError($"[RoomManager] {displayName}의 RemotePlayer가 null입니다.");
+                }
+            }
+        }
+
         private void OnPositionChanged(object sender, ValueChangedEventArgs args)
         {
             // 씬 전환 중이면 위치 업데이트 무시
@@ -381,17 +415,14 @@ namespace Salon.Firebase
             {
                 Debug.Log($"[RoomManager] OnPlayerAdded: 새로운 플레이어 감지 - {displayName}");
 
-                // 이미 해당 플레이어가 존재하는지 확인
                 if (instantiatedPlayers.ContainsKey(displayName))
                 {
                     Debug.Log($"[RoomManager] 플레이어 {displayName}는 이미 존재합니다. 중복 생성을 건너뜁니다.");
                     return;
                 }
 
-                // 잠시 대기하여 SubscribeToPlayerChanges에서의 생성과 충돌하지 않도록 함
                 await Task.Delay(100);
 
-                // 다시 한번 중복 체크
                 if (instantiatedPlayers.ContainsKey(displayName))
                 {
                     Debug.Log($"[RoomManager] 플레이어 {displayName}는 대기 후 이미 존재합니다. 중복 생성을 건너뜁니다.");
@@ -416,17 +447,14 @@ namespace Salon.Firebase
             {
                 Debug.Log($"[RoomManager] OnPlayerRemoved: 플레이어 제거 시작 - {displayName}");
 
-                // 플레이어 위치 구독 해제
                 UnsubscribeFromPlayerPosition(displayName);
 
-                // 플레이어 애니메이션 구독 해제
                 if (playerAnimationQueries.TryGetValue(displayName, out var animQuery))
                 {
                     animQuery.ValueChanged -= OnAnimationChanged;
                     playerAnimationQueries.Remove(displayName);
                 }
 
-                // 플레이어 오브젝트 제거
                 if (instantiatedPlayers.TryGetValue(displayName, out GameObject playerObject))
                 {
                     Debug.Log($"[RoomManager] 플레이어 오브젝트 제거 시도 - {displayName}, GameObject: {playerObject.name}");
@@ -485,6 +513,28 @@ namespace Salon.Firebase
                     localPlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = localPlayer.gameObject;
                     GameManager.Instance.player = localPlayer;
+
+                    try
+                    {
+                        var userData = await FirebaseManager.Instance.GetUserData();
+                        if (userData != null && userData.CharacterCustomization != null &&
+                            userData.CharacterCustomization.selectedOptions != null)
+                        {
+                            var customizationManager = localPlayer.GetComponent<CharacterCustomizationManager>();
+                            if (customizationManager != null)
+                            {
+                                customizationManager.ApplyCustomizationData(userData.CharacterCustomization.selectedOptions);
+                            }
+                        }
+                        else
+                        {
+                            Debug.Log("커스터마이제이션 데이터가 없습니다.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[RoomManager] 로컬 플레이어의 커스터마이제이션 데이터 로드 실패: {ex.Message}");
+                    }
                 }
                 else
                 {
@@ -505,7 +555,6 @@ namespace Salon.Firebase
                         }
                     }
 
-                    // 생성 직전 마지막 중복 체크
                     if (instantiatedPlayers.ContainsKey(displayName))
                     {
                         Debug.Log($"[RoomManager] 위치 가져온 후 체크: 플레이어 {displayName}는 이미 존재합니다.");
@@ -515,6 +564,29 @@ namespace Salon.Firebase
                     RemotePlayer remotePlayer = Instantiate(remotePlayerPrefab.gameObject, spawnPosition, Quaternion.identity).GetComponent<RemotePlayer>();
                     remotePlayer.Initialize(displayName);
                     instantiatedPlayers[displayName] = remotePlayer.gameObject;
+
+                    try
+                    {
+                        var userSnapshot = await dbReference.Child("Users").Child(await FirebaseManager.Instance.GetUIDByDisplayName(displayName)).Child("CharacterCustomization").GetValueAsync();
+                        if (userSnapshot.Exists)
+                        {
+                            var customizationData = JsonConvert.DeserializeObject<CharacterCustomizationData>(userSnapshot.GetRawJsonValue());
+                            if (customizationData != null && customizationData.selectedOptions != null)
+                            {
+                                remotePlayer.UpdateCustomization(customizationData.selectedOptions);
+                                Debug.Log($"[RoomManager] {displayName}의 초기 커스터마이제이션 데이터 적용 완료");
+                            }
+                        }
+                        else
+                        {
+                            remotePlayer.UpdateCustomization(null);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"[RoomManager] {displayName}의 커스터마이제이션 데이터 로드 실패: {ex.Message}");
+                    }
+
                     SubscribeToPlayerPosition(displayName);
                 }
 
@@ -560,6 +632,44 @@ namespace Salon.Firebase
             {
                 Debug.LogError($"[RoomManager] 채널 입장 실패: {ex.Message}");
                 throw;
+            }
+        }
+
+        public void RemoveAllListeners()
+        {
+            try
+            {
+                Debug.Log("[RoomManager] 모든 리스너 제거 시작");
+
+                // 플레이어 추가/제거 리스너 제거
+                if (CurrentChannelPlayersRef != null)
+                {
+                    CurrentChannelPlayersRef.ChildAdded -= OnPlayerAdded;
+                    CurrentChannelPlayersRef.ChildRemoved -= OnPlayerRemoved;
+                }
+
+                // 위치 변경 리스너 제거
+                foreach (var query in playerPositionQueries.Values)
+                {
+                    query.ValueChanged -= OnPositionChanged;
+                }
+                playerPositionQueries.Clear();
+
+                // 애니메이션 변경 리스너 제거
+                foreach (var query in playerAnimationQueries.Values)
+                {
+                    query.ValueChanged -= OnAnimationChanged;
+                }
+                playerAnimationQueries.Clear();
+
+                // 레퍼런스 초기화
+                ClearChannelReferences();
+
+                Debug.Log("[RoomManager] 모든 리스너 제거 완료");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[RoomManager] 리스너 제거 중 오류 발생: {ex.Message}");
             }
         }
     }

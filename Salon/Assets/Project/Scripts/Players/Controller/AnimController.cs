@@ -2,99 +2,126 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using System;
 
-public class AnimController : MonoBehaviour
+namespace Salon.Character
 {
-
-    private Animator animator;
-
-    private AnimatorOverrideController currentController;
-
-    private string originalMotionName = "ArmSwing";
-
-    public SpriteRenderer EmojiImage;
-
-    private bool isShowingEmoji = false;
-
-    public bool IsPlayingAnimation { get; private set; }
-    public System.Action<bool> OnAnimationStateChanged;
-
-    private void Start()
+    public class AnimController : MonoBehaviour
     {
-        Initialize();
-    }
+        private Animator animator;
 
-    public void Initialize()
-    {
-        animator = GetComponent<Animator>();
-        currentController = SetupOverrideController();
-        IsPlayingAnimation = false;
-    }
+        private AnimatorOverrideController currentController;
 
-    private AnimatorOverrideController SetupOverrideController()
-    {
-        RuntimeAnimatorController Controller = animator.runtimeAnimatorController;
-        AnimatorOverrideController overrideController = new AnimatorOverrideController(Controller);
-        animator.runtimeAnimatorController = overrideController;
-        return overrideController;
-    }
+        private string originalMotionName = "ArmSwing";
 
-    public void ClipChange(AnimationClip animationClip)
-    {
-        if (currentController == null)
+        public SpriteRenderer EmojiImage;
+
+        private bool isShowingEmoji = false;
+
+        public bool IsPlayingAnimation { get; private set; }
+        public event Action<bool> OnAnimationStateChanged;
+        public event Action<string> OnEmojiChanged;
+        private string currentAnimationName;
+        public string CurrentAnimationName => currentAnimationName;
+
+        private void Awake()
+        {
+            animator = GetComponent<Animator>();
+        }
+
+        private void Start()
+        {
+            Initialize();
+        }
+
+        public void Initialize()
         {
             currentController = SetupOverrideController();
+            IsPlayingAnimation = false;
         }
 
-        if (animationClip != null)
+        private AnimatorOverrideController SetupOverrideController()
         {
-            currentController[originalMotionName] = animationClip;
+            RuntimeAnimatorController Controller = animator.runtimeAnimatorController;
+            AnimatorOverrideController overrideController = new AnimatorOverrideController(Controller);
+            animator.runtimeAnimatorController = overrideController;
+            return overrideController;
         }
-    }
 
-    public async void SetEmoji(string emojiName)
-    {
-        EmojiImage.sprite = ItemManager.Instance.GetEmojiSprite(emojiName);
-        EmojiImage.gameObject.SetActive(true);
-        isShowingEmoji = true;
-
-        StartCoroutine(UpdateEmojiFacing());
-
-        await Task.Delay(3000);
-        isShowingEmoji = false;
-        EmojiImage.gameObject.SetActive(false);
-    }
-
-    private IEnumerator UpdateEmojiFacing()
-    {
-        while (isShowingEmoji && EmojiImage != null && EmojiImage.gameObject.activeSelf)
+        public void ClipChange(AnimationClip animationClip)
         {
-            if (Camera.main != null)
+            if (currentController == null)
             {
-                EmojiImage.transform.forward = -Camera.main.transform.forward;
+                currentController = SetupOverrideController();
             }
-            yield return null;
+
+            if (animationClip != null)
+            {
+                currentController[originalMotionName] = animationClip;
+            }
         }
-    }
 
-    public void SetAnime(string animName)
-    {
-        AnimationClip clip = ItemManager.Instance.GetAnimClip(animName);
-        ClipChange(clip);
-        IsPlayingAnimation = true;
-        OnAnimationStateChanged?.Invoke(true);
-        animator.SetTrigger("ASTrigger");
-
-        if (clip != null)
+        public async void SetEmoji(string emojiName)
         {
-            StartCoroutine(WaitForAnimationEnd(clip.length));
-        }
-    }
+            if (string.IsNullOrEmpty(emojiName)) return;
 
-    private IEnumerator WaitForAnimationEnd(float duration)
-    {
-        yield return new WaitForSeconds(duration);
-        IsPlayingAnimation = false;
-        OnAnimationStateChanged?.Invoke(false);
+            OnEmojiChanged?.Invoke(emojiName);
+            EmojiImage.sprite = ItemManager.Instance.GetEmojiSprite(emojiName);
+            EmojiImage.gameObject.SetActive(true);
+            isShowingEmoji = true;
+
+            StartCoroutine(UpdateEmojiFacing());
+
+            await Task.Delay(3000);
+            isShowingEmoji = false;
+            EmojiImage.gameObject.SetActive(false);
+
+        }
+
+        private IEnumerator UpdateEmojiFacing()
+        {
+            while (isShowingEmoji && EmojiImage != null && EmojiImage.gameObject.activeSelf)
+            {
+                if (Camera.main != null)
+                {
+                    EmojiImage.transform.forward = -Camera.main.transform.forward;
+                }
+                yield return null;
+            }
+        }
+
+        public void SetAnime(string animName)
+        {
+            if (string.IsNullOrEmpty(animName)) return;
+
+            AnimationClip clip = ItemManager.Instance.GetAnimClip(animName);
+            if (clip != null)
+            {
+                currentAnimationName = animName;
+                ClipChange(clip);
+                IsPlayingAnimation = true;
+                OnAnimationStateChanged?.Invoke(true);
+                animator.SetTrigger("ASTrigger");
+
+                StartCoroutine(WaitForAnimationEnd(clip.length));
+            }
+            else
+            {
+                Debug.LogError($"[AnimController] 애니메이션 클립을 찾을 수 없습니다: {animName}");
+            }
+        }
+
+        private IEnumerator WaitForAnimationEnd(float duration)
+        {
+            yield return new WaitForSeconds(duration);
+            IsPlayingAnimation = false;
+            OnAnimationComplete();
+        }
+
+        // 애니메이션 종료 시 호출되는 이벤트 함수
+        public void OnAnimationComplete()
+        {
+            OnAnimationStateChanged?.Invoke(false);
+        }
     }
 }

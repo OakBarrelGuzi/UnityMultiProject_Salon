@@ -20,7 +20,9 @@ public enum PanelType
     Emoji,
     Animation,
     Inventory,
-    Shop
+    Shop,
+    DartRanking,
+    Loading
 }
 public enum InviteStatus
 {
@@ -58,7 +60,10 @@ public enum AnimType
     DrinkThrow,
     FootTap,
     LegShake,
-    Sippin
+    Sippin,
+    ShootingArrow,
+    TwistDance,
+    DropKick,
 }
 
 [Serializable]

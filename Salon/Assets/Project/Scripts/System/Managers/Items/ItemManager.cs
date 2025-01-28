@@ -7,6 +7,7 @@ using Salon.Firebase;
 using Firebase.Database;
 using Newtonsoft.Json;
 using System.Threading.Tasks;
+using System;
 
 public class ItemManager : Singleton<ItemManager>
 {
@@ -14,10 +15,24 @@ public class ItemManager : Singleton<ItemManager>
     private DatabaseReference activatedItemRef;
     public List<ItemData> ItemList { get; private set; }
 
+    // 인벤토리 변경 이벤트 추가
+    public event System.Action OnInventoryChanged;
+
     public async Task Initialize()
     {
         inventoryRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("Inventory");
         activatedItemRef = FirebaseManager.Instance.DbReference.Child("Users").Child(FirebaseManager.Instance.CurrentUserUID).Child("ActivatedItems");
+
+        // 인벤토리 변경 리스너 등록
+        inventoryRef.ValueChanged += (sender, args) =>
+        {
+            if (args.DatabaseError != null)
+            {
+                Debug.LogError($"The read failed: {args.DatabaseError.Message}");
+                return;
+            }
+            OnInventoryChanged?.Invoke();
+        };
 
         // ActivatedItems 노드가 없으면 생성
         var snapshot = await activatedItemRef.GetValueAsync();
@@ -147,5 +162,18 @@ public class ItemManager : Singleton<ItemManager>
     public AnimationClip GetAnimClip(string animName)
     {
         return Resources.Load<AnimationClip>("Animations/" + animName);
+    }
+
+    public void RemoveAllListeners()
+    {
+        try
+        {
+            OnInventoryChanged = null;
+            Debug.Log("[ItemManager] 모든 리스너 제거 완료");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[ItemManager] 리스너 제거 중 오류 발생: {ex.Message}");
+        }
     }
 }
