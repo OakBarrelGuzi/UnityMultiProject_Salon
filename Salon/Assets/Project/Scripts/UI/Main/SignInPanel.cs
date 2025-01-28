@@ -13,8 +13,9 @@ public class SignInPanel : Panel
     [SerializeField] private Button signInButton;
     [SerializeField] private Button signUpButton;
 
-    void OnEnable()
+    public override void Open()
     {
+        base.Open();
         Initialize();
     }
 
