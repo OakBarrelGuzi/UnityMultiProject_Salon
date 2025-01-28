@@ -79,6 +79,10 @@ namespace Salon.Firebase
                     if (currentUser != null)
                     {
                         await InitializeManagers();
+                        //초기화 후 currentuser가 null 이 아니라면 온라인 상태로 변경
+
+                        await UpdateUserStatus(UserStatus.Online);
+
                     }
 
                     Debug.Log("[FirebaseManager] Firebase 초기화 성공");

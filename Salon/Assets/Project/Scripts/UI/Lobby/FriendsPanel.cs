@@ -34,7 +34,7 @@ public class FriendsPanel : Panel
 
     public override void Initialize()
     {
-        friendsInfoUIList.Clear();
+        ClearFriendsList();
         closeButton.onClick.AddListener(() => Close());
         sendFriendRequestButton.onClick.AddListener(OnSendFriendRequestButtonClick);
         inviteFriendButton.onClick.AddListener(OnInviteFriendButtonClick);
