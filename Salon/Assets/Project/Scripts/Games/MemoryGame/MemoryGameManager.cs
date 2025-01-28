@@ -408,6 +408,8 @@ public class MemoryGameManager : MonoBehaviour
             return;
         }
 
+        if (tableCardList.Count == 0) return; // 카드가 아직 초기화되지 않은 경우 리턴
+
         foreach (var child in e.Snapshot.Children)
         {
             var cardData = JsonConvert.DeserializeObject<CardData>(child.GetRawJsonValue());
@@ -430,7 +432,8 @@ public class MemoryGameManager : MonoBehaviour
             }
         }
 
-        if (AreAllCardsOpen())
+        // 모든 카드가 초기화되었고, 보드의 카드 수가 일치할 때만 게임 종료 체크
+        if (tableCardList.Count == CARDCOUNT && board.Count == CARDCOUNT && AreAllCardsOpen())
         {
             GameEnd();
         }

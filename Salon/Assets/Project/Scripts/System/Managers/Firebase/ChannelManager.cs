@@ -426,7 +426,19 @@ namespace Salon.Firebase
 
                                         // 새로 추가된 필드들 파싱
                                         if (jsonData.ContainsKey("Position")) playerData.Position = jsonData["Position"].ToString();
-                                        if (jsonData.ContainsKey("Animation")) playerData.Animation = (AnimType)Enum.Parse(typeof(AnimType), jsonData["Animation"].ToString());
+                                        if (jsonData.ContainsKey("Animation"))
+                                        {
+                                            var animationValue = jsonData["Animation"];
+                                            if (animationValue != null && animationValue.ToString() != "0")
+                                            {
+                                                playerData.Animation = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+                                                    JsonConvert.SerializeObject(animationValue));
+                                            }
+                                            else
+                                            {
+                                                playerData.Animation = new Dictionary<string, object>();
+                                            }
+                                        }
                                         if (jsonData.ContainsKey("Emoji")) playerData.Emoji = jsonData["Emoji"].ToString();
                                         if (jsonData.ContainsKey("CharacterCustomization"))
                                         {

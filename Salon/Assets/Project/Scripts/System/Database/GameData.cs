@@ -246,7 +246,7 @@ namespace Salon.Firebase.Database
         public GamePlayerState State { get; set; }
         public Dictionary<string, object> GameSpecificData { get; set; }
         public string Position { get; set; }
-        public AnimType Animation { get; set; }
+        public Dictionary<string, object> Animation { get; set; }
         public string Emoji { get; set; }
         public Dictionary<string, string> CharacterCustomization { get; set; }
 
@@ -258,6 +258,7 @@ namespace Salon.Firebase.Database
             State = GamePlayerState.Waiting;
             GameSpecificData = new Dictionary<string, object>();
             Position = NetworkPositionCompressor.CompressVector3(Vector3.zero, Vector3.forward, false);
+            Animation = new Dictionary<string, object>();
             CharacterCustomization = new Dictionary<string, string>();
         }
     }

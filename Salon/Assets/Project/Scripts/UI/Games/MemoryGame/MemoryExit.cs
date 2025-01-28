@@ -10,8 +10,15 @@ public class MemoryExit : MonoBehaviour
 
     void Start()
     {
-        ExitYesButton.onClick.AddListener(() => ScenesManager.Instance.ChanageScene("LobbyScene"));
+        ExitYesButton.onClick.AddListener(OnClickExitYesButton);
 
         ExitNoButton.onClick.AddListener(() => gameObject.SetActive(false));
+    }
+
+    public void OnClickExitYesButton()
+    {
+        UIManager.Instance.CloseAllPanels();
+        ScenesManager.Instance.ChanageScene("LobbyScene");
+        UIManager.Instance.OpenPanel(PanelType.Lobby);
     }
 }

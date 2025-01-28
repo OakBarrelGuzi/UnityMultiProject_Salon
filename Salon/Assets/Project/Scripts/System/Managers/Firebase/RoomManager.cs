@@ -175,8 +175,55 @@ namespace Salon.Firebase
                         if (displayName != FirebaseManager.Instance.GetCurrentDisplayName() &&
                             !instantiatedPlayers.ContainsKey(displayName))
                         {
-                            var playerData = JsonConvert.DeserializeObject<GamePlayerData>(child.GetRawJsonValue());
-                            await InstantiatePlayer(displayName, playerData);
+                            try
+                            {
+                                var rawData = child.GetRawJsonValue();
+                                var jsonData = JsonConvert.DeserializeObject<Dictionary<string, object>>(rawData);
+                                var playerData = new GamePlayerData(displayName);
+
+                                if (jsonData != null)
+                                {
+                                    // 기본 필드들 파싱
+                                    if (jsonData.ContainsKey("IsReady")) playerData.IsReady = Convert.ToBoolean(jsonData["IsReady"]);
+                                    if (jsonData.ContainsKey("IsHost")) playerData.IsHost = Convert.ToBoolean(jsonData["IsHost"]);
+                                    if (jsonData.ContainsKey("State")) playerData.State = (GamePlayerState)Enum.Parse(typeof(GamePlayerState), jsonData["State"].ToString());
+                                    if (jsonData.ContainsKey("GameSpecificData"))
+                                    {
+                                        playerData.GameSpecificData = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+                                            JsonConvert.SerializeObject(jsonData["GameSpecificData"]));
+                                    }
+
+                                    // 새로 추가된 필드들 파싱
+                                    if (jsonData.ContainsKey("Position")) playerData.Position = jsonData["Position"].ToString();
+                                    if (jsonData.ContainsKey("Animation"))
+                                    {
+                                        var animationValue = jsonData["Animation"];
+                                        if (animationValue != null && animationValue.ToString() != "0")
+                                        {
+                                            playerData.Animation = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+                                                JsonConvert.SerializeObject(animationValue));
+                                        }
+                                        else
+                                        {
+                                            playerData.Animation = new Dictionary<string, object>();
+                                        }
+                                    }
+                                    if (jsonData.ContainsKey("Emoji")) playerData.Emoji = jsonData["Emoji"].ToString();
+                                    if (jsonData.ContainsKey("CharacterCustomization"))
+                                    {
+                                        playerData.CharacterCustomization = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                                            JsonConvert.SerializeObject(jsonData["CharacterCustomization"]));
+                                    }
+                                }
+
+                                await InstantiatePlayer(displayName, playerData);
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError($"[RoomManager] 플레이어 데이터 파싱 실패: {ex.Message}");
+                                // 파싱 실패시 기본 플레이어 데이터로 생성
+                                await InstantiatePlayer(displayName, new GamePlayerData(displayName));
+                            }
                         }
                     }
                 }
@@ -429,7 +476,45 @@ namespace Salon.Firebase
                     return;
                 }
 
-                var playerData = JsonConvert.DeserializeObject<GamePlayerData>(e.Snapshot.GetRawJsonValue());
+                var rawData = e.Snapshot.GetRawJsonValue();
+                var jsonData = JsonConvert.DeserializeObject<Dictionary<string, object>>(rawData);
+                var playerData = new GamePlayerData(displayName);
+
+                if (jsonData != null)
+                {
+                    // 기본 필드들 파싱
+                    if (jsonData.ContainsKey("IsReady")) playerData.IsReady = Convert.ToBoolean(jsonData["IsReady"]);
+                    if (jsonData.ContainsKey("IsHost")) playerData.IsHost = Convert.ToBoolean(jsonData["IsHost"]);
+                    if (jsonData.ContainsKey("State")) playerData.State = (GamePlayerState)Enum.Parse(typeof(GamePlayerState), jsonData["State"].ToString());
+                    if (jsonData.ContainsKey("GameSpecificData"))
+                    {
+                        playerData.GameSpecificData = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+                            JsonConvert.SerializeObject(jsonData["GameSpecificData"]));
+                    }
+
+                    // 새로 추가된 필드들 파싱
+                    if (jsonData.ContainsKey("Position")) playerData.Position = jsonData["Position"].ToString();
+                    if (jsonData.ContainsKey("Animation"))
+                    {
+                        var animationValue = jsonData["Animation"];
+                        if (animationValue != null && animationValue.ToString() != "0")
+                        {
+                            playerData.Animation = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+                                JsonConvert.SerializeObject(animationValue));
+                        }
+                        else
+                        {
+                            playerData.Animation = new Dictionary<string, object>();
+                        }
+                    }
+                    if (jsonData.ContainsKey("Emoji")) playerData.Emoji = jsonData["Emoji"].ToString();
+                    if (jsonData.ContainsKey("CharacterCustomization"))
+                    {
+                        playerData.CharacterCustomization = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                            JsonConvert.SerializeObject(jsonData["CharacterCustomization"]));
+                    }
+                }
+
                 await InstantiatePlayer(displayName, playerData);
             }
             catch (Exception ex)

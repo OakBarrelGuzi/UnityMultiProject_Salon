@@ -21,6 +21,7 @@ public class CardResultUi : MonoBehaviour
         {
             UIManager.Instance.CloseAllPanels();
             ScenesManager.Instance.ChanageScene("LobbyScene");
+            UIManager.Instance.OpenPanel(PanelType.Lobby);
         });
     }
 
