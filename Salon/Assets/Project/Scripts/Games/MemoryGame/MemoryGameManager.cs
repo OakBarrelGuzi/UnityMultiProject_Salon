@@ -291,8 +291,9 @@ public class MemoryGameManager : MonoBehaviour
 
         if (localScore > remoteScore)
         {
-            memoryGamePanelUi.cardResultUi.getGoldText.text = "20";
             MyGoldWrite(20);
+            memoryGamePanelUi.cardResultUi.getGoldText.text = "20";
+            memoryGamePanelUi.cardResultUi.myGoldText.text = this.myGold.ToString();
         }
         memoryGamePanelUi.cardPanel.gameObject.SetActive(false);
 
