@@ -31,6 +31,7 @@ public class RoomCreationUI : Panel
     {
         closeButton.onClick.RemoveAllListeners();
         closeButton.onClick.AddListener(OnCloseClick);
+        matching.SetActive(true);
         findOp.SetActive(false);
     }
     public void OnFind()
@@ -45,7 +46,7 @@ public class RoomCreationUI : Panel
 
         if (!string.IsNullOrEmpty(currentRoomId) && !string.IsNullOrEmpty(currentChannelId))
         {
-            Debug.Log($"[RoomCreationUI] ¹æ »èÁ¦ ½Ãµµ: RoomId({currentRoomId}), ChannelId({currentChannelId})");
+            Debug.Log($"[RoomCreationUI] ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ãµï¿½: RoomId({currentRoomId}), ChannelId({currentChannelId})");
             await GameRoomManager.Instance.DeleteRoom(currentChannelId, currentRoomId, currentPlayerId);
         }
 
