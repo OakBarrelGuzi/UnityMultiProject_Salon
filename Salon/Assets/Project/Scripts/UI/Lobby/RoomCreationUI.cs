@@ -45,7 +45,7 @@ public class RoomCreationUI : Panel
 
         if (!string.IsNullOrEmpty(currentRoomId) && !string.IsNullOrEmpty(currentChannelId))
         {
-            Debug.Log($"[RoomCreationUI] πÊ ªË¡¶ Ω√µµ: RoomId({currentRoomId}), ChannelId({currentChannelId})");
+            Debug.Log($"[RoomCreationUI] Î∞© ÏÇ≠Ï†ú ÏãúÎèÑ: RoomId({currentRoomId}), ChannelId({currentChannelId})");
             await GameRoomManager.Instance.DeleteRoom(currentChannelId, currentRoomId, currentPlayerId);
         }
 
