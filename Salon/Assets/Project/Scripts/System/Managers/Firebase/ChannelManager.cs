@@ -394,16 +394,80 @@ namespace Salon.Firebase
                 {
                     try
                     {
-                        var data = JsonConvert.DeserializeObject<ChannelData>(channelSnapshot.GetRawJsonValue());
-                        if (data != null)
+                        // 채널이 존재하면 기본 ChannelData 객체 생성
+                        var data = new ChannelData();
+
+                        // Players 데이터가 있다면 파싱 시도
+                        var playersSnapshot = channelSnapshot.Child("Players");
+                        if (playersSnapshot.Exists)
                         {
-                            channelData[channelSnapshot.Key] = data;
+                            data.Players = new Dictionary<string, GamePlayerData>();
+                            foreach (var playerSnapshot in playersSnapshot.Children)
+                            {
+                                try
+                                {
+                                    var rawData = playerSnapshot.GetRawJsonValue();
+                                    var playerData = new GamePlayerData(playerSnapshot.Key);
+
+                                    // 기존 데이터를 동적으로 파싱
+                                    var jsonData = JsonConvert.DeserializeObject<Dictionary<string, object>>(rawData);
+
+                                    if (jsonData != null)
+                                    {
+                                        // 기본 필드들 파싱
+                                        if (jsonData.ContainsKey("IsReady")) playerData.IsReady = Convert.ToBoolean(jsonData["IsReady"]);
+                                        if (jsonData.ContainsKey("IsHost")) playerData.IsHost = Convert.ToBoolean(jsonData["IsHost"]);
+                                        if (jsonData.ContainsKey("State")) playerData.State = (GamePlayerState)Enum.Parse(typeof(GamePlayerState), jsonData["State"].ToString());
+                                        if (jsonData.ContainsKey("GameSpecificData"))
+                                        {
+                                            playerData.GameSpecificData = JsonConvert.DeserializeObject<Dictionary<string, object>>(
+                                                JsonConvert.SerializeObject(jsonData["GameSpecificData"]));
+                                        }
+
+                                        // 새로 추가된 필드들 파싱
+                                        if (jsonData.ContainsKey("Position")) playerData.Position = jsonData["Position"].ToString();
+                                        if (jsonData.ContainsKey("Animation")) playerData.Animation = (AnimType)Enum.Parse(typeof(AnimType), jsonData["Animation"].ToString());
+                                        if (jsonData.ContainsKey("Emoji")) playerData.Emoji = jsonData["Emoji"].ToString();
+                                        if (jsonData.ContainsKey("CharacterCustomization"))
+                                        {
+                                            playerData.CharacterCustomization = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                                                JsonConvert.SerializeObject(jsonData["CharacterCustomization"]));
+                                        }
+
+                                        data.Players[playerSnapshot.Key] = playerData;
+                                    }
+                                }
+                                catch (Exception playerEx)
+                                {
+                                    Debug.LogWarning($"[ChannelManager] 플레이어 데이터 파싱 실패 ({channelSnapshot.Key}, {playerSnapshot.Key}): {playerEx.Message}");
+                                    // 파싱 실패시 기본 플레이어 데이터 생성
+                                    data.Players[playerSnapshot.Key] = new GamePlayerData(playerSnapshot.Key);
+                                }
+                            }
                         }
+
+                        // CommonChannelData가 있다면 파싱 시도
+                        var commonDataSnapshot = channelSnapshot.Child("CommonChannelData");
+                        if (commonDataSnapshot.Exists)
+                        {
+                            try
+                            {
+                                data.CommonChannelData = JsonConvert.DeserializeObject<CommonChannelData>(commonDataSnapshot.GetRawJsonValue());
+                            }
+                            catch (Exception commonEx)
+                            {
+                                Debug.LogWarning($"[ChannelManager] CommonChannelData 파싱 실패 ({channelSnapshot.Key}): {commonEx.Message}");
+                                data.CommonChannelData = new CommonChannelData();
+                            }
+                        }
+
+                        channelData[channelSnapshot.Key] = data;
                     }
                     catch (Exception ex)
                     {
                         Debug.LogWarning($"[ChannelManager] 채널 {channelSnapshot.Key} 데이터 파싱 실패: {ex.Message}");
-                        continue;
+                        // 파싱에 실패하더라도 기본 ChannelData 객체 생성
+                        channelData[channelSnapshot.Key] = new ChannelData();
                     }
                 }
                 return channelData;

@@ -173,42 +173,6 @@ namespace Salon.Firebase
             connectionRef = FirebaseDatabase.DefaultInstance.GetReference(".info/connected");
             connectionRef.ValueChanged += HandleConnectionChanged;
 
-            auth.StateChanged += AuthStateChanged;
-        }
-
-        private async void AuthStateChanged(object sender, EventArgs e)
-        {
-            if (auth.CurrentUser != currentUser)
-            {
-                bool signedIn = (auth.CurrentUser != null);
-                if (signedIn)
-                {
-                    try
-                    {
-                        await InitializeManagers();
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.LogError($"[FirebaseManager] 초기화 중 오류: {ex.Message}");
-                        auth.SignOut();
-                        if (SceneManager.GetActiveScene().name != "MainScene")
-                        {
-                            SceneManager.LoadScene("MainScene");
-                        }
-                    }
-                }
-                else
-                {
-                    Debug.Log("[FirebaseManager] 사용자 로그아웃");
-                    if (!string.IsNullOrEmpty(currentUserUID))
-                    {
-                        await UpdateUserStatus(UserStatus.Offline);
-                    }
-                    currentUser = null;
-                    currentUserUID = null;
-                    CurrnetUserDisplayName = null;
-                }
-            }
         }
 
         private async Task SetupDisconnectHandler(string userUID)
@@ -380,10 +344,6 @@ namespace Salon.Firebase
                     connectionRef.ValueChanged -= HandleConnectionChanged;
                     connectionRef = null;
                 }
-                if (auth != null)
-                {
-                    auth.StateChanged -= AuthStateChanged;
-                }
 
                 SceneManager.sceneLoaded -= OnSceneLoaded;
 
@@ -554,7 +514,6 @@ namespace Salon.Firebase
             {
                 Debug.Log("[FirebaseManager] 로그인 시도 시작");
 
-                // Firebase 초기화 및 완료 대기
                 initializationComplete = new TaskCompletionSource<bool>();
                 await InitializeAsync();
                 if (!await initializationComplete.Task)
@@ -563,12 +522,10 @@ namespace Salon.Firebase
                     return false;
                 }
 
-                // 임시 로그인하여 UID 얻기
                 var tempResult = await auth.SignInWithEmailAndPasswordAsync(email, password);
                 string userUID = tempResult.User.UserId;
                 Debug.Log($"[FirebaseManager] 임시 로그인 완료: {userUID}");
 
-                // 사용자의 온라인 상태 확인
                 var userSnapshot = await dbReference.Child("Users").Child(userUID).GetValueAsync();
                 if (!userSnapshot.Exists)
                 {
@@ -580,7 +537,6 @@ namespace Salon.Firebase
                 var userData = JsonConvert.DeserializeObject<Database.UserData>(userSnapshot.GetRawJsonValue());
                 Debug.Log($"[FirebaseManager] 현재 사용자 상태: {userData.Status}, 마지막 접속: {DateTimeOffset.FromUnixTimeSeconds(userData.LastOnline).ToString()}");
 
-                // 상태가 Online일 때만 중복 로그인으로 처리
                 if (userData.Status == UserStatus.Online)
                 {
                     long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
@@ -600,18 +556,14 @@ namespace Salon.Firebase
                     }
                 }
 
-                // 실제 로그인 처리
                 currentUser = tempResult.User;
                 currentUserUID = currentUser.UserId;
                 CurrnetUserDisplayName = currentUser.DisplayName;
 
-                // OnDisconnect 핸들러 설정
                 await SetupDisconnectHandler(userUID);
 
-                // 매니저 초기화
                 await InitializeManagers();
 
-                // 모든 초기화가 완료된 후에 마지막으로 상태 업데이트
                 userData.Status = UserStatus.Online;
                 userData.LastOnline = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                 string json = JsonConvert.SerializeObject(userData);
@@ -728,8 +680,6 @@ namespace Salon.Firebase
         {
             try
             {
-                auth.StateChanged -= AuthStateChanged;
-
                 if (currentUserUID != null)
                 {
                     try
@@ -749,7 +699,6 @@ namespace Salon.Firebase
                     }
                 }
 
-                // 모든 매니저의 리스너 제거
                 RemoveAllListeners();
 
                 if (SceneManager.GetActiveScene().name != "MainScene")
@@ -766,14 +715,11 @@ namespace Salon.Firebase
                 IsInitialized = false;
 
                 Debug.Log("[Firebase Manager] 로그아웃 처리 완료");
-
-                auth.StateChanged += AuthStateChanged;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[Firebase Manager] 로그아웃 중 오류 발생: {ex.Message}\n스택 트레이스: {ex.StackTrace}");
                 LogManager.Instance.ShowLog("로그아웃 중 오류가 발생했습니다.");
-                auth.StateChanged += AuthStateChanged;
             }
         }
 
