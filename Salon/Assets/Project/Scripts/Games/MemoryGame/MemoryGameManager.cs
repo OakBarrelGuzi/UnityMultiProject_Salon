@@ -67,16 +67,31 @@ public class MemoryGameManager : MonoBehaviour
                 throw new Exception("GameRoomManager가 초기화되지 않았습니다.");
             }
 
+            // 기존 방 정리
+            await CleanupExistingRooms();
+
             roomId = GameRoomManager.Instance.currentRoomId;
             if (string.IsNullOrEmpty(roomId))
             {
                 throw new Exception("현재 방 ID가 없습니다.");
             }
 
-            roomRef = GameRoomManager.Instance.roomRef;
+            roomRef = FirebaseManager.Instance.DbReference
+                .Child("Channels")
+                .Child(GameRoomManager.Instance.currentChannelId)
+                .Child("GameRooms")
+                .Child(roomId);
+
             if (roomRef == null)
             {
                 throw new Exception("방 참조가 초기화되지 않았습니다.");
+            }
+
+            // 방 참조가 유효한지 확인
+            var roomSnapshot = await roomRef.GetValueAsync();
+            if (!roomSnapshot.Exists)
+            {
+                throw new Exception("방이 존재하지 않습니다.");
             }
 
             if (FirebaseManager.Instance == null)
@@ -114,10 +129,7 @@ public class MemoryGameManager : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogError($"게임 시작 중 오류 발생: {ex.Message}");
-
-            UIManager.Instance.CloseAllPanels();
-            ScenesManager.Instance.ChanageScene("LobbyScene");
-            UIManager.Instance.OpenPanel(PanelType.Lobby);
+            await ReturnToLobby();
         }
     }
 
@@ -914,6 +926,64 @@ public class MemoryGameManager : MonoBehaviour
         catch (Exception ex)
         {
             Debug.LogError($"플레이어 데이터 업데이트 중 오류 발생: {ex.Message}");
+        }
+    }
+
+    private async Task CleanupExistingRooms()
+    {
+        try
+        {
+            var gameRoomsRef = FirebaseManager.Instance.DbReference
+                .Child("Channels")
+                .Child(GameRoomManager.Instance.currentChannelId)
+                .Child("GameRooms");
+
+            var snapshot = await gameRoomsRef.GetValueAsync();
+            if (snapshot.Exists)
+            {
+                foreach (var room in snapshot.Children)
+                {
+                    var roomData = JsonConvert.DeserializeObject<GameRoomData>(room.GetRawJsonValue());
+                    if (roomData != null)
+                    {
+                        // 현재 플레이어가 호스트인 방이거나 비활성 상태인 방 삭제
+                        if (roomData.HostPlayerId == GameRoomManager.Instance.currentPlayerId || !roomData.IsActive)
+                        {
+                            await gameRoomsRef.Child(room.Key).RemoveValueAsync();
+                            Debug.Log($"기존 방 삭제: {room.Key}");
+                        }
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"기존 방 정리 중 오류 발생: {ex.Message}");
+            throw;
+        }
+    }
+
+    private async Task ReturnToLobby()
+    {
+        try
+        {
+            // 리소스 정리
+            CleanupResources();
+
+            // 호스트인 경우 방 삭제
+            if (await IsHost())
+            {
+                await CleanupGameRoom();
+            }
+
+            // 로비로 돌아가기
+            UIManager.Instance.CloseAllPanels();
+            ScenesManager.Instance.ChanageScene("LobbyScene");
+            UIManager.Instance.OpenPanel(PanelType.Lobby);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"로비 복귀 중 오류 발생: {ex.Message}");
         }
     }
 }
