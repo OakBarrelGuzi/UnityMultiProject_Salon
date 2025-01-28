@@ -78,7 +78,6 @@ public class MemoryGameManager : MonoBehaviour
     {
         try
         {
-            // 게임 상태 초기화
             isGameStarted = false;
             isGameEnded = false;
             isCardFull = false;
@@ -88,26 +87,30 @@ public class MemoryGameManager : MonoBehaviour
             board.Clear();
             openCardList.Clear();
 
-            // Firebase 게임 상태 초기화
             if (await IsHost())
             {
-                await roomRef.Child("GameState").Child("IsEnded").RemoveValueAsync();
+                await roomRef.Child("GameState").RemoveValueAsync();
                 await roomRef.Child("Board").RemoveValueAsync();
-                await roomRef.Child("Players").Child(GameRoomManager.Instance.currentPlayerId).Child("Score").SetValueAsync(0);
-                var otherPlayer = (await roomRef.Child("Players").GetValueAsync()).Children.First(p => p.Key != GameRoomManager.Instance.currentPlayerId);
-                await roomRef.Child("Players").Child(otherPlayer.Key).Child("Score").SetValueAsync(0);
+
+                var playersSnapshot = await roomRef.Child("Players").GetValueAsync();
+                foreach (var player in playersSnapshot.Children)
+                {
+                    await roomRef.Child("Players").Child(player.Key).Child("Score").SetValueAsync(0);
+                }
+            }
+            else
+            {
+                await roomRef.Child("Board").RemoveValueAsync();
             }
 
             await MyGoldLoad();
             await GetCustomizationData();
             CardRandomSet();
 
-            // Firebase 이벤트 핸들러 등록
             roomRef.Child("GameState").Child("CurrentTurnPlayerId").ValueChanged += OnTurnChanged;
             roomRef.Child("Board").ValueChanged += OnBoardChanged;
             roomRef.Child("Players").ValueChanged += OnPlayersDataChanged;
 
-            // 모든 초기화가 완료되면 게임 시작
             isGameStarted = true;
             Debug.Log("게임 초기화 완료 및 시작");
         }
@@ -154,7 +157,6 @@ public class MemoryGameManager : MonoBehaviour
     {
         try
         {
-            // 로컬 플레이어의 커스터마이제이션 데이터 불러오기
             var localCustomRef = FirebaseManager.Instance.DbReference
                 .Child("Users")
                 .Child(FirebaseManager.Instance.CurrentUserUID)
@@ -168,7 +170,6 @@ public class MemoryGameManager : MonoBehaviour
                 localCM.ApplyCustomizationData(localCustomData.selectedOptions);
             }
 
-            // 원격 플레이어의 UID 가져오기
             var playersSnapshot = await roomRef.Child("Players").GetValueAsync();
             string remotePlayerUID = null;
 
@@ -183,7 +184,6 @@ public class MemoryGameManager : MonoBehaviour
 
             if (!string.IsNullOrEmpty(remotePlayerUID))
             {
-                // 원격 플레이어의 커스터마이제이션 데이터 불러오기
                 var remoteCustomRef = FirebaseManager.Instance.DbReference
                     .Child("Users")
                     .Child(remotePlayerUID)
@@ -215,7 +215,6 @@ public class MemoryGameManager : MonoBehaviour
 
     private void Update()
     {
-        // 턴 제한 시간 확인
         if (currentPlayerId == GameRoomManager.Instance.currentPlayerId &&
             Time.time - turnStartTime > TURN_TIME_LIMIT)
         {
@@ -325,12 +324,16 @@ public class MemoryGameManager : MonoBehaviour
     }
     private async void GameEnd()
     {
-        if (isGameEnded)
+        if (!isGameEnded) // isGameEnded가 false일 때 실행
         {
+            isGameEnded = true; // 먼저 상태를 변경
             try
             {
                 // 게임 종료 상태를 Firebase에 기록
                 await roomRef.Child("GameState").Child("IsEnded").SetValueAsync(true);
+
+                // 결과 UI 표시 전에 잠시 대기
+                await Task.Delay(1000);
 
                 memoryGamePanelUi.cardResultUi.gameObject.SetActive(true);
                 int localScore = int.Parse(memoryGamePanelUi.cardPanel.localPlayerScore.text);
@@ -405,6 +408,7 @@ public class MemoryGameManager : MonoBehaviour
             catch (Exception ex)
             {
                 Debug.LogError($"게임 종료 처리 중 오류 발생: {ex.Message}");
+                isGameEnded = false; // 오류 발생 시 상태 복구
             }
         }
     }
@@ -517,12 +521,19 @@ public class MemoryGameManager : MonoBehaviour
     }
     private void OnBoardChanged(object sender, ValueChangedEventArgs e)
     {
-        if (isAnimating || !e.Snapshot.Exists || !isGameStarted || isGameEnded)
+        if (!isGameStarted || isGameEnded || isAnimating || !e.Snapshot.Exists)
         {
             return;
         }
 
         if (tableCardList.Count == 0) return;
+
+        // 보드 상태가 비어있으면 초기 상태로 간주
+        if (!e.Snapshot.HasChildren)
+        {
+            board.Clear();
+            return;
+        }
 
         foreach (var child in e.Snapshot.Children)
         {
@@ -546,9 +557,21 @@ public class MemoryGameManager : MonoBehaviour
             }
         }
 
-        if (!isGameEnded && tableCardList.Count == CARDCOUNT && board.Count == CARDCOUNT && AreAllCardsOpen())
+        // 모든 카드의 애니메이션이 완료된 후에만 게임 종료 체크
+        if (!isGameEnded && !isAnimating && tableCardList.Count == CARDCOUNT && board.Count == CARDCOUNT)
         {
-            isGameEnded = true;
+            StartCoroutine(CheckGameEndRoutine());
+        }
+    }
+
+    private IEnumerator CheckGameEndRoutine()
+    {
+        // 모든 카드 애니메이션이 완료될 때까지 대기
+        yield return new WaitUntil(() => !isAnimating);
+        yield return new WaitForSeconds(0.5f);
+
+        if (AreAllCardsOpen())
+        {
             GameEnd();
         }
     }
